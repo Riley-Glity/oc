@@ -52,17 +52,17 @@
         .input-group input { width: 100%; padding: 10px 14px; background: #14040a; border: 1px solid #3a1020; color: #e0c0c0; font-family: inherit; font-size: 0.95em; border-radius: 6px; outline: none; transition: 0.2s; }
         .input-group input:focus { border-color: #c04050; box-shadow: 0 0 10px rgba(200,40,60,0.3); }
         .race-select { display: flex; gap: 8px; flex-wrap: wrap; }
-        .race-select button { flex: 1; min-width: 100px; padding: 10px; background: #14040a; border: 1px solid #3a1020; color: #c09090; font-family: inherit; font-size: 0.85em; border-radius: 6px; cursor: pointer; transition: 0.2s; letter-spacing: 0.03em; }
-        .race-select button.active { border-color: #c04050; background: #1e0610; color: #ff8090; box-shadow: 0 0 12px rgba(200,40,60,0.3); }
-        #btn-area { padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 7px; flex-shrink: 0; max-height: 40vh; overflow-y: auto; background: #0a0005; border-top: 1px solid #1a0810; }
-        #btn-area button { background: #180610; border: 1px solid #2a0a16; color: #d0c0c4; padding: 12px 16px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 0.9em; text-align: left; transition: 0.15s; -webkit-tap-highlight-color: transparent; letter-spacing: 0.03em; }
-        #btn-area button:active { background: #240a16; border-color: #5a1a2a; transform: scale(0.98); }
-        #btn-area button.gold-btn { border-color: #3a2810; background: #1a1008; }
-        #btn-area button.gold-btn:active { border-color: #6a4a20; background: #241808; }
-        #btn-area button.danger-btn { border-color: #3a0a14; background: #1a060a; }
-        #btn-area button.danger-btn:active { border-color: #6a1020; background: #240a10; }
-        #btn-area button.primary-btn { border-color: #5a1a28; background: #1e0812; color: #ff8090; }
-        #btn-area button.primary-btn:active { border-color: #8a2030; background: #280a16; box-shadow: 0 0 14px rgba(200,40,60,0.3); }
+        .race-select .clickable { padding: 6px 12px; }
+        .race-select .clickable.active { color: #ff8090; text-shadow: 0 0 10px rgba(200,80,60,0.4); }
+        #text-content .clickable { color: #e8c060; text-decoration: underline; cursor: pointer; font-weight: bold; transition: 0.2s; display: inline-block; padding: 2px 6px; border-radius: 4px; }
+        #text-content .clickable:hover { color: #ffc060; background: rgba(200,80,40,0.15); text-shadow: 0 0 8px rgba(255,200,60,0.3); }
+        #text-content .clickable:active { transform: scale(0.97); }
+        #text-content .clickable.danger { color: #e85060; }
+        #text-content .clickable.danger:hover { color: #ff7080; background: rgba(200,40,60,0.2); }
+        #text-content .clickable.gold { color: #e8c060; }
+        #text-content .clickable.gold:hover { color: #ffd070; background: rgba(200,160,60,0.15); }
+        #text-content .clickable.back { color: #8aaa8a; }
+        #text-content .clickable.back:hover { color: #aacca0; background: rgba(100,180,100,0.1); }
         #sidebar-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         #sidebar-overlay.open { opacity: 1; pointer-events: auto; }
         #sidebar { position: fixed; top: 0; right: calc(-1 * var(--sidebar-w)); width: var(--sidebar-w); height: 100%; height: 100dvh; background: #0e0108; border-left: 2px solid #3a0a18; z-index: 100; overflow-y: auto; -webkit-overflow-scrolling: touch; transition: right 0.3s ease; padding: 20px 18px; }
@@ -99,7 +99,7 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3a1020; border-radius: 2px; }
-        @media (max-width: 500px) { :root { --sidebar-w: 290px; } #topbar { padding: 8px 12px; } #topbar .title { font-size: 1em; } #quick-stats { padding: 6px 12px; font-size: 0.7em; gap: 4px 8px; } #text-area { padding: 14px 12px; } #text-content { font-size: 0.86em; } #btn-area { padding: 6px 12px 14px; } #btn-area button { padding: 11px 14px; font-size: 0.84em; } .race-select button { font-size: 0.8em; padding: 8px; } }
+        @media (max-width: 500px) { :root { --sidebar-w: 290px; } #topbar { padding: 8px 12px; } #topbar .title { font-size: 1em; } #quick-stats { padding: 6px 12px; font-size: 0.7em; gap: 4px 8px; } #text-area { padding: 14px 12px; } #text-content { font-size: 0.86em; } .race-select .clickable { padding: 5px 10px; } }
     </style>
 </head>
 <body>
@@ -114,7 +114,6 @@
         </div>
         <div id="quick-stats"><span><span class="qs-label">🕐</span> <span class="qs-time" id="qs-time">08:00</span></span><span><span class="qs-label">📅</span> <span class="qs-val" id="qs-date">第1天</span></span><span><span class="qs-label">姓名</span> <span class="qs-special" id="qs-name">???</span></span><span><span class="qs-label">HP</span> <span class="qs-red" id="qs-hp">100/100</span></span><span><span class="qs-label">🍖</span> <span class="qs-gold" id="qs-food">100</span></span><span><span class="qs-label">😫</span> <span class="qs-red" id="qs-fatigue">0</span></span><span><span class="qs-label">EXP</span> <span class="qs-gold" id="qs-exp">0/20</span></span><span><span class="qs-label">环</span> <span class="qs-gold" id="qs-ring">-</span></span><span><span class="qs-label">金币</span> <span class="qs-gold" id="qs-gold">0</span></span></div>
         <div id="text-area"><div id="text-content"></div></div>
-        <div id="btn-area"></div>
     </div>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
     <div id="sidebar"><h3>◆ 属 性 面 板 ◆</h3><div id="sidebar-tabs"><button id="tab-status" class="active" onclick="switchTab('status')">状态</button><button id="tab-social" onclick="switchTab('social')">社交</button><button id="tab-inventory" onclick="switchTab('inventory')">背包</button><button id="tab-save" onclick="switchTab('save')">存档</button></div><div id="sidebar-content"></div><button class="close-btn" onclick="toggleSidebar()">关闭面板</button></div>
@@ -141,12 +140,13 @@ var player = {
     equippedClothId: null,
     equippedClothData: null,
     equippedWeaponId: null,
-    equippedWeaponData: null
+    equippedWeaponData: null,
+    sinTrait: '' // 暴食/懒惰/色欲
 };
+var SAVE_KEY = 'qclaw_hell_ring_save';
 var sidebarTab = 'status';
 var stage = 'title', sidebarOpen = false, selectedRace = '', selectedGender = '';
 var tc = document.getElementById('text-content');
-var ba = document.getElementById('btn-area');
 var sb = document.getElementById('sidebar');
 var ov = document.getElementById('sidebar-overlay');
 var mp = document.getElementById('main');
@@ -154,8 +154,9 @@ var sc = document.getElementById('sidebar-content');
 
 function roll() { return Math.floor(Math.random() * 20) + 1; }
 function st(html) { tc.innerHTML = html; document.getElementById('text-area').scrollTop = 0; }
-function cb() { ba.innerHTML = ''; }
-function ab(label, fn, cls) { var b = document.createElement('button'); b.textContent = label; if (cls) b.className = cls; b.addEventListener('click', fn); ba.appendChild(b); }
+function cb() { /* 选项已改为行内可点击文字，由 st() 整体重渲染 */ }
+function ab(label, fn, cls, timeCost) { var span = document.createElement('span'); var c = 'clickable'; if (cls === 'danger-btn') c += ' danger'; else if (cls === 'gold-btn' || cls === 'primary-btn') c += ' gold'; span.className = c; // 如果label中没有包含耗时，自动加上
+    if (timeCost && label.indexOf('（' + timeCost) === -1 && label.indexOf('分钟') === -1) { label = label + '（耗时' + timeCost + '分钟）'; } span.textContent = label; var p = document.createElement('p'); p.appendChild(span); tc.appendChild(p); span.addEventListener('click', fn); }
 function uqs() {
     document.getElementById('qs-name').textContent = player.name || '???';
     document.getElementById('qs-hp').textContent = player.hp + '/' + player.maxHp;
@@ -332,6 +333,7 @@ function useConsumable(itemId) {
     if (e.fatigue !== undefined) {
         player.fatigue = Math.max(0, Math.min(player.maxFatigue, player.fatigue + e.fatigue));
     }
+    // 食物道具不恢复饱食度
     removeItem(itemId, 1);
     ua(); usb();
     st('<p>你使用了 ' + item.name + '。</p>');
@@ -381,6 +383,8 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
             st('<div class="scene-title">🏆 战 斗 胜 利</div><p>你击败了 <span class="gold-text">' + enemy.name + '</span>！</p><p style="color:#e8c060;">获得 ' + gold + ' 金币，' + exp + ' 经验。' + (enemy.sinReward ? ' 罪业值 +' + enemy.sinReward : '') + '</p>');
             cb();
             ab('继续', function() {
+                // 战斗胜利增加疲劳值
+                player.fatigue = Math.min(player.maxFatigue, player.fatigue + 10);
                 if (returnRing && returnLevel) {
                     sceneExploreDistrict(returnRing, returnLevel);
                 } else {
@@ -513,9 +517,131 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
 function getTimeString() { var h = Math.floor(player.gameTime / 60) % 24; var m = player.gameTime % 60; return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; }
 function getDateString() { return '第' + player.daysSurvived + '天 · 月' + player.month + ' · 年' + player.year; }
 function getTimePeriod() { var h = Math.floor(player.gameTime / 60) % 24; if (h >= 6 && h < 12) return 'morning'; if (h >= 12 && h < 18) return 'afternoon'; if (h >= 18 && h < 22) return 'evening'; return 'night'; }
-function addTime(minutes) { player.gameTime += minutes; while (player.gameTime >= 1440) { player.gameTime -= 1440; player.daysSurvived++; if (player.daysSurvived % 30 === 0) { player.month++; if (player.month > 12) { player.month = 1; player.year++; } } } updateFatigue(); updateFood(); ua(); }
-function updateFatigue() { var period = getTimePeriod(); if (period === 'night' && !player.flags.isSleeping) { player.fatigue = Math.min(player.maxFatigue, player.fatigue + 1); if (player.fatigue >= 80) { addBuff('exhausted', '极度疲劳', '你感到极度疲惫，行动力大幅下降。力量-2，敏捷-2。', 'negative', 30); } if (player.fatigue >= 100) { player.fatigue = 100; triggerFaint(); } } }
-function updateFood() { player.food = Math.max(0, player.food - 0.5); if (player.food <= 0) { player.hp = Math.max(0, player.hp - 5); player.statusMood = '你饥肠辘辘，再不进食可能会有生命危险。'; } }
+function addTime(minutes) { player.gameTime += minutes; while (player.gameTime >= 1440) { player.gameTime -= 1440; player.daysSurvived++; if (player.daysSurvived % 30 === 0) { player.month++; if (player.month > 12) { player.month = 1; player.year++; } } } updateFatigue(); updateFood(); tickBuffs(); ua(); }
+function updateFatigue() {
+    // 1. 基础疲劳：夜间+1
+    var period = getTimePeriod();
+    if (period === 'night' && !player.flags.isSleeping) {
+        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 1);
+    }
+    // 2. 暴食罪孽/环：更容易饥饿（额外+0.5/次）
+    if ((player.sin === '暴食' || player.birthRing === '暴食之环') && !player.flags.isSleeping) {
+        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 0.5);
+    }
+    // 3. 懒惰罪孽/环：疲劳累积更多（额外+1/次）
+    if ((player.sin === '懒惰' || player.birthRing === '懒惰之环') && !player.flags.isSleeping) {
+        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 1);
+    }
+    // 4. 24:00后所有互动行为增加疲劳
+    var h = Math.floor(player.gameTime / 60) % 24;
+    if (h >= 0 && h < 6 && !player.flags.isSleeping) {
+        // 凌晨时段，额外+2
+        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 2);
+    }
+    // 5. 疲劳值达到100后，每累积40点叠加一层debuff
+    if (player.fatigue >= 100) {
+        var excess = player.fatigue - 100;
+        var newLayers = Math.floor(excess / 40) + 1; // +1 for first 100
+        // 更新疲劳层数debuff
+        for (var i = 1; i <= 8; i++) {
+            if (i <= newLayers) {
+                addBuff('fatigue_layer_' + i, '疲劳层' + i, '疲劳累积过多，力量-1，敏捷-1。', 'negative', 999);
+                player.strength = Math.max(1, player.strength - 1);
+                player.agility = Math.max(1, player.agility - 1);
+            } else {
+                removeBuff('fatigue_layer_' + i);
+            }
+        }
+        // 8层后晕倒
+        if (newLayers >= 8) {
+            triggerFaintDeep();
+            return;
+        }
+    }
+    // 6. 80+疲劳debuff
+    if (player.fatigue >= 80 && !player.buffs.find(function(b){return b.id==='exhausted';})) {
+        addBuff('exhausted', '极度疲劳', '你感到极度疲惫，行动力大幅下降。力量-2，敏捷-2。', 'negative', 999);
+        player.strength = Math.max(1, player.strength - 2);
+        player.agility = Math.max(1, player.agility - 2);
+    }
+    // 欲望值自然增长（色欲罪孽/环）
+    if ((player.sin === '色欲' || player.birthRing === '色欲之环') && !player.flags.isSleeping) {
+        player.desire = Math.min(player.maxDesire, player.desire + 1);
+    }
+    // 欲望溢出检查
+    if (player.desire >= player.maxDesire) {
+        triggerDesireOverflow();
+    }
+}
+
+function triggerFaintDeep() {
+    player.hp = Math.max(1, player.hp - 10);
+    player.sanity = Math.max(0, player.sanity - 3);
+    // 清空所有疲劳层debuff
+    for (var i = 1; i <= 8; i++) {
+        removeBuff('fatigue_layer_' + i);
+    }
+    removeBuff('exhausted');
+    // 恢复力量/敏捷
+    player.strength = Math.max(1, player.strength - 0); // 留基础
+    // 扣6小时
+    player.gameTime += 360;
+    player.fatigue = 0;
+    player.flags.isSleeping = false;
+    var eventText = '你因极度疲劳而晕倒了整整六个小时。当你再次醒来时，身体仍然虚弱，但至少不再处于崩溃边缘。';
+    player.statusMood = '你刚从昏迷中醒来，身体极度虚弱。';
+    st('<div class="scene-title">晕 倒（极度疲劳）</div><p>' + eventText + '</p><p style="color:#e85060;">HP-10，理智-3。疲劳已清除，疲劳层debuff已消失。</p>');
+    cb();
+    ab('继续', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+}
+
+function triggerDesireOverflow() {
+    st('<div class="scene-title">欲望涌动</div><p>你感到内心的欲望如潮水般涌动，几乎要将理智淹没……</p>');
+    cb();
+    ab('寻找NPC解决（耗时30分钟）', function() {
+        addTime(30);
+        player.desire = 0;
+        player.sinValue += 2;
+        st('<p>你通过亲密互动释放了欲望。理智恢复了。</p>');
+        cb();
+        ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+    });
+    ab('卖身工作（耗时60分钟）', function() {
+        addTime(60);
+        player.desire = 0;
+        player.sinValue += 3;
+        var gold = 8 + Math.floor(Math.random() * 8);
+        player.gold += gold;
+        st('<p>你通过工作释放了欲望。获得了' + gold + '金币。</p>');
+        cb();
+        ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+    });
+    ab('强行压制（理智-3）', function() {
+        player.sanity = Math.max(0, player.sanity - 3);
+        player.desire = Math.floor(player.maxDesire * 0.5);
+        st('<p>你强行压制住了欲望，但这让你的精神承受了巨大压力。</p>');
+        cb();
+        ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+    });
+}
+
+function tickBuffs() {
+    for (var i = player.buffs.length - 1; i >= 0; i--) {
+        var b = player.buffs[i];
+        if (b.duration > 0) {
+            b.duration--;
+            if (b.duration <= 0) {
+                removeBuff(b.id);
+            }
+        }
+    }
+}
+function updateFood() { player.food = Math.max(0, player.food - 1); // 基础消耗从0.5改为1
+    // 暴食罪孽/环：额外-1
+    if (player.sin === '暴食' || player.birthRing === '暴食之环') {
+        player.food = Math.max(0, player.food - 1);
+    }
+    if (player.food <= 0) { player.hp = Math.max(0, player.hp - 5); player.statusMood = '你饥肠辘辘，再不进食可能会有生命危险。'; } }
 function triggerFaint() { player.hp = Math.max(1, player.hp - 20); player.sanity = Math.max(0, player.sanity - 5); player.fatigue = 50; player.flags.isSleeping = false; addTime(120); var r = Math.random(); var event; if (r < 0.4) { event = { text: '你恢复意识时，最先感受到的是四肢如同灌了铅般的沉重与酸痛。你缓缓睁开眼，发现自己正躺在一个昏暗、散发着霉味的死胡同角落里。极度的疲劳让你的视线难以立刻聚焦，大脑深处传来阵阵发麻的空虚与胀痛。你用手撑着布满灰尘的墙壁，借着粗糙的摩擦力，勉强支撑起虚脱的身体坐了起来。晕倒前的最后记忆是你拖着沉重的步伐走在街头，眼前发黑。你深吸了一口气，下意识伸手摸向腰间检查物品。皮革钱袋的底部被利器平整地划开了一道口子。你把手探进去摸索，发现原本沉甸甸的分量轻了不少，里面的金币少了一大半。周围没有任何人的身影。巷子里很安静，只有几步之外的街道上，隐约传来人群走动和交谈的嘈杂声。', goldLoss: Math.floor(player.gold * 0.3) }; } else if (r < 0.7) { event = { text: '意识从深沉的昏迷中逐渐回笼。你艰难地撑开沉重的眼皮，模糊的视线里，一个灰暗的身影正背对着你，快步走出死胡同，消失在街道的拐角处。你试图用手臂撑着地面坐起来，但腰腿稍微一用力，身体内部便传来一阵尖锐的撕裂痛感。大腿内侧的皮肤上印着几道被粗暴掐按出的指痕淤青。下方的隐秘处不仅红肿火辣，大腿根部还残留着某种不属于你的、正在逐渐变冷的黏腻液体。你低下头，发现身上的衣物凌乱不堪。外套被强行剥到了手肘处，内搭的布料被粗暴地向上推挤，胡乱堆叠在胸口。下半身的裤子并未完全穿好，松垮地卡在大腿中段，原本系着的皮带已经不知去向。巷子里的凉风吹过裸露的皮肤，引起一阵战栗。你忍着牵扯内里的钝痛，下意识伸手摸向腰侧。绑在那里的皮质钱袋被扯开了一半的系绳，你把手指探进去摸索，里面原本沉甸甸的分量已经被掏空了大半，只剩下底部可怜的几枚金币。', goldLoss: Math.floor(player.gold * 0.5), extra: '你感觉自己被侵犯了……' }; } else { event = { text: '你的视线猛地陷入黑暗，身体彻底失去支撑，重重地砸在粗糙的街道石板上，失去了意识。不知过了多久，一双骨节粗大、皮肤表面覆盖着坚硬鳞甲的手抓住了你的手臂。那股力量极大，直接将你沉重的身体从地面上拽起一半。伴随着鞋跟和衣物与地面的摩擦声，那个高大的恶魔拖着你，一路退进了远离街道的阴凉废弃建筑内。他将你平放在相对干净的角落里。粗糙的指尖在你颈部的脉搏处短暂停留了一下，确认你还有心跳后，他没有做任何多余的动作，直接转身隐入了更深的阴影中。当你再次睁开眼时，头脑还有些因缺血导致的晕眩。你撑着墙壁坐起身，立刻警惕地伸手摸向腰侧。皮质的钱袋完好无损地挂在原处，系绳没有被动过的痕迹，沉甸甸的分量告诉你里面的金币一枚都没少。你低头快速检查，身上的衣物虽然沾了些灰尘，但依然穿戴整齐，身体也没有任何额外的伤口或异样痛感。', goldLoss: 0 }; } player.gold = Math.max(0, player.gold - event.goldLoss); player.statusMood = '你刚从昏迷中醒来，身体虚弱，需要休息。'; st('<div class="scene-title">晕 倒</div><p>' + event.text + (event.extra ? '<br>' + event.extra : '') + '</p>' + (event.goldLoss > 0 ? '<p style="color:#e85060;">失去了 ' + event.goldLoss + ' 金币。</p>' : '')); cb(); ab('继续（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); }); }
 function addFood(amount) { player.food = Math.min(player.maxFood, player.food + amount); ua(); }
 function addFatigue(amount) { player.fatigue = Math.min(player.maxFatigue, player.fatigue + amount); if (player.fatigue >= 100) { triggerFaint(); } ua(); }
@@ -576,7 +702,7 @@ function usb() {
     var gen = player.gender === 'male' ? '男' : player.gender === 'female' ? '女' : '未选择';
     if (sidebarTab === 'status') {
         var buffHtml = '';
-        for (var i = 0; i < player.buffs.length; i++) { var bf = player.buffs[i]; buffHtml += '<span class="buff-tag ' + (bf.type === 'positive' ? 'positive' : 'negative') + '">' + bf.name + (bf.duration ? ' (' + bf.duration + '回合)' : '') + '</span>'; }
+        for (var i = 0; i < player.buffs.length; i++) { var bf = player.buffs[i]; buffHtml += '<span class="buff-tag ' + (bf.type === 'positive' ? 'positive' : 'negative') + '">' + bf.name + (bf.duration ? ' (' + bf.duration + '小时)' : '') + '</span>'; }
         if (!buffHtml) buffHtml = '<span style="color:#5a5a6a;font-size:0.72em;">无</span>';
         sc.innerHTML = '<div class="status-box"><div class="stat-row"><span class="s-label">🕐 时间</span><span class="s-val" style="color:#8ab4d4;">' + getTimeString() + '</span></div><div class="stat-row"><span class="s-label">📅 日期</span><span class="s-val">' + getDateString() + ' (存活' + player.daysSurvived + '天)</span></div><div class="stat-row"><span class="s-label">姓名</span><span class="s-val s-highlight">' + player.name + '</span></div><div class="stat-row"><span class="s-label">种族</span><span class="s-val">' + rl + '</span></div><div class="stat-row"><span class="s-label">性别</span><span class="s-val">' + gen + '</span></div><div class="stat-row"><span class="s-label">等级</span><span class="s-val">' + player.level + '</span></div><div class="stat-row"><span class="s-label">EXP</span><span class="s-val">' + (player.exp||0) + ' / ' + (player.level*20) + '</span></div><div class="stat-row"><span class="s-label">职业</span><span class="s-val">' + player.job + '</span></div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">❤️ HP</span><span class="s-val s-highlight">' + player.hp + ' / ' + player.maxHp + '</span></div><div class="stat-row"><span class="s-label">🧠 理智</span><span class="s-val">' + player.sanity + ' / ' + player.maxSanity + '</span></div><div class="stat-row"><span class="s-label">🔥 欲望</span><span class="s-val" style="color:#d4a040;">' + player.desire + ' / ' + player.maxDesire + '</span></div><div class="stat-row"><span class="s-label">🍖 饱食度</span><span class="s-val">' + Math.floor(player.food) + ' / ' + player.maxFood + '</span></div><div class="stat-row"><span class="s-label">😫 疲劳度</span><span class="s-val">' + Math.floor(player.fatigue) + ' / ' + player.maxFatigue + '</span></div><div class="stat-row"><span class="s-label">⚔️ 物攻</span><span class="s-val">' + Math.floor(player.strength * 1.5) + '</span></div><div class="stat-row"><span class="s-label">✨ 法攻</span><span class="s-val">' + Math.floor(player.magic * 1.5) + '</span></div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">金币</span><span class="s-val s-gold">' + player.gold + '</span></div><div class="stat-row"><span class="s-label">罪孽/本质</span><span class="s-val s-gold">' + (player.sin || '-') + '</span></div><div class="stat-row"><span class="s-label">罪业值</span><span class="s-val">' + player.sinValue + '</span></div><div class="stat-row"><span class="s-label">所在环</span><span class="s-val">' + (player.currentRing || '-') + '</span></div><div class="stat-row"><span class="s-label">当前区域</span><span class="s-val">' + (player.currentDistrict || '-') + '</span></div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">衣着</span><span class="s-val">' + player.outfit + '</span></div><p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + player.outfitDesc + '</p></div>' + '<div class="status-box"><div class="status-label">BUFF / DEBUFF</div><div style="margin-top:4px;">' + buffHtml + '</div><div class="status-mood">' + getMoodText() + '</div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">💪 力量</span><span class="s-val">' + player.strength + '</span></div><div class="stat-row"><span class="s-label">🏃 敏捷</span><span class="s-val">' + player.agility + '</span></div><div class="stat-row"><span class="s-label">✨ 魔力</span><span class="s-val">' + player.magic + '</span></div><div class="stat-row"><span class="s-label">💋 魅力</span><span class="s-val">' + player.charisma + '</span></div></div>';
     } else if (sidebarTab === 'inventory') {
@@ -822,6 +948,8 @@ function findJob() {
     cb();
     ab('接受（耗时' + job.time + '分钟）', function() {
         addTime(job.time);
+        // 工作增加疲劳值
+        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 15 + Math.floor(player.fatigue/10));
         if (player[job.stat] >= job.dc) {
             player.gold += job.reward;
             addExp(job.exp);
@@ -883,16 +1011,22 @@ function enterShop(type) {
         cb(); ab('返回', function() { sceneExploreDistrict(ring, 'poor'); });
         return;
     }
-    var html = '<div class="scene-title">' + {food:'食品店',cloth:'服装店',item:'道具店'}[type] + '</div>';
+    var typeName = {food:'食品店',cloth:'服装店',item:'道具店'}[type];
+    var html = '<div class="scene-title">◆ ' + typeName + ' ◆</div>';
+    html += '<div style="background:#180610;border:1px solid #2a0a16;border-radius:6px;padding:10px;margin:8px 0;">';
+    html += '<p style="color:#8a5a62;font-size:0.78em;margin-bottom:6px;">📦 可购买物品：</p>';
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
-        html += '<p>' + it.name + ' - ' + it.price + '金币 : ' + (it.desc || '') + '</p>';
+        html += '<p>· ' + it.name + ' <span style="color:#e8c060;">' + it.price + 'G</span> — ' + (it.desc || '') + '</p>';
     }
-    st(html); cb();
-
+    html += '</div>';
+    html += '<p style="color:#8a5a62;font-size:0.78em;margin-top:8px;">请选择要购买的物品：</p>';
+    st(html);
+    cb();
+    
     for (var i = 0; i < items.length; i++) {
         (function(item) {
-            ab('购买 ' + item.name + ' (' + item.price + 'G)', function() {
+            ab('购买 ' + item.name + '（' + item.price + 'G）', function() {
                 if (player.gold >= item.price) {
                     player.gold -= item.price;
 
@@ -938,9 +1072,9 @@ function enterShop(type) {
                     }
 
                     ua();
-                    st('<p>你购买了 ' + item.name + '。</p>');
+                    st('<p>✅ 你购买了 <span style="color:#e8c060;">' + item.name + '</span>。</p>');
                 } else {
-                    st('<p class="highlight">金币不足。</p>');
+                    st('<p class="highlight">⚠️ 金币不足。需要 ' + item.price + ' 金币，你只有 ' + player.gold + ' 金币。</p>');
                 }
                 cb();
                 ab('继续购物', function() { enterShop(type); });
@@ -1113,7 +1247,7 @@ function sceneTutorialOption1(ring) {
                 player.flags[flagKey] = true;
                 addBuff('lazy_rest', '灰雾之憩', '在灰雾中躺过的舒适感仍在。理智恢复速度略微提升。', 'positive', 10);
                 ua();
-                st('<div class="scene-title">躺 下 休 息</div><p>你在莫尔旁边的躺椅上躺了下来。灰雾立刻包裹了你——它不是冷的，而是带着一种温吞的、让人舒适的暖意。时间似乎变得无比缓慢，你能感到自己思绪中的那些尖锐的棱角在灰雾中被磨平。当你再次睁开眼时，不知道过了多久——但你的精神确实好了很多。身上还残留着灰雾的暖意，让你感到格外放松。<em>……舒服吧？</em>莫尔的声音从旁边飘来。<em>下次再来。我懒得动，你随时可以躺。只要不吵到我。</em></p><p style="color:#e8c060;">恢复5点理智。失去3金币。获得Buff：灰雾之憩（10回合内理智恢复速度提升）。</p>');
+                st('<div class="scene-title">躺 下 休 息</div><p>你在莫尔旁边的躺椅上躺了下来。灰雾立刻包裹了你——它不是冷的，而是带着一种温吞的、让人舒适的暖意。时间似乎变得无比缓慢，你能感到自己思绪中的那些尖锐的棱角在灰雾中被磨平。当你再次睁开眼时，不知道过了多久——但你的精神确实好了很多。身上还残留着灰雾的暖意，让你感到格外放松。<em>……舒服吧？</em>莫尔的声音从旁边飘来。<em>下次再来。我懒得动，你随时可以躺。只要不吵到我。</em></p><p style="color:#e8c060;">恢复5点理智。失去3金币。获得Buff：灰雾之憩（10小时内理智恢复速度提升）。</p>');
                 cb();
                 ab('离开灰雾', function() { sceneExploreDistrict(ring, 'poor'); });
             } else {
@@ -1172,7 +1306,7 @@ function sceneTutorialOption2(ring) {
             player.flags[flagKey] = true;
             addBuff('velvet_satisfaction', '魅魔的满足', '薇尔维特的客人对你的服务很满意。在色欲之环的声望略微提升。魅力+2（10回合）。', 'positive', 10);
             ua();
-            st('<div class="scene-title">为 薇 尔 维 特 工 作</div><p>薇尔维特带你走进暗红之门。门后是一条铺着紫色地毯的走廊，空气中弥漫着甜腻的香气。<em>你的第一个客人很快就到。放轻松——你的外表是资本，你用它来赚金币，和铁匠用他的铁锤赚金币没有区别。</em></p><p style="color:#c09080;font-style:italic;">[在薇尔维特的安排下，你完成了你的第一次服务。昏暗的灯光、柔软的床铺、陌生人短暂的亲密——这一切在欲望之环的暗巷中只是日常。]</p><p>结束后，薇尔维特把15枚金币放在你的手心。<em>不错。客人很满意——这是我很少听到的反馈。你身上现在带着一种满足的气息，在色欲之环，这种气息是最好的名片。</em></p><p style="color:#e8c060;">获得15金币。欲望值+4。罪业值+3。获得Buff：魅魔的满足（魅力+2，持续10回合）。</p>');
+            st('<div class="scene-title">为 薇 尔 维 特 工 作</div><p>薇尔维特带你走进暗红之门。门后是一条铺着紫色地毯的走廊，空气中弥漫着甜腻的香气。<em>你的第一个客人很快就到。放轻松——你的外表是资本，你用它来赚金币，和铁匠用他的铁锤赚金币没有区别。</em></p><p style="color:#c09080;font-style:italic;">[在薇尔维特的安排下，你完成了你的第一次服务。昏暗的灯光、柔软的床铺、陌生人短暂的亲密——这一切在欲望之环的暗巷中只是日常。]</p><p>结束后，薇尔维特把15枚金币放在你的手心。<em>不错。客人很满意——这是我很少听到的反馈。你身上现在带着一种满足的气息，在色欲之环，这种气息是最好的名片。</em></p><p style="color:#e8c060;">获得15金币。欲望值+4。罪业值+3。获得Buff：魅魔的满足（魅力+2，持续10小时）。</p>');
             cb();
             ab('离开暗红之门', function() { sceneExploreDistrict(ring, 'poor'); });
             break;
@@ -1183,7 +1317,7 @@ function sceneTutorialOption2(ring) {
                 player.flags[flagKey] = true;
                 addBuff('dark_deed', '暗中作祟', '你委托暗鳍除掉了一个人。罪恶感让你的理智略微下降，但你在嫉妒之环的暗处声望提升了。理智-1，敏捷+1（20回合）。', 'negative', 20);
                 ua();
-                st('<div class="scene-title">委 托 暗 鳍</div><p>暗鳍收下了金币。那双灰绿色的眼睛中闪过一丝满足。<em>我会处理的。不会有人知道是你——在嫉妒之环，没人会追问是谁做的。他们只会庆幸不是自己。过几天你去水沟区下游找找——如果你看到什么东西浮在水面上，那就是你花了10金币买的结果。</em></p><p>你转身离开栈桥时，感到一阵阴冷从脊背爬上来。在嫉妒之环，你刚才做的事并不罕见——但这不代表它不会在你的灵魂上留下痕迹。</p><p style="color:#e85060;">失去10金币。罪业值+5。获得Buff：暗中作祟（理智-1，敏捷+1，持续20回合）。</p>');
+                st('<div class="scene-title">委 托 暗 鳍</div><p>暗鳍收下了金币。那双灰绿色的眼睛中闪过一丝满足。<em>我会处理的。不会有人知道是你——在嫉妒之环，没人会追问是谁做的。他们只会庆幸不是自己。过几天你去水沟区下游找找——如果你看到什么东西浮在水面上，那就是你花了10金币买的结果。</em></p><p>你转身离开栈桥时，感到一阵阴冷从脊背爬上来。在嫉妒之环，你刚才做的事并不罕见——但这不代表它不会在你的灵魂上留下痕迹。</p><p style="color:#e85060;">失去10金币。罪业值+5。获得Buff：暗中作祟（理智-1，敏捷+1，持续20小时）。</p>');
                 cb();
                 ab('离开栈桥', function() { sceneExploreDistrict(ring, 'poor'); });
             } else {
@@ -1197,7 +1331,7 @@ function sceneTutorialOption2(ring) {
             player.flags[flagKey] = true;
             addBuff('scavenger_eye', '拾荒者的嗅觉', '在残渣区翻找食材让你学会了如何从垃圾中找出有用的东西。在暴食之环探索时更容易发现道具。', 'positive', 15);
             ua();
-            st('<div class="scene-title">收 集 食 材</div><p>你在残渣堆里翻找了半天——手被碎玻璃划了几道口子，膝盖上也沾满了说不清来由的污渍。但你还是找到了几块勉强能用的肉、一把半干的香料和几个还没完全腐烂的蔬菜。格鲁姆接过这些"食材"，仔细检查了一遍，然后满意地点了点头。<em>不错——比大多数新人强。大多数人翻不到五分钟就吐了。你没有。这说明你真的饿了。而且——</em>他拍了拍你的肩膀——<em>你有了拾荒者的嗅觉。以后在残渣区找东西会更容易。</em></p><p>他把5枚油腻的金币塞到你手里。<em>辛苦费。下次如果你更饿了——我可以给你更好的活。</em></p><p style="color:#e8c060;">获得5金币。获得Buff：拾荒者的嗅觉（15回合内探索暴食环更容易发现道具）。</p>');
+            st('<div class="scene-title">收 集 食 材</div><p>你在残渣堆里翻找了半天——手被碎玻璃划了几道口子，膝盖上也沾满了说不清来由的污渍。但你还是找到了几块勉强能用的肉、一把半干的香料和几个还没完全腐烂的蔬菜。格鲁姆接过这些"食材"，仔细检查了一遍，然后满意地点了点头。<em>不错——比大多数新人强。大多数人翻不到五分钟就吐了。你没有。这说明你真的饿了。而且——</em>他拍了拍你的肩膀——<em>你有了拾荒者的嗅觉。以后在残渣区找东西会更容易。</em></p><p>他把5枚油腻的金币塞到你手里。<em>辛苦费。下次如果你更饿了——我可以给你更好的活。</em></p><p style="color:#e8c060;">获得5金币。获得Buff：拾荒者的嗅觉（15小时内探索暴食环更容易发现道具）。</p>');
             cb();
             ab('离开棚子', function() { sceneExploreDistrict(ring, 'poor'); });
             break;
@@ -1571,10 +1705,19 @@ function sceneTavernMurder() {
 }
 
 // ==================== 场景函数 ====================
-function sceneTitle() { stage = 'title'; selectedRace = ''; player.race = ''; st('<div style="text-align:center;padding:30px 0;"><div style="font-size:1.6em;letter-spacing:0.12em;color:#e8c060;text-shadow:0 0 20px rgba(200,60,40,0.5);margin-bottom:6px;">七 环 地 狱</div><div style="color:#9a5a5a;font-size:0.8em;letter-spacing:0.1em;">—— 傲慢之醒 ——</div><div class="divider">◆ ◆ ◆</div><p>在人间与天堂之下，横亘着<span class="highlight">七环地狱</span>。七个环形领域层层嵌套，每一环由一位原罪君主统治。</p><p>你即将坠入这片永恒黑暗。你是谁？</p></div>'); cb(); ab('🔥 开始角色创建', function() { sceneCreate(); }, 'primary-btn'); }
-function sceneCreate() { stage = 'create'; selectedRace = ''; selectedGender = ''; st('<div class="scene-title">角 色 创 建</div><p>选择你的<span class="highlight">种族</span>：</p><p><span class="highlight">罪人</span>：曾是人类，犯下罪孽后坠入地狱。在傲慢之环接受路西法的审判。</p><p><span class="gold-text">原生恶魔</span>：诞生于地狱混沌能量。在诞生环直接觐见君主。每个环有独特的诞生场景和君主对话。</p><div class="input-group"><div class="race-select" id="race-btns"><button id="race-sinner" onclick="sr(\'sinner\')">⚰️ 罪人</button><button id="race-demon" onclick="sr(\'demon\')">👿 原生恶魔</button></div></div><div id="race-desc" style="font-size:0.85em;color:#9a6a6a;margin-top:8px;"></div><p style="margin-top:10px;">选择你的<span class="highlight">性别</span>：</p><div class="input-group"><div class="race-select" id="gender-btns"><button id="gender-male" onclick="sg(\'male\')">♂ 男性</button><button id="gender-female" onclick="sg(\'female\')">♀ 女性</button></div></div><div class="input-group" style="margin-top:12px;"><label>输入你的<span class="highlight">姓名</span>：</label><input type="text" id="name-input" placeholder="输入姓名……" maxlength="20"></div>'); cb(); ab('✅ 确认并继续', function() { var nv = document.getElementById('name-input').value.trim(); if (!selectedRace) { st('<p class="highlight">请先选择种族！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!selectedGender) { st('<p class="highlight">请先选择性别！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!nv) { st('<p class="highlight">请输入姓名！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } player.name = nv; player.race = selectedRace; player.gender = selectedGender; ua(); if (selectedRace === 'sinner') { sceneSinSelect(); } else { sceneDemonBirthRing(); } }, 'primary-btn'); }
-function sr(race) { selectedRace = race; document.getElementById('race-sinner').className = race === 'sinner' ? 'active' : ''; document.getElementById('race-demon').className = race === 'demon' ? 'active' : ''; var d = document.getElementById('race-desc'); if (race === 'sinner') d.innerHTML = '<span class="highlight">罪人</span>——背负生前罪孽。在傲慢环接受路西法审判。初始理智-3。'; else d.innerHTML = '<span class="gold-text">原生恶魔</span>——在诞生环觐见君主。初始理智+3，随机属性+3。每个环有独特的诞生场景和君主对话。'; }
-function sg(gender) { selectedGender = gender; document.getElementById('gender-male').className = gender === 'male' ? 'active' : ''; document.getElementById('gender-female').className = gender === 'female' ? 'active' : ''; }
+function sceneTitle() {
+    // 自动加载存档
+    var saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+        try {
+            var data = JSON.parse(saved);
+            Object.assign(player, data);
+        } catch(e) {}
+    }
+    stage = 'title'; selectedRace = ''; player.race = ''; st('<div style="text-align:center;padding:30px 0;"><div style="font-size:1.6em;letter-spacing:0.12em;color:#e8c060;text-shadow:0 0 20px rgba(200,60,40,0.5);margin-bottom:6px;">七 环 地 狱</div><div style="color:#9a5a5a;font-size:0.8em;letter-spacing:0.1em;">—— 傲慢之醒 ——</div><div class="divider">◆ ◆ ◆</div><p>在人间与天堂之下，横亘着<span class="highlight">七环地狱</span>。七个环形领域层层嵌套，每一环由一位原罪君主统治。</p><p>你即将坠入这片永恒黑暗。你是谁？</p></div>'); cb(); ab('🔥 开始角色创建', function() { sceneCreate(); }, 'primary-btn'); }
+function sceneCreate() { stage = 'create'; selectedRace = ''; selectedGender = ''; st('<div class="scene-title">角 色 创 建</div><p>选择你的<span class="highlight">种族</span>：</p><p><span class="highlight">罪人</span>：曾是人类，犯下罪孽后坠入地狱。在傲慢之环接受路西法的审判。</p><p><span class="gold-text">原生恶魔</span>：诞生于地狱混沌能量。在诞生环直接觐见君主。每个环有独特的诞生场景和君主对话。</p><div class="input-group"><div class="race-select" id="race-btns"><span class="clickable" id="race-sinner" onclick="sr(\'sinner\')">⚰️ 罪人</span><span class="clickable" id="race-demon" onclick="sr(\'demon\')">👿 原生恶魔</span></div></div><div id="race-desc" style="font-size:0.85em;color:#9a6a6a;margin-top:8px;"></div><p style="margin-top:10px;">选择你的<span class="highlight">性别</span>：</p><div class="input-group"><div class="race-select" id="gender-btns"><span class="clickable" id="gender-male" onclick="sg(\'male\')">♂ 男性</span><span class="clickable" id="gender-female" onclick="sg(\'female\')">♀ 女性</span></div></div><div class="input-group" style="margin-top:12px;"><label>输入你的<span class="highlight">姓名</span>：</label><input type="text" id="name-input" placeholder="输入姓名……" maxlength="20"></div>'); cb(); ab('✅ 确认并继续', function() { var nv = document.getElementById('name-input').value.trim(); if (!selectedRace) { st('<p class="highlight">请先选择种族！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!selectedGender) { st('<p class="highlight">请先选择性别！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!nv) { st('<p class="highlight">请输入姓名！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } player.name = nv; player.race = selectedRace; player.gender = selectedGender; ua(); if (selectedRace === 'sinner') { sceneSinSelect(); } else { sceneDemonBirthRing(); } }, 'primary-btn'); }
+function sr(race) { selectedRace = race; document.getElementById('race-sinner').classList.toggle('active', race === 'sinner'); document.getElementById('race-demon').classList.toggle('active', race === 'demon'); var d = document.getElementById('race-desc'); if (race === 'sinner') d.innerHTML = '<span class="highlight">罪人</span>——背负生前罪孽。在傲慢环接受路西法审判。初始理智-3。'; else d.innerHTML = '<span class="gold-text">原生恶魔</span>——在诞生环觐见君主。初始理智+3，随机属性+3。每个环有独特的诞生场景和君主对话。'; }
+function sg(gender) { selectedGender = gender; document.getElementById('gender-male').classList.toggle('active', gender === 'male'); document.getElementById('gender-female').classList.toggle('active', gender === 'female'); }
 
 // ==================== 罪人生前背景故事库 ====================
 var sinBackstories = {
@@ -1624,12 +1767,22 @@ function sceneSinSelect() {
     }
 }
 
-function sceneDiceSinner() { player.strength = roll(); player.agility = roll(); player.magic = roll(); player.charisma = roll(); player.sanity = Math.max(1, roll() - 3); switch (player.sin) { case '暴怒': player.strength += 3; player.sanity -= 2; break; case '贪婪': player.charisma += 2; player.magic += 1; break; case '嫉妒': player.agility += 2; player.magic += 1; break; case '色欲': player.charisma += 3; player.strength -= 1; break; case '傲慢': player.magic += 2; player.charisma += 1; player.sanity -= 1; break; case '暴食': player.strength += 1; player.agility -= 1; player.sanity -= 1; break; case '懒惰': player.sanity += 2; player.agility -= 2; break; } ua(); st('<div class="scene-title">命 运 之 骰</div><div class="divider">🎲 🎲 🎲</div><p><span class="highlight">' + player.name + '</span> | 罪人 | <span class="gold-text">' + player.sin + '</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' + player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility + '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic + '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma + '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity + '</span></span></div>'); cb(); ab('⚡ 坠入傲慢之环……', function() { sceneSinnerAwaken(); }, 'primary-btn'); }
+function sceneDiceSinner() { player.strength = roll(); player.agility = roll(); player.magic = roll(); player.charisma = roll(); player.sanity = Math.max(1, roll() - 3); switch (player.sin) { case '暴怒': player.strength += 3; player.sanity -= 2; break; case '贪婪': player.charisma += 2; player.magic += 1; break; case '嫉妒': player.agility += 2; player.magic += 1; break; case '色欲': player.charisma += 3; player.strength -= 1; break; case '傲慢': player.magic += 2; player.charisma += 1; player.sanity -= 1; break; case '暴食': player.strength += 1; player.agility -= 1; player.sanity -= 1; break; case '懒惰': player.sanity += 2; player.agility -= 2; break; } setSinTraits(); ua(); st('<div class="scene-title">命 运 之 骰</div><div class="divider">🎲 🎲 🎲</div><p><span class="highlight">' + player.name + '</span> | 罪人 | <span class="gold-text">' + player.sin + '</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' + player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility + '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic + '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma + '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity + '</span></span></div>'); cb(); ab('⚡ 坠入傲慢之环……', function() { sceneSinnerAwaken(); }, 'primary-btn'); }
+
+function setSinTraits() {
+    if (player.sin === '暴食' || player.birthRing === '暴食之环') {
+        player.sinTrait = '暴食';
+    } else if (player.sin === '懒惰' || player.birthRing === '懒惰之环') {
+        player.sinTrait = '懒惰';
+    } else if (player.sin === '色欲' || player.birthRing === '色欲之环') {
+        player.sinTrait = '色欲';
+    }
+}
 function sceneSinnerAwaken() { player.hp = player.maxHp; player.currentRing = '傲慢之环'; ua(); st('<div class="scene-title">傲 慢 之 环</div><p>意识像一根被拉出水面的绳索，缓慢而痛苦地凝聚。然后——你睁开了眼。</p><p>头顶不是天空。是<span class="highlight">水晶</span>。暗紫色的水晶穹顶覆盖着整个视野，望不到边际。从中透出的光不来自任何星辰，不来自任何太阳——那光是傲慢本身发出的冷光，将一切照得清晰而残酷。你从不知道光也可以如此冰冷。你躺在黑色的石板上，石板表面刻满了你看不懂的古老符文——那是审判的文字，在你接触它的瞬间便印入了你的意识。</p><p>周围是和你一样刚坠入地狱的灵魂。有的蜷缩着无声哭泣，有的疯狂咒骂着这片黑暗，有的已经吓得说不出话，只是呆呆地望着头顶的水晶穹顶。空气中弥漫着一种难以形容的压迫感——不是重量，是<span class="highlight">目光</span>。仿佛有什么不可名状的存在正从上方俯视着这一切。</p><p>远处，一座水晶宫殿悬浮在半空。它不依附于任何支撑，只是静静地漂浮在暗紫色的光晕中。塔尖刺入更深层的黑暗。你知道那座宫殿属于谁。地狱中的每一个存在都知道。</p><p>一阵脚步声接近。一个穿着暗色长袍的低阶恶魔走到你面前。他的面孔模糊不清，仿佛五官只是临时拼凑的。他用不带任何感情的声音说：</p><p><em>新到的罪人。君主今日亲自审判。起来。去审判厅。</em></p>'); cb(); ab('挣扎着站起来，跟随恶魔前往审判厅', function() { sceneSinnerHall(); }); }
 function sceneSinnerHall() { st('<div class="scene-title">审 判 厅</div><p>审判厅比你想象中更大。大到你无法看到尽头。暗紫色的光从穹顶的棱镜中折射下来，将整个空间切割成无数明暗交错的碎片。厅堂两侧矗立着巨大的水晶柱，每根柱子都有数十米高——但让你脊背发凉的，不是柱子的宏伟，而是柱中封存的东西。</p><p><span class="highlight">罪人的遗骸。</span>不知多少年前的灵魂，保持着坠入地狱时的姿态，被永远凝固在水晶之中。他们的表情清晰可见——有的惊恐，有的愤怒，有的在最后一刻终于流露出了悔恨。他们已成为这座厅堂的装饰，成为对每一位新到者的无声警告。</p><p>你被推搡着站到了厅堂中央。周围是数十个和你一样的新到者，挤在一起，像待宰的牲畜。哭泣声渐渐停止了——因为所有人都感觉到了——空气变了。不是变冷。是变得<span class="highlight">稀薄</span>。然后你听到了脚步声。每一下都像踩在所有人的心脏上。</p><p>银白色的长发，赤金色的眼眸，暗紫金边的长袍——<span class="highlight">路西法</span>降临在审判席上。他没有看任何人。他的目光越过所有新到的罪人，仿佛他们只是一片不值得聚焦的模糊背景。</p>'); cb(); ab('屏住呼吸，等待审判', function() { var verdictText = ''; switch (player.sin) { case '傲慢': verdictText = '他的目光在你身上多停了半秒——在那双赤金色的眼眸中，你捕捉到了一丝几乎不可察觉的玩味。<em>傲慢——</em>他微微侧头，银白长发从肩上滑落，<em>倒是与吾同源。但你配不上这份罪孽。你犯下的傲慢如此渺小，连给吾提鞋都不配。不过——至少你选择了最高贵的罪。</em>'; break; case '暴怒': verdictText = '他的目光扫过你，嘴角微微下撇——那表情介于轻蔑和厌烦之间。<em>暴怒——野蛮人的罪孽。</em>他连评价都懒得多说一个字。在他眼中，你的愤怒不过是一只野兽在笼中的咆哮——吵闹，但毫无意义。'; break; case '贪婪': verdictText = '他看了你一眼——那眼神中闪过一丝毫不掩饰的鄙夷。<em>贪婪——为铜臭折腰的灵魂。</em>他的语气里没有愤怒，只有一种居高临下的嫌恶，<em>连罪孽都犯得如此庸俗。你追逐了一辈子的东西，在吾眼中不过是脚下的尘埃。</em>'; break; case '嫉妒': verdictText = '他甚至没有正眼看你。<em>嫉妒——最卑微的罪孽。</em>他的声音里带着一种独特的蔑视——那种蔑视不是针对你的罪行，而是针对你选择了如此低劣的罪，<em>连罪都不配光明正大地犯。永远活在别人的阴影里，连自己站出来的勇气都没有。</em>'; break; case '暴食': verdictText = '他的目光冷冷掠过你，像掠过一块不值得停留的残渣。<em>暴食——把灵魂浪费在填饱肚子上。</em>他轻轻摇了摇头，<em>真是可悲。你一生的追求，不过是满足一个永远填不满的胃。连罪都犯得如此没有野心。</em>'; break; case '色欲': verdictText = '他轻哼了一声——那声音里混合着厌倦和轻微的不耐烦。<em>色欲——被欲望驱使的动物。</em>他的手指在王座扶手上轻轻敲了一下，<em>连自制都做不到，也配称罪人？你不过是欲望的奴隶，而奴隶——在任何地方都是最底层的存在。</em>'; break; case '懒惰': verdictText = '他几乎懒得开口。沉默了许久，才吐出几个字：<em>懒惰——连罪都犯得如此敷衍。</em>他挥了挥手，仿佛连审判你都是一种浪费，<em>你甚至不配被审判。你的存在本身，就是对地狱效率的侮辱。</em>'; break; } st('<div class="scene-title">审 判</div><p>路西法的目光终于扫过你——当那双赤金色的眼眸与你短暂接触时，你感到一阵前所未有的<span class="highlight">自惭形秽</span>。仿佛你的一生、你的罪孽、你自认为刻骨铭心的痛苦——在他眼中都轻如尘埃。</p><p>' + verdictText + '</p><p>他轻轻挥了挥手，语气恢复了平淡：<em>罪孽浅薄。平庸至极。按惯例，依罪孽送往对应环层。至于这些连罪孽都犯得如此平庸的——暂留傲慢环底层。若有价值，自有去处。若无价值——</em></p><p>他没有说完。他不需要说完。那个未完成的句子像一把悬在半空的刀，让每一个人都清楚地意识到：在这里，你的存在本身，不过是一种<span class="highlight">暂缓</span>。</p>'); player.flags.judged = true; cb(); ab('低头承受审判结果', function() { sceneSinnerAfter(); }); }); ab('直视路西法', function() { player.sanity -= 1; player.flags.daredToLook = true; ua(); var dareText = ''; switch (player.sin) { case '傲慢': dareText = '在所有低垂的头颅中，你抬起了头。路西法的嘴角微微上扬——那不是赞赏，而是看到一只蚂蚁试图模仿飞鸟时的嘲弄。他微微偏头，银白长发从肩上滑落。<em>有趣。</em>他说这两个字时，眼中终于映出了你的倒影——但那倒影如此渺小，<em>你至少还有抬头的勇气。但这不能改变你的平庸。傲慢——是需要实力来支撑的。而你没有。</em>'; break; case '暴怒': dareText = '你抬起头。路西法甚至没有回应你的目光——他的无视本身就是最锋利的回应。他沉默了很久，久到你的脖子开始酸痛。然后他才开口：<em>你以为愤怒能让你与众不同？每一个暴怒的灵魂在审判时都会抬头。你们都一样——除了蛮力一无所有。</em>'; break; case '贪婪': dareText = '你抬起头。路西法终于正眼看了你——但只是短短一瞬。随即移开，仿佛你的存在污染了他的视线。<em>连审判都要讨价还价？</em>他语气里的嫌恶加深了，<em>你以为直视吾能让你获得更好的待遇？贪婪——真是从头到脚都写着廉价。</em>'; break; case '嫉妒': dareText = '你抬起头。路西法的目光掠过你，像掠过一片不值得停留的阴影。<em>你在看吾？还是你在想——凭什么坐在上面的是他而不是你？</em>他替你回答了：<em>因为你永远只敢在下面看。嫉妒者最大的可悲，是永远不敢伸手去拿自己想要的东西。</em>'; break; case '暴食': dareText = '你抬起头。路西法微微偏头——那姿态不像在看你，更像在确认一件物品是否值得被踢开。<em>你的胃填不满，你的胆量倒是不小。</em>他的语气中带着一丝意外的玩味，<em>但饥饿带来的勇气，和饥饿本身一样——不过是本能。</em>'; break; case '色欲': dareText = '你抬起头。路西法面无表情，你的直视在他眼中和一只飞虫掠过面前没有区别。<em>你在试图诱惑谁？</em>他的声音冷淡至极，<em>吾见过最美的天使坠落，也见过最丑陋的欲望膨胀。你的这点小把戏，连让吾多看一眼的资格都没有。</em>'; break; case '懒惰': dareText = '你抬起头。路西法甚至懒得回应你的目光。他挥了挥手——那动作随意得像在赶走一阵无关紧要的风。<em>连抬头都抬得这么敷衍。</em>他的语气中没有愤怒，只有一种深深的疲惫，<em>退下吧。你连被审判的价值都没有。</em>'; break; } st('<p>你不知从哪来的勇气——或许是愚蠢，或许是残存的尊严——在所有头颅都低垂的时刻，你抬起了头。你直视了那双赤金色的眼眸。仅仅一瞬。但那一瞬间漫长得像一个世纪。</p><p>你没有感到愤怒。没有感到惩罚。你只感到一种<span class="highlight">彻底的无视</span>——比蔑视更令人窒息的，是他甚至懒得对你施加蔑视。一个人类抬头看天，天不会感到被冒犯。一只蚂蚁举起前肢，踩死它的人不会觉得那是挑衅。</p><p>' + dareText + '</p>'); cb(); ab('……', function() { sceneSinnerAfter(); }); }, 'danger-btn'); }
 function sceneSinnerAfter() { st('<div class="scene-title">灰 烬 区</div><p>审判结束了。路西法的身影从审判席上消失，仿佛从未存在过。只有空气中残留的星尘粒子提醒你，刚才的一切都是真实的——那位傲慢君主真的曾经坐在那张座椅上，用最漫不经心的语气决定了所有新到者的命运。</p><p>你和其他被判定为"平庸"的存在一起，被带到了傲慢环的底层区域。这里被称为<span class="highlight">灰烬区</span>——罪人、低阶恶魔、以及各种不入流的存在混杂的地方。水晶宫殿的光芒到这里已经变得稀薄，暗紫色的辉煌被灰色的平庸取代。街道狭窄而肮脏，两旁是歪歪扭扭的建筑。</p><p>但至少——你还存在。一个路过的低阶恶魔告诉你，被判定为罪孽平庸的存在可以在七环中自行选择居所。这是傲慢之主的"仁慈"——在他看来，安排你们这些平庸者的去向根本不值得他亲自费神。</p><p>你抬起头，望向灰烬区昏暗的天际线。远处，通往其他环层的通道隐约可见。你的地狱之旅——真正属于你自己的旅程——从现在开始。</p>'); cb(); ab('🗺️ 选择定居环', function() { sceneChooseResidence(); }); ab('🔍 在灰烬区探索', function() { sceneExploreDistrict('傲慢之环', 'poor'); }); }
 function sceneDemonBirthRing() { st('<div class="scene-title">诞 生 之 环</div><p><span class="highlight">' + player.name + '</span>——你是地狱的造物。选择你的<span class="gold-text">诞生环</span>，每个环都有独特的诞生场景和君主。</p>'); cb(); var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环']; var sinMap = { '傲慢之环': '傲慢', '贪婪之环': '贪婪', '暴怒之环': '暴怒', '色欲之环': '色欲', '嫉妒之环': '嫉妒', '暴食之环': '暴食', '懒惰之环': '懒惰' }; var attrMap = { '傲慢': '魔力+2·魅力+1·理智-1', '暴怒': '力量+3·理智-2', '嫉妒': '敏捷+2·魔力+1', '贪婪': '魅力+2·魔力+1', '暴食': '力量+1·敏捷-1·理智-1', '色欲': '魅力+3·力量-1', '懒惰': '理智+2·敏捷-2' }; for (var i = 0; i < rings.length; i++) { (function(r) { var s = sinMap[r]; var cls = ''; if (r === '贪婪之环') cls = 'gold-btn'; if (r === '暴怒之环') cls = 'danger-btn'; ab(r + '（' + attrMap[s] + '）', function() { player.birthRing = r; player.sin = s; player.currentRing = r; ua(); st('<div class="scene-title">' + r + '</div><p>属性修正：<span class="highlight">' + attrMap[s] + '</span></p><p>君主：<span class="gold-text">' + L[s].name + '</span></p>'); cb(); ab('🎲 掷出命运之骰', function() { sceneDiceDemon(); }, 'primary-btn'); }, cls); })(rings[i]); } }
-function sceneDiceDemon() { player.strength = roll(); player.agility = roll(); player.magic = roll(); player.charisma = roll(); player.sanity = roll() + 3; var bs = ['strength', 'agility', 'magic', 'charisma']; var bst = bs[Math.floor(Math.random() * 4)]; var bn = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' }; player[bst] += 3; switch (player.sin) { case '暴怒': player.strength += 3; player.sanity -= 2; break; case '贪婪': player.charisma += 2; player.magic += 1; break; case '嫉妒': player.agility += 2; player.magic += 1; break; case '色欲': player.charisma += 3; player.strength -= 1; break; case '傲慢': player.magic += 2; player.charisma += 1; player.sanity -= 1; break; case '暴食': player.strength += 1; player.agility -= 1; player.sanity -= 1; break; case '懒惰': player.sanity += 2; player.agility -= 2; break; } ua(); st('<div class="scene-title">命 运 之 骰</div><div class="divider">🎲 🎲 🎲</div><p><span class="highlight">' + player.name + '</span> | 原生恶魔 | ' + player.sin + '</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' + player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility + '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic + '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma + '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity + '</span></span></div><p>混沌能量额外强化了<span class="highlight">' + bn[bst] + '</span>（+3）。</p>'); cb(); ab('⚡ 在' + player.birthRing + '中苏醒……', function() { sceneDemonAwaken(); }, 'primary-btn'); }
+function sceneDiceDemon() { player.strength = roll(); player.agility = roll(); player.magic = roll(); player.charisma = roll(); player.sanity = roll() + 3; var bs = ['strength', 'agility', 'magic', 'charisma']; var bst = bs[Math.floor(Math.random() * 4)]; var bn = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' }; player[bst] += 3; switch (player.sin) { case '暴怒': player.strength += 3; player.sanity -= 2; break; case '贪婪': player.charisma += 2; player.magic += 1; break; case '嫉妒': player.agility += 2; player.magic += 1; break; case '色欲': player.charisma += 3; player.strength -= 1; break; case '傲慢': player.magic += 2; player.charisma += 1; player.sanity -= 1; break; case '暴食': player.strength += 1; player.agility -= 1; player.sanity -= 1; break; case '懒惰': player.sanity += 2; player.agility -= 2; break; } setSinTraits(); ua(); st('<div class="scene-title">命 运 之 骰</div><div class="divider">🎲 🎲 🎲</div><p><span class="highlight">' + player.name + '</span> | 原生恶魔 | ' + player.sin + '</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' + player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility + '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic + '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma + '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity + '</span></span></div><p>混沌能量额外强化了<span class="highlight">' + bn[bst] + '</span>（+3）。</p>'); cb(); ab('⚡ 在' + player.birthRing + '中苏醒……', function() { sceneDemonAwaken(); }, 'primary-btn'); }
 function sceneDemonAwaken() { player.hp = player.maxHp; player.currentRing = player.birthRing; ua(); var ld = L[player.sin]; st('<div class="scene-title">诞 生</div><p>' + ld.birthScene + '</p><p style="margin-top:10px;">你诞生于<span class="highlight">' + player.birthRing + '</span>。你的君主——<span class="highlight">' + ld.name + '</span>——正在等你。</p>'); cb(); ab('前往觐见' + ld.name, function() { sceneDemonAudience(); }, 'primary-btn'); }
 function sceneDemonAudience() { var ld = L[player.sin]; st('<div class="scene-title">觐 见 君 主</div><p>' + ld.audience.replace(/\n/g, '<br>') + '</p>'); player.flags.audiencedLord = true; player.relationships[ld.name] = { love: 5, desire: 0, anger: 0, opinion: '一个刚诞生的原生恶魔。' }; player.residenceRing = player.birthRing; if (player.sin === '贪婪') { player.gold += 1; st(tc.innerHTML + '<p style="margin-top:10px;"><span class="gold-text">获得玛门的投资：1金币。</span></p>'); } cb(); ab('选择居所', function() { sceneDemonChooseDistrict(); }, 'primary-btn'); }
 function sceneDemonChooseDistrict() { var ring = player.birthRing; var d = RD[ring]; st('<div class="scene-title">选 择 居 所</div><p><span class="highlight">' + d.poor.name + '</span>——' + d.poor.desc + '</p><p><span class="gold-text">' + d.middle.name + '</span>——' + d.middle.desc + '</p><p><span style="color:#ff6080;">' + d.rich.name + '</span>——' + d.rich.desc + '</p>'); cb(); ab('在' + d.poor.name + '落脚（免费）', function() { player.currentDistrict = d.poor.name; ua(); sceneExploreDistrict(ring, 'poor'); }); ab('在' + d.middle.name + '落脚（需要10金币）', function() { if (player.gold >= 10) { player.gold -= 10; player.currentDistrict = d.middle.name; ua(); sceneExploreDistrict(ring, 'middle'); } else { st('<p class="highlight">金币不足。需要10金币。</p>'); cb(); ab('去贫民区免费落脚', function() { player.currentDistrict = d.poor.name; ua(); sceneExploreDistrict(ring, 'poor'); }); } }, 'gold-btn'); ab('尝试进入' + d.rich.name, function() { st('<p class="highlight">贵族区需要君主许可。</p><p>' + d.rich.desc + '</p><p>守卫拦住了你。</p>'); cb(); ab('返回', function() { sceneDemonChooseDistrict(); }); }, 'danger-btn'); }
@@ -1675,65 +1828,265 @@ function sceneExploreDistrict(ring, level) {
     ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
     ab('📋 打开属性面板', function() { toggleSidebar(); });
 }
+// ==================== 睡眠系统 ====================
+function getSleepPlaces(ring, level) {
+    var places = {
+        '傲慢之环': {
+            poor: [
+                { name: '灰烬区流浪者聚集地（免费）', cost: 0, quality: 'poor', fatiguePerHour: 8, hpPerHour: 3, sanityPerHour: 1, desc: '在流浪者中找个角落窝着。' },
+                { name: '灰烬区破旧旅店（5金币）', cost: 5, quality: 'medium', fatiguePerHour: 12, hpPerHour: 5, sanityPerHour: 2, desc: '简陋但有屋顶的床铺。' }
+            ],
+            middle: [
+                { name: '星尘区标准旅店（15金币）', cost: 15, quality: 'good', fatiguePerHour: 16, hpPerHour: 7, sanityPerHour: 3, desc: '审判厅附属的标准住所。' },
+                { name: '星尘区文书官宿舍（20金币）', cost: 20, quality: 'good', fatiguePerHour: 18, hpPerHour: 8, sanityPerHour: 4, desc: '只有执事雇员才能进入的区域。' }
+            ],
+            rich: [
+                { name: '晨星高地访客厢房（50金币）', cost: 50, quality: 'excellent', fatiguePerHour: 22, hpPerHour: 10, sanityPerHour: 5, desc: '水晶宫殿边缘的客房，需要君主许可。' }
+            ]
+        },
+        '贪婪之环': {
+            poor: [
+                { name: '铜板巷桥洞（免费）', cost: 0, quality: 'poor', fatiguePerHour: 8, hpPerHour: 3, sanityPerHour: 1, desc: '在冰冷的石桥下缩一夜。' },
+                { name: '铜板巷廉价旅馆（6金币）', cost: 6, quality: 'medium', fatiguePerHour: 12, hpPerHour: 5, sanityPerHour: 2, desc: '一个勉强能躺下的木板床。' }
+            ],
+            middle: [
+                { name: '金丝街标准旅馆（18金币）', cost: 18, quality: 'good', fatiguePerHour: 17, hpPerHour: 7, sanityPerHour: 3, desc: '金丝街上的普通旅馆。' },
+                { name: '罪业银行附属宿舍（25金币）', cost: 25, quality: 'good', fatiguePerHour: 19, hpPerHour: 8, sanityPerHour: 4, desc: '需要银行账户才能入住。' }
+            ],
+            rich: [
+                { name: '万宝内城行宫（60金币）', cost: 60, quality: 'excellent', fatiguePerHour: 24, hpPerHour: 12, sanityPerHour: 6, desc: '金币铺地的奢华住所。' }
+            ]
+        },
+        '暴怒之环': {
+            poor: [
+                { name: '碎骨巷废墟角落（免费）', cost: 0, quality: 'poor', fatiguePerHour: 9, hpPerHour: 4, sanityPerHour: 0, desc: '随时可能被斗殴波及。' },
+                { name: '碎骨巷廉租铺位（7金币）', cost: 7, quality: 'medium', fatiguePerHour: 13, hpPerHour: 5, sanityPerHour: 1, desc: '铁皮搭建的简陋铺位。' }
+            ],
+            middle: [
+                { name: '铁砧大道角斗士宿舍（20金币）', cost: 20, quality: 'good', fatiguePerHour: 18, hpPerHour: 8, sanityPerHour: 3, desc: '角斗士们的休息区。' },
+                { name: '怒火熔炉厂区宿舍（22金币）', cost: 22, quality: 'good', fatiguePerHour: 19, hpPerHour: 8, sanityPerHour: 2, desc: '工厂工人专用宿舍。' }
+            ],
+            rich: [
+                { name: '熔岩堡垒贵宾区（70金币）', cost: 70, quality: 'excellent', fatiguePerHour: 25, hpPerHour: 12, sanityPerHour: 4, desc: '需要萨麦尔认可才能进入。' }
+            ]
+        },
+        '色欲之环': {
+            poor: [
+                { name: '暗巷台阶（免费）', cost: 0, quality: 'poor', fatiguePerHour: 7, hpPerHour: 3, sanityPerHour: 1, desc: '昏暗的角落勉强容身。' },
+                { name: '暗巷情趣旅馆（8金币）', cost: 8, quality: 'medium', fatiguePerHour: 13, hpPerHour: 6, sanityPerHour: 3, desc: '装饰暧昧的临时住所。' }
+            ],
+            middle: [
+                { name: '霓虹大道连锁旅馆（20金币）', cost: 20, quality: 'good', fatiguePerHour: 17, hpPerHour: 7, sanityPerHour: 4, desc: '标准化的欲望之环连锁店。' },
+                { name: '欲望拍卖行附楼（28金币）', cost: 28, quality: 'good', fatiguePerHour: 20, hpPerHour: 9, sanityPerHour: 5, desc: '高端客户的临时住所。' }
+            ],
+            rich: [
+                { name: '红雾宫殿厢房（80金币）', cost: 80, quality: 'excellent', fatiguePerHour: 26, hpPerHour: 14, sanityPerHour: 6, desc: '需要阿斯蒙蒂斯的邀请函。' }
+            ]
+        },
+        '嫉妒之环': {
+            poor: [
+                { name: '水沟区干角落（免费）', cost: 0, quality: 'poor', fatiguePerHour: 8, hpPerHour: 2, sanityPerHour: 1, desc: '黑水浸泡不到的地方。' },
+                { name: '水沟区简易木屋（6金币）', cost: 6, quality: 'medium', fatiguePerHour: 12, hpPerHour: 5, sanityPerHour: 1, desc: '用废木板搭建的临时住所。' }
+            ],
+            middle: [
+                { name: '镜面街区旅馆（18金币）', cost: 18, quality: 'good', fatiguePerHour: 17, hpPerHour: 7, sanityPerHour: 3, desc: '模仿各环风格建造的旅馆。' },
+                { name: '深渊镜像工坊宿舍（24金币）', cost: 24, quality: 'good', fatiguePerHour: 19, hpPerHour: 8, sanityPerHour: 3, desc: '高级工匠的住所。' }
+            ],
+            rich: [
+                { name: '深水王座客房（65金币）', cost: 65, quality: 'excellent', fatiguePerHour: 25, hpPerHour: 12, sanityPerHour: 4, desc: '需要利维坦默许。' }
+            ]
+        },
+        '暴食之环': {
+            poor: [
+                { name: '残渣区垃圾堆（免费）', cost: 0, quality: 'poor', fatiguePerHour: 8, hpPerHour: 3, sanityPerHour: 0, desc: '在残渣堆里找个相对干净的地方。' },
+                { name: '残渣区临时窝棚（5金币）', cost: 5, quality: 'medium', fatiguePerHour: 11, hpPerHour: 5, sanityPerHour: 1, desc: '破帆布搭成的棚子。' }
+            ],
+            middle: [
+                { name: '美食大道廉价旅店（16金币）', cost: 16, quality: 'good', fatiguePerHour: 16, hpPerHour: 7, sanityPerHour: 2, desc: '香气弥漫的餐饮区住所。' },
+                { name: '食教传教站客房（20金币）', cost: 20, quality: 'good', fatiguePerHour: 18, hpPerHour: 9, sanityPerHour: 3, desc: '需要加入食教或捐赠。' }
+            ],
+            rich: [
+                { name: '永恒盛宴厅偏厅（75金币）', cost: 75, quality: 'excellent', fatiguePerHour: 26, hpPerHour: 14, sanityPerHour: 4, desc: '别力西卜的餐厅附带住所。' }
+            ]
+        },
+        '懒惰之环': {
+            poor: [
+                { name: '停滞区灰雾中（免费）', cost: 0, quality: 'poor', fatiguePerHour: 10, hpPerHour: 5, sanityPerHour: 3, desc: '直接躺在灰雾里。' },
+                { name: '惰性休闲馆低价位（8金币）', cost: 8, quality: 'medium', fatiguePerHour: 14, hpPerHour: 6, sanityPerHour: 4, desc: '最便宜的躺椅。' }
+            ],
+            middle: [
+                { name: '虚无躺椅总店标准间（15金币）', cost: 15, quality: 'good', fatiguePerHour: 18, hpPerHour: 8, sanityPerHour: 5, desc: '高品质的虚无躺椅。' },
+                { name: '懒鬼外包公司宿舍（18金币）', cost: 18, quality: 'good', fatiguePerHour: 19, hpPerHour: 9, sanityPerHour: 5, desc: '效率极低但床很软。' }
+            ],
+            rich: [
+                { name: '虚无之床边缘区（60金币）', cost: 60, quality: 'excellent', fatiguePerHour: 24, hpPerHour: 12, sanityPerHour: 8, desc: '靠近贝尔芬格的沉睡之所。' }
+            ]
+        }
+    };
+    var ringData = places[ring];
+    if (!ringData) return [];
+    var levelData = ringData[level] || ringData.poor;
+    return levelData;
+}
+
 function chooseSleepPlace() {
-    var places = [
-        { name: '灰烬区流浪者聚集地', quality: 'poor', cost: 0, fatiguePerHour: 8, hpPerHour: 3, sanityPerHour: 1 },
-        { name: '灰烬区破旧旅店', quality: 'medium', cost: 5, fatiguePerHour: 12, hpPerHour: 5, sanityPerHour: 2 },
-        { name: '星尘区标准旅店', quality: 'good', cost: 15, fatiguePerHour: 16, hpPerHour: 7, sanityPerHour: 3 }
-    ];
-    var baseSleepHours = 4 + (player.fatigue / 100) * 6;
-    baseSleepHours = Math.round(baseSleepHours * 10) / 10;
-    st('<div class="scene-title">选择睡觉地点</div><p>当前疲劳度：' + Math.floor(player.fatigue) + '/' + player.maxFatigue + '</p><p>预计基础睡眠时间：约 ' + baseSleepHours + ' 小时</p>');
+    var ring = player.currentRing || '傲慢之环';
+    var level = 'poor';
+    // 从player.currentDistrict判断当前层级
+    var d = RD[ring];
+    if (player.currentDistrict) {
+        if (d.rich && player.currentDistrict === d.rich.name) level = 'rich';
+        else if (d.middle && player.currentDistrict === d.middle.name) level = 'middle';
+    }
+    var places = getSleepPlaces(ring, level);
+    if (places.length === 0) {
+        st('<p>当前区域没有可用的住宿地点。</p>');
+        cb();
+        ab('返回', function() { sceneExploreDistrict(ring, 'poor'); });
+        return;
+    }
+    var html = '<div class="scene-title">◆ 休 息 ◆</div>';
+    html += '<p>当前所在：<span style="color:#e8c060;">' + (player.currentDistrict || ring) + '</span></p>';
+    html += '<p>当前疲劳：' + Math.floor(player.fatigue) + '/' + player.maxFatigue + '</p>';
+    html += '<div style="background:#180610;border:1px solid #2a0a16;border-radius:6px;padding:10px;margin:8px 0;">';
+    html += '<p style="color:#8a5a62;font-size:0.78em;margin-bottom:6px;">🛏️ 可用住处（仅限当前区域）：</p>';
+    for (var i = 0; i < places.length; i++) {
+        var p = places[i];
+        html += '<p>· ' + p.name + '</p>';
+        html += '<p style="color:#6a4a4a;font-size:0.78em;padding-left:12px;">' + p.desc + '</p>';
+    }
+    html += '</div>';
+    html += '<p style="color:#8a5a62;font-size:0.78em;margin-top:8px;">选择住处：</p>';
+    st(html);
     cb();
     for (var i = 0; i < places.length; i++) {
         (function(p) {
-            var qualityNames = { poor: '简陋', medium: '中等', good: '良好' };
-            var fatigueRecovery = Math.floor(p.fatiguePerHour * baseSleepHours);
-            var hpRecovery = Math.floor(p.hpPerHour * baseSleepHours);
-            var sanityRecovery = Math.floor(p.sanityPerHour * baseSleepHours);
-            var label = p.name + '（' + qualityNames[p.quality] + '，' + p.cost + '金币，约' + baseSleepHours + '小时，恢复疲劳' + fatigueRecovery + '，HP' + hpRecovery + '，理智' + sanityRecovery + '）';
-            ab(label, function() {
-                if (player.gold >= p.cost) {
-                    player.gold -= p.cost;
-                    if (player.hasClock) {
-                        var alarmHour = prompt('设置起床时间（小时，0-23）：');
-                        if (alarmHour !== null && !isNaN(alarmHour) && alarmHour >= 0 && alarmHour <= 23) {
-                            player.alarmTime = parseInt(alarmHour) * 60;
-                        }
-                    }
-                    player.flags.isSleeping = true;
-                    sleepRest(p.quality, baseSleepHours, p.fatiguePerHour, p.hpPerHour, p.sanityPerHour);
-                    st('<div class="scene-title">睡 眠</div><p>你在' + p.name + '睡了 ' + baseSleepHours + ' 小时，精力得到了恢复。</p>');
+            ab(p.name, function() {
+                if (player.gold < p.cost) {
+                    st('<p class="highlight">⚠️ 金币不足。需要 ' + p.cost + ' 金币，你只有 ' + player.gold + ' 金币。</p>');
                     cb();
-                    ab('继续（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing, 'poor'); });
+                    ab('返回', function() { chooseSleepPlace(); });
+                    return;
+                }
+                player.gold -= p.cost;
+                if (player.hasClock) {
+                    // 时钟模式：让玩家选择睡眠时长
+                    var currentHour = Math.floor(player.gameTime / 60) % 24;
+                    showSleepClock(p, currentHour);
                 } else {
-                    st('<p class="highlight">金币不足。</p>');
-                    cb(); ab('返回', function() { chooseSleepPlace(); });
+                    // 无时钟：自动计算睡眠时长
+                    var baseHours = 4 + (player.fatigue / 100) * 6;
+                    baseHours = Math.round(baseHours * 10) / 10;
+                    doSleep(p, baseHours);
                 }
             });
         })(places[i]);
     }
-    ab('取消', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+    ab('取消', function() { sceneExploreDistrict(ring, 'poor'); });
 }
+
+function showSleepClock(place, currentHour) {
+    var html = '<div class="scene-title">◆ 设置起床时间 ◆</div>';
+    html += '<p>当前时间：<span style="color:#8ab4d4;">' + getTimeString() + '</span></p>';
+    html += '<p>选择住处：' + place.name + '</p>';
+    html += '<div style="background:#180610;border:1px solid #2a0a16;border-radius:6px;padding:10px;margin:8px 0;">';
+    html += '<p style="color:#8a5a62;font-size:0.78em;">⏰ 选择睡眠时长：</p>';
+    var options = [4, 6, 8, 10];
+    for (var i = 0; i < options.length; i++) {
+        var h = options[i];
+        var wakeHour = (currentHour + h) % 24;
+        var wakeStr = (wakeHour < 10 ? '0' : '') + wakeHour + ':00';
+        html += '<p>· <span class="clickable" onclick="doSleepWithHours(' + h + ',\'' + place.name.replace(/'/g, "\\'") + '\')">睡 ' + h + ' 小时 → ' + wakeStr + ' 起床</span></p>';
+    }
+    html += '</div>';
+    st(html);
+    cb();
+    ab('取消', function() { chooseSleepPlace(); });
+}
+
+function doSleepWithHours(hours, placeName) {
+    var ring = player.currentRing || '傲慢之环';
+    var level = 'poor';
+    var d = RD[ring];
+    if (player.currentDistrict) {
+        if (d.rich && player.currentDistrict === d.rich.name) level = 'rich';
+        else if (d.middle && player.currentDistrict === d.middle.name) level = 'middle';
+    }
+    var places = getSleepPlaces(ring, level);
+    var place = null;
+    for (var i = 0; i < places.length; i++) {
+        if (places[i].name.indexOf(placeName) >= 0 || placeName.indexOf(places[i].name.split('（')[0]) >= 0) {
+            place = places[i];
+            break;
+        }
+    }
+    if (!place) place = places[0];
+    if (!place) place = { fatiguePerHour: 12, hpPerHour: 5, sanityPerHour: 2, quality: 'medium' };
+    doSleep(place, hours);
+}
+
+function doSleep(place, hours) {
+    player.flags.isSleeping = true;
+    sleepRest(place.quality, hours, place.fatiguePerHour, place.hpPerHour, place.sanityPerHour);
+    st('<div class="scene-title">睡 眠</div><p>你在' + place.name + '睡了 ' + hours + ' 小时，精力得到了恢复。</p>');
+    cb();
+    ab('继续（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+}
+
 function sceneChooseResidence() { st('<div class="scene-title">选 择 居 所</div><p>选择你想前往的环层。跨环移动需要支付5金币路费并耗时。</p>'); cb(); var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环']; for (var i = 0; i < rings.length; i++) { (function(r) { var cls = ''; if (r === '贪婪之环') cls = 'gold-btn'; if (r === '暴怒之环') cls = 'danger-btn'; ab('前往' + r, function() { travelToRing(r); }, cls); })(rings[i]); } }
 
 // ==================== 存档系统 ====================
+// ==================== 存档系统 ====================
+var SAVE_KEY = 'qclaw_hell_ring_save';
+
 function saveGame() {
-    var data = JSON.stringify(player, null, 2);
-    var blob = new Blob([data], { type: 'application/json' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = '七环地狱_存档.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    st('<p>存档已导出！</p>');
+    try {
+        // 优先保存到 LocalStorage
+        localStorage.setItem(SAVE_KEY, JSON.stringify(player));
+        // 同时保留文件导出
+        var data = JSON.stringify(player, null, 2);
+        var blob = new Blob([data], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = '七环地狱_存档.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        st('<p style="color:#80c080;">✅ 已保存到浏览器（自动存档）并导出文件。</p>');
+    } catch(e) {
+        st('<p class="highlight">保存失败：' + e.message + '</p>');
+    }
     cb();
-    ab('返回', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+    ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
 }
+
 function loadGame(event) {
+    // 优先从 LocalStorage 加载
+    var saved = localStorage.getItem(SAVE_KEY);
+    if (saved) {
+        try {
+            var data = JSON.parse(saved);
+            Object.assign(player, data);
+            ua();
+            st('<p style="color:#e8c060;">✅ 存档加载成功（来自浏览器自动存档）！</p>');
+            cb();
+            ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+            return;
+        } catch(e) {
+            // 如果 LocalStorage 解析失败，继续尝试文件加载
+        }
+    }
+    
+    // 其次从文件加载
+    if (!event || !event.target.files.length) {
+        st('<p class="highlight">未找到存档。</p>');
+        cb();
+        ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+        return;
+    }
+    
     var file = event.target.files[0];
     if (!file) return;
     var reader = new FileReader();
@@ -1742,13 +2095,13 @@ function loadGame(event) {
             var data = JSON.parse(e.target.result);
             Object.assign(player, data);
             ua();
-            st('<p style="color:#e8c060;">存档加载成功！</p>');
+            st('<p style="color:#e8c060;">✅ 存档加载成功（来自文件）！</p>');
             cb();
-            ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
         } catch (err) {
             st('<p class="highlight">存档加载失败：' + err.message + '</p>');
             cb();
-            ab('返回', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
         }
     };
     reader.readAsText(file);
