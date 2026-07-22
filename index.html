@@ -100,6 +100,16 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3a1020; border-radius: 2px; }
         @media (max-width: 500px) { :root { --sidebar-w: 290px; } #topbar { padding: 8px 12px; } #topbar .title { font-size: 1em; } #quick-stats { padding: 6px 12px; font-size: 0.7em; gap: 4px 8px; } #text-area { padding: 14px 12px; } #text-content { font-size: 0.86em; } .race-select .clickable { padding: 5px 10px; } }
+        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }
+        .map-node { background: #14040a; border: 1px solid #2a0a14; border-radius: 4px; padding: 6px 8px; font-size: 0.78em; cursor: pointer; text-align: center; transition: 0.2s; }
+        .map-node:hover { border-color: #c04050; background: #1e0812; }
+        .map-node.current { border-color: #e8c060; background: #1a1008; }
+        .map-node.locked { opacity: 0.4; cursor: not-allowed; }
+        .task-card { background: #14040a; border: 1px solid #2a0a14; border-radius: 6px; padding: 8px 10px; margin: 4px 0; font-size: 0.8em; }
+        .task-card .task-title { color: #e8c060; font-weight: bold; }
+        .task-card .task-deadline { color: #e85060; font-size: 0.8em; }
+        .task-card .task-reward { color: #d4a040; }
+        .black-market-badge { color: #ff6080; text-shadow: 0 0 10px rgba(255,60,80,0.3); font-weight: bold; }
     </style>
 </head>
 <body>
@@ -116,7 +126,7 @@
         <div id="text-area"><div id="text-content"></div></div>
     </div>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <div id="sidebar"><h3>◆ 属 性 面 板 ◆</h3><div id="sidebar-tabs"><button id="tab-status" class="active" onclick="switchTab('status')">状态</button><button id="tab-social" onclick="switchTab('social')">社交</button><button id="tab-inventory" onclick="switchTab('inventory')">背包</button><button id="tab-save" onclick="switchTab('save')">存档</button></div><div id="sidebar-content"></div><button class="close-btn" onclick="toggleSidebar()">关闭面板</button></div>
+    <div id="sidebar"><h3>◆ 属 性 面 板 ◆</h3><div id="sidebar-tabs"><button id="tab-status" class="active" onclick="switchTab('status')">状态</button><button id="tab-social" onclick="switchTab('social')">社交</button><button id="tab-inventory" onclick="switchTab('inventory')">背包</button><button id="tab-save" onclick="switchTab('save')">存档</button><button id="tab-map" onclick="switchTab('map')">地图</button><button id="tab-tasks" onclick="switchTab('tasks')">任务</button></div><div id="sidebar-content"></div><button class="close-btn" onclick="toggleSidebar()">关闭面板</button></div>
 </div>
 
 <script>
@@ -141,7 +151,19 @@ var player = {
     equippedClothData: null,
     equippedWeaponId: null,
     equippedWeaponData: null,
-    sinTrait: '' // 暴食/懒惰/色欲
+    sinTrait: '',
+    // 新增：NPC对话追踪
+    npcTalkDaily: {},
+    // 新增：任务系统
+    activeTasks: [],
+    completedTasks: [],
+    failedTasks: [],
+    // 新增：黑市刷新
+    blackMarketItems: [],
+    blackMarketLastRefresh: -1,
+    // 新增：饱食状态
+    satietyTimer: 0,
+    satietyBuff: null
 };
 var SAVE_KEY = 'qclaw_hell_ring_save';
 var sidebarTab = 'status';
@@ -154,9 +176,9 @@ var sc = document.getElementById('sidebar-content');
 
 function roll() { return Math.floor(Math.random() * 20) + 1; }
 function st(html) { tc.innerHTML = html; document.getElementById('text-area').scrollTop = 0; }
-function cb() { /* 选项已改为行内可点击文字，由 st() 整体重渲染 */ }
-function ab(label, fn, cls, timeCost) { var span = document.createElement('span'); var c = 'clickable'; if (cls === 'danger-btn') c += ' danger'; else if (cls === 'gold-btn' || cls === 'primary-btn') c += ' gold'; span.className = c; // 如果label中没有包含耗时，自动加上
-    if (timeCost && label.indexOf('（' + timeCost) === -1 && label.indexOf('分钟') === -1) { label = label + '（耗时' + timeCost + '分钟）'; } span.textContent = label; var p = document.createElement('p'); p.appendChild(span); tc.appendChild(p); span.addEventListener('click', fn); }
+function ab(label, fn, cls, timeCost) { var span = document.createElement('span'); var c = 'clickable'; if (cls === 'danger-btn') c += ' danger'; else if (cls === 'gold-btn' || cls === 'primary-btn') c += ' gold'; if (timeCost && label.indexOf('（' + timeCost) === -1 && label.indexOf('分钟') === -1) { label = label + '（耗时' + timeCost + '分钟）'; } span.className = c; span.innerHTML = label; var p = document.createElement('p'); p.appendChild(span); tc.appendChild(p); span.addEventListener('click', fn); }
+function cb() { /* 选项由 st() 整体重渲染，此处为空操作 */ }
+
 function uqs() {
     document.getElementById('qs-name').textContent = player.name || '???';
     document.getElementById('qs-hp').textContent = player.hp + '/' + player.maxHp;
@@ -182,10 +204,8 @@ function addItem(id, name, type, desc, quantity, effects, equipped) {
             return;
         }
     }
-    player.inventory.push({
-        id: id, name: name, type: type, desc: desc,
-        quantity: quantity, effects: effects, equipped: equipped
-    });
+    var item = { id: id, name: name, type: type, desc: desc, quantity: quantity, effects: effects, equipped: equipped, buffs: effects.buffs || [] };
+    player.inventory.push(item);
 }
 function removeItem(id, quantity) { quantity = quantity || 1; for (var i = 0; i < player.inventory.length; i++) { if (player.inventory[i].id === id) { player.inventory[i].quantity -= quantity; if (player.inventory[i].quantity <= 0) { player.inventory.splice(i, 1); } return true; } } return false; }
 function hasItem(id) { for (var i = 0; i < player.inventory.length; i++) { if (player.inventory[i].id === id && player.inventory[i].quantity > 0) { return true; } } return false; }
@@ -198,6 +218,65 @@ function findItemById(id) {
         }
     }
     return null;
+}
+
+// ==================== NPC好感审视系统 ====================
+function getNpcAttitude(npcId) {
+    var rel = player.relationships[npcId];
+    if (!rel) return { text: '你们尚未相识。', level: 'unknown' };
+    var love = rel.love || 0;
+    if (love <= -20) return { text: '他眼中满是敌意，仿佛随时会对你拔刀相向。', level: 'hostile' };
+    if (love <= 0) return { text: '他明显不想和你浪费时间，语气冷淡疏离。', level: 'cold' };
+    if (love <= 30) return { text: '他只是简单地回应你的问题，保持着基本的礼貌。', level: 'neutral' };
+    if (love <= 60) return { text: '他的态度比之前缓和了许多，愿意多说几句话。', level: 'friendly' };
+    if (love <= 80) return { text: '他把你当作可以信任的人，语气中带着难得的温和。', level: 'trusted' };
+    return { text: '他愿意向你敞开心扉，甚至分享一些不为人知的秘密。', level: 'intimate' };
+}
+
+// ==================== NPC对话次数限制 ====================
+function canTalkNPC(npcId) {
+    var today = player.daysSurvived;
+    if (!player.npcTalkDaily) player.npcTalkDaily = {};
+    if (!player.npcTalkDaily[npcId]) {
+        player.npcTalkDaily[npcId] = { count: 0, day: today };
+    }
+    var data = player.npcTalkDaily[npcId];
+    if (data.day !== today) {
+        data.count = 0;
+        data.day = today;
+    }
+    if (data.count >= 5) {
+        return false;
+    }
+    return true;
+}
+
+function incrementNpcTalk(npcId) {
+    var today = player.daysSurvived;
+    if (!player.npcTalkDaily) player.npcTalkDaily = {};
+    if (!player.npcTalkDaily[npcId]) {
+        player.npcTalkDaily[npcId] = { count: 0, day: today };
+    }
+    var data = player.npcTalkDaily[npcId];
+    if (data.day !== today) {
+        data.count = 0;
+        data.day = today;
+    }
+    data.count++;
+}
+
+function getNpcTalkRemaining(npcId) {
+    var today = player.daysSurvived;
+    if (!player.npcTalkDaily) player.npcTalkDaily = {};
+    if (!player.npcTalkDaily[npcId]) {
+        player.npcTalkDaily[npcId] = { count: 0, day: today };
+    }
+    var data = player.npcTalkDaily[npcId];
+    if (data.day !== today) {
+        data.count = 0;
+        data.day = today;
+    }
+    return Math.max(0, 5 - data.count);
 }
 
 // ==================== 服装装备系统 ====================
@@ -266,7 +345,6 @@ function unequipArmorFromBag() {
     ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
 }
 
-// ==================== 武器装备系统 ====================
 function equipWeaponData(item) {
     if (!item || item.type !== 'weapon' || item.equipped) return;
     if (player.equippedWeaponId) {
@@ -285,6 +363,13 @@ function equipWeaponData(item) {
         player.strength += player.equippedWeaponData.attack;
         addBuff('weapon_attack', item.name, '武器攻击力 +' + player.equippedWeaponData.attack, 'positive', 9999);
     }
+    // 武器特殊buff
+    if (item.effects && item.effects.buffs) {
+        for (var i = 0; i < item.effects.buffs.length; i++) {
+            var b = item.effects.buffs[i];
+            addBuff('weapon_' + b.id, b.name, b.desc, b.type || 'positive', b.duration || 9999);
+        }
+    }
 }
 
 function unequipWeapon() {
@@ -295,6 +380,11 @@ function unequipWeapon() {
         var oldData = player.equippedWeaponData || {};
         if (oldData.attack) player.strength -= oldData.attack;
         removeBuff('weapon_attack');
+        if (oldData.buffs) {
+            for (var i = 0; i < oldData.buffs.length; i++) {
+                removeBuff('weapon_' + oldData.buffs[i].id);
+            }
+        }
     }
     player.equippedWeaponId = null;
     player.equippedWeaponData = null;
@@ -319,7 +409,7 @@ function unequipWeaponFromBag() {
     ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
 }
 
-// ==================== 消耗品使用 ====================
+// ==================== 消耗品使用（修复：增加饱食度） ====================
 function useConsumable(itemId) {
     var item = findItemById(itemId);
     if (!item || item.type !== 'consumable' || item.quantity <= 0) return;
@@ -333,12 +423,48 @@ function useConsumable(itemId) {
     if (e.fatigue !== undefined) {
         player.fatigue = Math.max(0, Math.min(player.maxFatigue, player.fatigue + e.fatigue));
     }
-    // 食物道具不恢复饱食度
+    // 修复：增加饱食度
+    if (e.food) {
+        player.food = Math.min(player.maxFood, player.food + e.food);
+        // 饱食buff
+        if (e.satietyBuff) {
+            addBuff('satiety', e.satietyBuff.name, e.satietyBuff.desc, 'positive', e.satietyBuff.duration || 1440);
+            player.satietyTimer = e.satietyBuff.duration || 1440;
+        }
+    }
+    // 食物道具的额外buff
+    if (e.buffs) {
+        for (var i = 0; i < e.buffs.length; i++) {
+            var b = e.buffs[i];
+            addBuff('food_' + b.id, b.name, b.desc, b.type || 'positive', b.duration || 60);
+        }
+    }
     removeItem(itemId, 1);
     ua(); usb();
     st('<p>你使用了 ' + item.name + '。</p>');
     cb();
     ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+}
+
+// ==================== 饱食度系统（每日检查） ====================
+function checkSatiety() {
+    // 每天检查一次饱食度状态
+    if (player.food <= 0) {
+        if (!player.buffs.find(function(b){ return b.id === 'starvation'; })) {
+            addBuff('starvation', '饥饿', '你饥肠辘辘，身体开始虚弱。力量-2，敏捷-2，疲劳恢复速度降低。', 'negative', 1440);
+            player.strength = Math.max(1, player.strength - 2);
+            player.agility = Math.max(1, player.agility - 2);
+        }
+    } else {
+        removeBuff('starvation');
+    }
+    // 饱食buff过期检查
+    if (player.satietyTimer > 0) {
+        player.satietyTimer--;
+        if (player.satietyTimer <= 0) {
+            removeBuff('satiety');
+        }
+    }
 }
 
 // ==================== 战斗系统 ====================
@@ -378,12 +504,17 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
             player.gold += gold;
             addExp(exp);
             player.sinValue += (enemy.sinReward || 0);
-            if (flagKey) player.flags[flagKey] = true;
+            if (flagKey) {
+                player.flags[flagKey] = true;
+                // 如果是酒馆教程，额外设置完成标志
+                if (flagKey === 'tavernTutorial') {
+                    player.flags.tavernTutorialDone = true;
+                }
+            }
             ua();
             st('<div class="scene-title">🏆 战 斗 胜 利</div><p>你击败了 <span class="gold-text">' + enemy.name + '</span>！</p><p style="color:#e8c060;">获得 ' + gold + ' 金币，' + exp + ' 经验。' + (enemy.sinReward ? ' 罪业值 +' + enemy.sinReward : '') + '</p>');
             cb();
             ab('继续', function() {
-                // 战斗胜利增加疲劳值
                 player.fatigue = Math.min(player.maxFatigue, player.fatigue + 10);
                 if (returnRing && returnLevel) {
                     sceneExploreDistrict(returnRing, returnLevel);
@@ -392,11 +523,13 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
                 }
             });
         } else {
-            // 战败
             player.hp = Math.max(1, Math.floor(player.maxHp * 0.2));
             player.fatigue = Math.min(player.maxFatigue, player.fatigue + 30);
             var goldLoss = Math.floor(player.gold * 0.3);
             player.gold = Math.max(0, player.gold - goldLoss);
+            if (flagKey && flagKey === 'tavernTutorial') {
+                player.flags.tavernTutorialDone = true;
+            }
             ua();
             st('<div class="scene-title">💀 战 斗 失 败</div><p>你被 <span class="highlight">' + enemy.name + '</span> 击倒了……</p><p>你勉强保住了一条命，但损失了 ' + goldLoss + ' 金币。</p>');
             cb();
@@ -439,11 +572,10 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
                 });
                 return;
             } else {
-                renderCombot('逃跑失败！');
+                renderCombat('逃跑失败！');
                 enemyTurn();
             }
         } else if (action === 'item') {
-            // 显示可用消耗品
             var consumables = player.inventory.filter(function(it) { return it.type === 'consumable' && it.quantity > 0; });
             if (consumables.length === 0) {
                 renderCombat('没有可用的消耗品。');
@@ -471,6 +603,9 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
                         if (e.desire) player.desire = Math.min(player.maxDesire, player.desire + e.desire);
                         if (e.fatigue !== undefined) {
                             player.fatigue = Math.max(0, Math.min(player.maxFatigue, player.fatigue + e.fatigue));
+                        }
+                        if (e.food) {
+                            player.food = Math.min(player.maxFood, player.food + e.food);
                         }
                         removeItem(item.id, 1);
                         ua();
@@ -517,32 +652,52 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
 function getTimeString() { var h = Math.floor(player.gameTime / 60) % 24; var m = player.gameTime % 60; return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m; }
 function getDateString() { return '第' + player.daysSurvived + '天 · 月' + player.month + ' · 年' + player.year; }
 function getTimePeriod() { var h = Math.floor(player.gameTime / 60) % 24; if (h >= 6 && h < 12) return 'morning'; if (h >= 12 && h < 18) return 'afternoon'; if (h >= 18 && h < 22) return 'evening'; return 'night'; }
-function addTime(minutes) { player.gameTime += minutes; while (player.gameTime >= 1440) { player.gameTime -= 1440; player.daysSurvived++; if (player.daysSurvived % 30 === 0) { player.month++; if (player.month > 12) { player.month = 1; player.year++; } } } updateFatigue(); updateFood(); tickBuffs(); ua(); }
+function isNight() { var h = Math.floor(player.gameTime / 60) % 24; return h >= 22 || h < 6; }
+function isBlackMarketOpen() { var h = Math.floor(player.gameTime / 60) % 24; return h >= 22 || h < 2; }
+
+function addTime(minutes) {
+    player.gameTime += minutes;
+    while (player.gameTime >= 1440) {
+        player.gameTime -= 1440;
+        player.daysSurvived++;
+        if (player.daysSurvived % 30 === 0) { player.month++; if (player.month > 12) { player.month = 1; player.year++; } }
+        // 每天重置NPC对话
+        player.npcTalkDaily = {};
+        // 检查饱食度
+        checkSatiety();
+        // 黑市刷新
+        refreshBlackMarket();
+        // 任务过期检查
+        checkTaskDeadlines();
+        // 随机事件触发
+        if (Math.random() < 0.15) {
+            triggerRandomEvent();
+        }
+    }
+    updateFatigue();
+    updateFood();
+    tickBuffs();
+    ua();
+}
+
 function updateFatigue() {
-    // 1. 基础疲劳：夜间+1
     var period = getTimePeriod();
     if (period === 'night' && !player.flags.isSleeping) {
         player.fatigue = Math.min(player.maxFatigue, player.fatigue + 1);
     }
-    // 2. 暴食罪孽/环：更容易饥饿（额外+0.5/次）
     if ((player.sin === '暴食' || player.birthRing === '暴食之环') && !player.flags.isSleeping) {
         player.fatigue = Math.min(player.maxFatigue, player.fatigue + 0.5);
     }
-    // 3. 懒惰罪孽/环：疲劳累积更多（额外+1/次）
     if ((player.sin === '懒惰' || player.birthRing === '懒惰之环') && !player.flags.isSleeping) {
         player.fatigue = Math.min(player.maxFatigue, player.fatigue + 1);
     }
-    // 4. 24:00后所有互动行为增加疲劳
     var h = Math.floor(player.gameTime / 60) % 24;
     if (h >= 0 && h < 6 && !player.flags.isSleeping) {
-        // 凌晨时段，额外+2
         player.fatigue = Math.min(player.maxFatigue, player.fatigue + 2);
     }
-    // 5. 疲劳值达到100后，每累积40点叠加一层debuff
     if (player.fatigue >= 100) {
         var excess = player.fatigue - 100;
-        var newLayers = Math.floor(excess / 40) + 1; // +1 for first 100
-        // 更新疲劳层数debuff
+        var newLayers = Math.floor(excess / 40) + 1;
         for (var i = 1; i <= 8; i++) {
             if (i <= newLayers) {
                 addBuff('fatigue_layer_' + i, '疲劳层' + i, '疲劳累积过多，力量-1，敏捷-1。', 'negative', 999);
@@ -552,23 +707,19 @@ function updateFatigue() {
                 removeBuff('fatigue_layer_' + i);
             }
         }
-        // 8层后晕倒
         if (newLayers >= 8) {
             triggerFaintDeep();
             return;
         }
     }
-    // 6. 80+疲劳debuff
     if (player.fatigue >= 80 && !player.buffs.find(function(b){return b.id==='exhausted';})) {
         addBuff('exhausted', '极度疲劳', '你感到极度疲惫，行动力大幅下降。力量-2，敏捷-2。', 'negative', 999);
         player.strength = Math.max(1, player.strength - 2);
         player.agility = Math.max(1, player.agility - 2);
     }
-    // 欲望值自然增长（色欲罪孽/环）
     if ((player.sin === '色欲' || player.birthRing === '色欲之环') && !player.flags.isSleeping) {
         player.desire = Math.min(player.maxDesire, player.desire + 1);
     }
-    // 欲望溢出检查
     if (player.desire >= player.maxDesire) {
         triggerDesireOverflow();
     }
@@ -577,14 +728,11 @@ function updateFatigue() {
 function triggerFaintDeep() {
     player.hp = Math.max(1, player.hp - 10);
     player.sanity = Math.max(0, player.sanity - 3);
-    // 清空所有疲劳层debuff
     for (var i = 1; i <= 8; i++) {
         removeBuff('fatigue_layer_' + i);
     }
     removeBuff('exhausted');
-    // 恢复力量/敏捷
-    player.strength = Math.max(1, player.strength - 0); // 留基础
-    // 扣6小时
+    player.strength = Math.max(1, player.strength - 0);
     player.gameTime += 360;
     player.fatigue = 0;
     player.flags.isSleeping = false;
@@ -636,15 +784,44 @@ function tickBuffs() {
         }
     }
 }
-function updateFood() { player.food = Math.max(0, player.food - 1); // 基础消耗从0.5改为1
-    // 暴食罪孽/环：额外-1
+
+function updateFood() {
+    player.food = Math.max(0, player.food - 1);
     if (player.sin === '暴食' || player.birthRing === '暴食之环') {
         player.food = Math.max(0, player.food - 1);
     }
-    if (player.food <= 0) { player.hp = Math.max(0, player.hp - 5); player.statusMood = '你饥肠辘辘，再不进食可能会有生命危险。'; } }
-function triggerFaint() { player.hp = Math.max(1, player.hp - 20); player.sanity = Math.max(0, player.sanity - 5); player.fatigue = 50; player.flags.isSleeping = false; addTime(120); var r = Math.random(); var event; if (r < 0.4) { event = { text: '你恢复意识时，最先感受到的是四肢如同灌了铅般的沉重与酸痛。你缓缓睁开眼，发现自己正躺在一个昏暗、散发着霉味的死胡同角落里。极度的疲劳让你的视线难以立刻聚焦，大脑深处传来阵阵发麻的空虚与胀痛。你用手撑着布满灰尘的墙壁，借着粗糙的摩擦力，勉强支撑起虚脱的身体坐了起来。晕倒前的最后记忆是你拖着沉重的步伐走在街头，眼前发黑。你深吸了一口气，下意识伸手摸向腰间检查物品。皮革钱袋的底部被利器平整地划开了一道口子。你把手探进去摸索，发现原本沉甸甸的分量轻了不少，里面的金币少了一大半。周围没有任何人的身影。巷子里很安静，只有几步之外的街道上，隐约传来人群走动和交谈的嘈杂声。', goldLoss: Math.floor(player.gold * 0.3) }; } else if (r < 0.7) { event = { text: '意识从深沉的昏迷中逐渐回笼。你艰难地撑开沉重的眼皮，模糊的视线里，一个灰暗的身影正背对着你，快步走出死胡同，消失在街道的拐角处。你试图用手臂撑着地面坐起来，但腰腿稍微一用力，身体内部便传来一阵尖锐的撕裂痛感。大腿内侧的皮肤上印着几道被粗暴掐按出的指痕淤青。下方的隐秘处不仅红肿火辣，大腿根部还残留着某种不属于你的、正在逐渐变冷的黏腻液体。你低下头，发现身上的衣物凌乱不堪。外套被强行剥到了手肘处，内搭的布料被粗暴地向上推挤，胡乱堆叠在胸口。下半身的裤子并未完全穿好，松垮地卡在大腿中段，原本系着的皮带已经不知去向。巷子里的凉风吹过裸露的皮肤，引起一阵战栗。你忍着牵扯内里的钝痛，下意识伸手摸向腰侧。绑在那里的皮质钱袋被扯开了一半的系绳，你把手指探进去摸索，里面原本沉甸甸的分量已经被掏空了大半，只剩下底部可怜的几枚金币。', goldLoss: Math.floor(player.gold * 0.5), extra: '你感觉自己被侵犯了……' }; } else { event = { text: '你的视线猛地陷入黑暗，身体彻底失去支撑，重重地砸在粗糙的街道石板上，失去了意识。不知过了多久，一双骨节粗大、皮肤表面覆盖着坚硬鳞甲的手抓住了你的手臂。那股力量极大，直接将你沉重的身体从地面上拽起一半。伴随着鞋跟和衣物与地面的摩擦声，那个高大的恶魔拖着你，一路退进了远离街道的阴凉废弃建筑内。他将你平放在相对干净的角落里。粗糙的指尖在你颈部的脉搏处短暂停留了一下，确认你还有心跳后，他没有做任何多余的动作，直接转身隐入了更深的阴影中。当你再次睁开眼时，头脑还有些因缺血导致的晕眩。你撑着墙壁坐起身，立刻警惕地伸手摸向腰侧。皮质的钱袋完好无损地挂在原处，系绳没有被动过的痕迹，沉甸甸的分量告诉你里面的金币一枚都没少。你低头快速检查，身上的衣物虽然沾了些灰尘，但依然穿戴整齐，身体也没有任何额外的伤口或异样痛感。', goldLoss: 0 }; } player.gold = Math.max(0, player.gold - event.goldLoss); player.statusMood = '你刚从昏迷中醒来，身体虚弱，需要休息。'; st('<div class="scene-title">晕 倒</div><p>' + event.text + (event.extra ? '<br>' + event.extra : '') + '</p>' + (event.goldLoss > 0 ? '<p style="color:#e85060;">失去了 ' + event.goldLoss + ' 金币。</p>' : '')); cb(); ab('继续（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); }); }
+    if (player.food <= 0) {
+        player.hp = Math.max(0, player.hp - 5);
+        player.statusMood = '你饥肠辘辘，再不进食可能会有生命危险。';
+    }
+    checkSatiety();
+}
+
+function triggerFaint() {
+    player.hp = Math.max(1, player.hp - 20);
+    player.sanity = Math.max(0, player.sanity - 5);
+    player.fatigue = 50;
+    player.flags.isSleeping = false;
+    addTime(120);
+    var r = Math.random();
+    var event;
+    if (r < 0.4) {
+        event = { text: '你恢复意识时，最先感受到的是四肢如同灌了铅般的沉重与酸痛。你缓缓睁开眼，发现自己正躺在一个昏暗、散发着霉味的死胡同角落里。极度的疲劳让你的视线难以立刻聚焦，大脑深处传来阵阵发麻的空虚与胀痛。你用手撑着布满灰尘的墙壁，借着粗糙的摩擦力，勉强支撑起虚脱的身体坐了起来。晕倒前的最后记忆是你拖着沉重的步伐走在街头，眼前发黑。你深吸了一口气，下意识伸手摸向腰间检查物品。皮革钱袋的底部被利器平整地划开了一道口子。你把手探进去摸索，发现原本沉甸甸的分量轻了不少，里面的金币少了一大半。周围没有任何人的身影。巷子里很安静，只有几步之外的街道上，隐约传来人群走动和交谈的嘈杂声。', goldLoss: Math.floor(player.gold * 0.3) };
+    } else if (r < 0.7) {
+        event = { text: '意识从深沉的昏迷中逐渐回笼。你艰难地撑开沉重的眼皮，模糊的视线里，一个灰暗的身影正背对着你，快步走出死胡同，消失在街道的拐角处。你试图用手臂撑着地面坐起来，但腰腿稍微一用力，身体内部便传来一阵尖锐的撕裂痛感。大腿内侧的皮肤上印着几道被粗暴掐按出的指痕淤青。下方的隐秘处不仅红肿火辣，大腿根部还残留着某种不属于你的、正在逐渐变冷的黏腻液体。你低下头，发现身上的衣物凌乱不堪。外套被强行剥到了手肘处，内搭的布料被粗暴地向上推挤，胡乱堆叠在胸口。下半身的裤子并未完全穿好，松垮地卡在大腿中段，原本系着的皮带已经不知去向。巷子里的凉风吹过裸露的皮肤，引起一阵战栗。你忍着牵扯内里的钝痛，下意识伸手摸向腰侧。绑在那里的皮质钱袋被扯开了一半的系绳，你把手指探进去摸索，里面原本沉甸甸的分量已经被掏空了大半，只剩下底部可怜的几枚金币。', goldLoss: Math.floor(player.gold * 0.5), extra: '你感觉自己被侵犯了……' };
+    } else {
+        event = { text: '你的视线猛地陷入黑暗，身体彻底失去支撑，重重地砸在粗糙的街道石板上，失去了意识。不知过了多久，一双骨节粗大、皮肤表面覆盖着坚硬鳞甲的手抓住了你的手臂。那股力量极大，直接将你沉重的身体从地面上拽起一半。伴随着鞋跟和衣物与地面的摩擦声，那个高大的恶魔拖着你，一路退进了远离街道的阴凉废弃建筑内。他将你平放在相对干净的角落里。粗糙的指尖在你颈部的脉搏处短暂停留了一下，确认你还有心跳后，他没有做任何多余的动作，直接转身隐入了更深的阴影中。当你再次睁开眼时，头脑还有些因缺血导致的晕眩。你撑着墙壁坐起身，立刻警惕地伸手摸向腰侧。皮质的钱袋完好无损地挂在原处，系绳没有被动过的痕迹，沉甸甸的分量告诉你里面的金币一枚都没少。你低头快速检查，身上的衣物虽然沾了些灰尘，但依然穿戴整齐，身体也没有任何额外的伤口或异样痛感。', goldLoss: 0 };
+    }
+    player.gold = Math.max(0, player.gold - event.goldLoss);
+    player.statusMood = '你刚从昏迷中醒来，身体虚弱，需要休息。';
+    st('<div class="scene-title">晕 倒</div><p>' + event.text + (event.extra ? '<br>' + event.extra : '') + '</p>' + (event.goldLoss > 0 ? '<p style="color:#e85060;">失去了 ' + event.goldLoss + ' 金币。</p>' : ''));
+    cb();
+    ab('继续（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+}
+
 function addFood(amount) { player.food = Math.min(player.maxFood, player.food + amount); ua(); }
 function addFatigue(amount) { player.fatigue = Math.min(player.maxFatigue, player.fatigue + amount); if (player.fatigue >= 100) { triggerFaint(); } ua(); }
+
 function sleepRest(quality, hours, fatiguePerHour, hpPerHour, sanityPerHour) {
     var fatigueRecovery = fatiguePerHour * hours;
     var hpRecovery = hpPerHour * hours;
@@ -704,7 +881,14 @@ function usb() {
         var buffHtml = '';
         for (var i = 0; i < player.buffs.length; i++) { var bf = player.buffs[i]; buffHtml += '<span class="buff-tag ' + (bf.type === 'positive' ? 'positive' : 'negative') + '">' + bf.name + (bf.duration ? ' (' + bf.duration + '小时)' : '') + '</span>'; }
         if (!buffHtml) buffHtml = '<span style="color:#5a5a6a;font-size:0.72em;">无</span>';
-        sc.innerHTML = '<div class="status-box"><div class="stat-row"><span class="s-label">🕐 时间</span><span class="s-val" style="color:#8ab4d4;">' + getTimeString() + '</span></div><div class="stat-row"><span class="s-label">📅 日期</span><span class="s-val">' + getDateString() + ' (存活' + player.daysSurvived + '天)</span></div><div class="stat-row"><span class="s-label">姓名</span><span class="s-val s-highlight">' + player.name + '</span></div><div class="stat-row"><span class="s-label">种族</span><span class="s-val">' + rl + '</span></div><div class="stat-row"><span class="s-label">性别</span><span class="s-val">' + gen + '</span></div><div class="stat-row"><span class="s-label">等级</span><span class="s-val">' + player.level + '</span></div><div class="stat-row"><span class="s-label">EXP</span><span class="s-val">' + (player.exp||0) + ' / ' + (player.level*20) + '</span></div><div class="stat-row"><span class="s-label">职业</span><span class="s-val">' + player.job + '</span></div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">❤️ HP</span><span class="s-val s-highlight">' + player.hp + ' / ' + player.maxHp + '</span></div><div class="stat-row"><span class="s-label">🧠 理智</span><span class="s-val">' + player.sanity + ' / ' + player.maxSanity + '</span></div><div class="stat-row"><span class="s-label">🔥 欲望</span><span class="s-val" style="color:#d4a040;">' + player.desire + ' / ' + player.maxDesire + '</span></div><div class="stat-row"><span class="s-label">🍖 饱食度</span><span class="s-val">' + Math.floor(player.food) + ' / ' + player.maxFood + '</span></div><div class="stat-row"><span class="s-label">😫 疲劳度</span><span class="s-val">' + Math.floor(player.fatigue) + ' / ' + player.maxFatigue + '</span></div><div class="stat-row"><span class="s-label">⚔️ 物攻</span><span class="s-val">' + Math.floor(player.strength * 1.5) + '</span></div><div class="stat-row"><span class="s-label">✨ 法攻</span><span class="s-val">' + Math.floor(player.magic * 1.5) + '</span></div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">金币</span><span class="s-val s-gold">' + player.gold + '</span></div><div class="stat-row"><span class="s-label">罪孽/本质</span><span class="s-val s-gold">' + (player.sin || '-') + '</span></div><div class="stat-row"><span class="s-label">罪业值</span><span class="s-val">' + player.sinValue + '</span></div><div class="stat-row"><span class="s-label">所在环</span><span class="s-val">' + (player.currentRing || '-') + '</span></div><div class="stat-row"><span class="s-label">当前区域</span><span class="s-val">' + (player.currentDistrict || '-') + '</span></div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">衣着</span><span class="s-val">' + player.outfit + '</span></div><p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + player.outfitDesc + '</p></div>' + '<div class="status-box"><div class="status-label">BUFF / DEBUFF</div><div style="margin-top:4px;">' + buffHtml + '</div><div class="status-mood">' + getMoodText() + '</div></div>' + '<div class="status-box"><div class="stat-row"><span class="s-label">💪 力量</span><span class="s-val">' + player.strength + '</span></div><div class="stat-row"><span class="s-label">🏃 敏捷</span><span class="s-val">' + player.agility + '</span></div><div class="stat-row"><span class="s-label">✨ 魔力</span><span class="s-val">' + player.magic + '</span></div><div class="stat-row"><span class="s-label">💋 魅力</span><span class="s-val">' + player.charisma + '</span></div></div>';
+        var satietyStatus = player.food <= 0 ? '<span style="color:#e85060;">饥饿</span>' : (player.food < 30 ? '<span style="color:#d4a040;">半饱</span>' : '<span style="color:#80c080;">饱足</span>');
+        sc.innerHTML = '<div class="status-box"><div class="stat-row"><span class="s-label">🕐 时间</span><span class="s-val" style="color:#8ab4d4;">' + getTimeString() + '</span></div><div class="stat-row"><span class="s-label">📅 日期</span><span class="s-val">' + getDateString() + ' (存活' + player.daysSurvived + '天)</span></div><div class="stat-row"><span class="s-label">姓名</span><span class="s-val s-highlight">' + player.name + '</span></div><div class="stat-row"><span class="s-label">种族</span><span class="s-val">' + rl + '</span></div><div class="stat-row"><span class="s-label">性别</span><span class="s-val">' + gen + '</span></div><div class="stat-row"><span class="s-label">等级</span><span class="s-val">' + player.level + '</span></div><div class="stat-row"><span class="s-label">EXP</span><span class="s-val">' + (player.exp||0) + ' / ' + (player.level*20) + '</span></div><div class="stat-row"><span class="s-label">职业</span><span class="s-val">' + player.job + '</span></div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">❤️ HP</span><span class="s-val s-highlight">' + player.hp + ' / ' + player.maxHp + '</span></div><div class="stat-row"><span class="s-label">🧠 理智</span><span class="s-val">' + player.sanity + ' / ' + player.maxSanity + '</span></div><div class="stat-row"><span class="s-label">🔥 欲望</span><span class="s-val" style="color:#d4a040;">' + player.desire + ' / ' + player.maxDesire + '</span></div><div class="stat-row"><span class="s-label">🍖 饱食度</span><span class="s-val">' + Math.floor(player.food) + ' / ' + player.maxFood + ' (' + satietyStatus + ')</span></div><div class="stat-row"><span class="s-label">😫 疲劳度</span><span class="s-val">' + Math.floor(player.fatigue) + ' / ' + player.maxFatigue + '</span></div><div class="stat-row"><span class="s-label">⚔️ 物攻</span><span class="s-val">' + Math.floor(player.strength * 1.5) + '</span></div><div class="stat-row"><span class="s-label">✨ 法攻</span><span class="s-val">' + Math.floor(player.magic * 1.5) + '</span></div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">金币</span><span class="s-val s-gold">' + player.gold + '</span></div><div class="stat-row"><span class="s-label">罪孽/本质</span><span class="s-val s-gold">' + (player.sin || '-') + '</span></div><div class="stat-row"><span class="s-label">罪业值</span><span class="s-val">' + player.sinValue + '</span></div><div class="stat-row"><span class="s-label">所在环</span><span class="s-val">' + (player.currentRing || '-') + '</span></div><div class="stat-row"><span class="s-label">当前区域</span><span class="s-val">' + (player.currentDistrict || '-') + '</span></div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">衣着</span><span class="s-val">' + player.outfit + '</span></div><p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + player.outfitDesc + '</p></div>' +
+        '<div class="status-box"><div class="status-label">BUFF / DEBUFF</div><div style="margin-top:4px;">' + buffHtml + '</div><div class="status-mood">' + getMoodText() + '</div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">💪 力量</span><span class="s-val">' + player.strength + '</span></div><div class="stat-row"><span class="s-label">🏃 敏捷</span><span class="s-val">' + player.agility + '</span></div><div class="stat-row"><span class="s-label">✨ 魔力</span><span class="s-val">' + player.magic + '</span></div><div class="stat-row"><span class="s-label">💋 魅力</span><span class="s-val">' + player.charisma + '</span></div></div>' +
+        (isBlackMarketOpen() ? '<div class="status-box" style="border-color:#ff4060;"><p style="color:#ff6080;text-align:center;font-weight:bold;">🌙 黑市开放中 (22:00-02:00)</p></div>' : '');
     } else if (sidebarTab === 'inventory') {
         var invHtml = '';
         if (player.inventory.length === 0) {
@@ -723,6 +907,10 @@ function usb() {
                     default: typeLabel = '📌';
                 }
                 var equippedMark = item.equipped ? ' <span style="color:#ff6080;">[已装备]</span>' : '';
+                var buffDesc = '';
+                if (item.effects && item.effects.buffs && item.effects.buffs.length > 0) {
+                    buffDesc = '<p style="font-size:0.65em;color:#80c080;margin-top:2px;">✨ ' + item.effects.buffs.map(function(b){return b.name + ' (' + b.desc + ')';}).join('; ') + '</p>';
+                }
                 invHtml += '<div class="status-box" style="margin-bottom:6px;">';
                 invHtml += '<div style="display:flex;justify-content:space-between;align-items:center;">';
                 invHtml += '<span>' + typeLabel + ' <strong style="color:#e8c060;">' + item.name + '</strong>' + equippedMark;
@@ -730,7 +918,7 @@ function usb() {
                 invHtml += '</span>';
                 invHtml += '<span style="display:flex;gap:4px;">';
                 if (item.type === 'consumable') {
-                    invHtml += '<button onclick="useConsumable(\'' + item.id + '\')" style="padding:2px 8px;font-size:0.7em;background:#1a1008;border:1px solid #3a2810;color:#d4a040;border-radius:4px;cursor:pointer;">食用</button>';
+                    invHtml += '<button onclick="useConsumable(\'' + item.id + '\')" style="padding:2px 8px;font-size:0.7em;background:#1a1008;border:1px solid #3a2810;color:#d4a040;border-radius:4px;cursor:pointer;">使用</button>';
                 }
                 if (item.type === 'armor') {
                     if (!item.equipped) {
@@ -749,27 +937,504 @@ function usb() {
                 invHtml += '</span>';
                 invHtml += '</div>';
                 invHtml += '<p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + item.desc + '</p>';
+                if (item.effects && (item.effects.hp || item.effects.food || item.effects.strength || item.effects.magic || item.effects.charisma)) {
+                    var eff = [];
+                    if (item.effects.hp) eff.push('HP+' + item.effects.hp);
+                    if (item.effects.food) eff.push('饱食+' + item.effects.food);
+                    if (item.effects.strength) eff.push('力量+' + item.effects.strength);
+                    if (item.effects.magic) eff.push('魔力+' + item.effects.magic);
+                    if (item.effects.charisma) eff.push('魅力+' + item.effects.charisma);
+                    if (item.effects.sanity) eff.push('理智+' + item.effects.sanity);
+                    if (item.effects.desire) eff.push('欲望+' + item.effects.desire);
+                    if (item.effects.attack) eff.push('攻击+' + item.effects.attack);
+                    if (eff.length) invHtml += '<p style="font-size:0.65em;color:#d4a040;">' + eff.join(' | ') + '</p>';
+                }
+                invHtml += buffDesc;
                 invHtml += '</div>';
             }
         }
         sc.innerHTML = invHtml;
     } else if (sidebarTab === 'social') {
-        var socialHtml = ''; var npcs = Object.keys(player.relationships);
-        if (npcs.length === 0) { socialHtml = '<p style="color:#5a5a6a;font-size:0.78em;text-align:center;padding:20px 0;">尚未结识任何人。<br>随着冒险推进，你遇到的角色将出现在这里。</p>'; }
-        else { for (var i = 0; i < npcs.length; i++) { var n = npcs[i]; var rel = player.relationships[n]; var loveBar = Math.min(100, Math.max(0, rel.love || 0)); var desireBar = Math.min(100, Math.max(0, rel.desire || 0)); var angerBar = Math.min(100, Math.max(0, rel.anger || 0)); var opinion = rel.opinion || '对你尚无明确看法。'; var loveTag = loveBar >= 80 ? ' ❤️' : loveBar >= 50 ? ' 💕' : ''; socialHtml += '<div class="social-card"><div class="npc-name">' + n + loveTag + '</div><div class="npc-opinion">"' + opinion + '"</div><div class="npc-bars"><div class="npc-bar"><span style="color:#e85060;">好感</span><div style="flex:1;background:#1a0812;height:6px;border-radius:3px;"><div class="npc-bar-fill love" style="width:' + loveBar + '%;"></div></div><span style="color:#e85060;font-size:0.9em;">' + loveBar + '</span></div><div class="npc-bar"><span style="color:#d4a040;">欲望</span><div style="flex:1;background:#1a0812;height:6px;border-radius:3px;"><div class="npc-bar-fill desire" style="width:' + desireBar + '%;"></div></div><span style="color:#d4a040;font-size:0.9em;">' + desireBar + '</span></div><div class="npc-bar"><span style="color:#c03040;">愤怒</span><div style="flex:1;background:#1a0812;height:6px;border-radius:3px;"><div class="npc-bar-fill anger" style="width:' + angerBar + '%;"></div></div><span style="color:#c03040;font-size:0.9em;">' + angerBar + '</span></div></div></div>'; } }
+        var socialHtml = '';
+        var npcs = Object.keys(player.relationships);
+        if (npcs.length === 0) {
+            socialHtml = '<p style="color:#5a5a6a;font-size:0.78em;text-align:center;padding:20px 0;">尚未结识任何人。<br>随着冒险推进，你遇到的角色将出现在这里。</p>';
+        } else {
+            for (var i = 0; i < npcs.length; i++) {
+                var n = npcs[i];
+                var rel = player.relationships[n];
+                var loveBar = Math.min(100, Math.max(0, rel.love || 0));
+                var desireBar = Math.min(100, Math.max(0, rel.desire || 0));
+                var angerBar = Math.min(100, Math.max(0, rel.anger || 0));
+                var attitude = getNpcAttitude(n);
+                var opinion = rel.opinion || '对你尚无明确看法。';
+                var loveTag = loveBar >= 80 ? ' ❤️' : loveBar >= 50 ? ' 💕' : '';
+                var talkRemain = getNpcTalkRemaining(n);
+                var statusText = talkRemain > 0 ? '可交谈 (' + talkRemain + '次)' : '<span style="color:#e85060;">今日已无话可说</span>';
+                socialHtml += '<div class="social-card"><div class="npc-name">' + n + loveTag + ' <span style="font-size:0.65em;color:#8a5a62;">' + statusText + '</span></div>' +
+                    '<div class="npc-opinion">"' + opinion + '"</div>' +
+                    '<div style="font-size:0.7em;color:#c09080;margin-bottom:4px;">' + attitude.text + '</div>' +
+                    '<div class="npc-bars"><div class="npc-bar"><span style="color:#e85060;">好感</span><div style="flex:1;background:#1a0812;height:6px;border-radius:3px;"><div class="npc-bar-fill love" style="width:' + loveBar + '%;"></div></div><span style="color:#e85060;font-size:0.9em;">' + loveBar + '</span></div>' +
+                    '<div class="npc-bar"><span style="color:#d4a040;">欲望</span><div style="flex:1;background:#1a0812;height:6px;border-radius:3px;"><div class="npc-bar-fill desire" style="width:' + desireBar + '%;"></div></div><span style="color:#d4a040;font-size:0.9em;">' + desireBar + '</span></div>' +
+                    '<div class="npc-bar"><span style="color:#c03040;">愤怒</span><div style="flex:1;background:#1a0812;height:6px;border-radius:3px;"><div class="npc-bar-fill anger" style="width:' + angerBar + '%;"></div></div><span style="color:#c03040;font-size:0.9em;">' + angerBar + '</span></div></div></div>';
+            }
+        }
         sc.innerHTML = socialHtml;
     } else if (sidebarTab === 'save') {
         sc.innerHTML = '<div class="save-section"><p style="font-size:0.78em;color:#8a5a62;margin-bottom:8px;">保存或加载你的游戏进度。</p><button onclick="saveGame()">💾 导出存档</button><button onclick="document.getElementById(\'load-input\').click()">📂 导入存档</button><input type="file" id="load-input" style="display:none;" onchange="loadGame(event)"><button onclick="resetGame()" style="border-color:#3a0a14;color:#e06060;">🔄 重置游戏</button><p style="font-size:0.68em;color:#5a5a6a;margin-top:8px;">存档保存在本地文件中，可以分享给其他人。</p></div>';
+    } else if (sidebarTab === 'map') {
+        sc.innerHTML = renderMapHtml();
+    } else if (sidebarTab === 'tasks') {
+        sc.innerHTML = renderTasksHtml();
     }
 }
 
-// ==================== NPC 长篇初遇文本 ====================
+// ==================== 地图系统 ====================
+function renderMapHtml() {
+    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">🗺️ 七环地狱 · 地图</div>';
+    var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环'];
+    var ringColors = {
+        '傲慢之环': '#d4a0d4',
+        '贪婪之环': '#d4a040',
+        '暴怒之环': '#e85060',
+        '色欲之环': '#e06090',
+        '嫉妒之环': '#40a080',
+        '暴食之环': '#80c040',
+        '懒惰之环': '#8080a0'
+    };
+    html += '<div class="map-grid">';
+    for (var i = 0; i < rings.length; i++) {
+        var r = rings[i];
+        var isCurrent = (r === player.currentRing);
+        var color = ringColors[r] || '#888';
+        html += '<div class="map-node ' + (isCurrent ? 'current' : '') + '" style="border-color:' + color + ';" onclick="travelToRing(\'' + r + '\')">' +
+            '<span style="color:' + color + ';">●</span> ' + r + (isCurrent ? ' <span style="color:#e8c060;">(当前)</span>' : '') +
+            '<div style="font-size:0.6em;color:#6a5a5a;">' + (player.residenceRing === r ? '🏠 居住' : '') + '</div></div>';
+    }
+    html += '</div>';
+    html += '<p style="font-size:0.7em;color:#8a5a62;margin-top:6px;">点击环名可前往（需支付5金币路费）。</p>';
+    if (player.currentDistrict) {
+        html += '<p style="font-size:0.75em;color:#c09080;margin-top:4px;">📍 当前区域：' + player.currentDistrict + '</p>';
+    }
+    html += '</div>';
+    // 区域详细信息
+    var rd = RD[player.currentRing];
+    if (rd) {
+        html += '<div class="status-box" style="margin-top:6px;">';
+        html += '<p style="font-size:0.75em;color:#e8c060;">区域详情</p>';
+        html += '<p style="font-size:0.7em;color:#9a6a6a;">贫民区：' + (rd.poor ? rd.poor.name : '未知') + '</p>';
+        html += '<p style="font-size:0.7em;color:#9a6a6a;">中层区：' + (rd.middle ? rd.middle.name : '未知') + '</p>';
+        html += '<p style="font-size:0.7em;color:#9a6a6a;">贵族区：' + (rd.rich ? rd.rich.name : '未知') + '</p>';
+        html += '</div>';
+    }
+    return html;
+}
+
+// ==================== 任务系统 ====================
+var taskPool = [];
+
+function generateTask() {
+    var templates = [
+        { title: '收集暗影结晶', desc: '灰烬区矿场深处出现了罕见的暗影结晶，有人愿意出高价收购。', deadline: 2, rewardGold: 15, rewardExp: 12, type: 'collect', target: 'shadow_crystal', quantity: 3 },
+        { title: '清除废弃矿道', desc: '废弃矿道里盘踞了一群低阶地狱虫，它们阻碍了通行。', deadline: 1, rewardGold: 20, rewardExp: 18, type: 'combat', target: 'hell_worm', quantity: 1 },
+        { title: '护送商队', desc: '一位商人需要人护送穿过铜板巷的危险区域。', deadline: 1, rewardGold: 25, rewardExp: 15, type: 'escort', target: 'merchant', quantity: 1 },
+        { title: '找回失窃的信物', desc: '一位老恶魔的传家宝被偷走了，据说藏在暗巷的某处。', deadline: 2, rewardGold: 18, rewardExp: 14, type: 'collect', target: 'stolen_heirloom', quantity: 1 },
+        { title: '清理黑水污染', desc: '水沟区的黑水出现了异常污染，需要找到污染源。', deadline: 2, rewardGold: 12, rewardExp: 10, type: 'explore', target: 'pollution_source', quantity: 1 },
+        { title: '散播谣言', desc: '有人付钱让你在镜面街区散播关于某位贵族的丑闻。', deadline: 1, rewardGold: 22, rewardExp: 8, type: 'social', target: 'rumor', quantity: 3, sinReward: 5 },
+        { title: '偷取配方', desc: '美食大道的一家高档餐厅有一份秘密配方，有人愿意出高价收购。', deadline: 2, rewardGold: 30, rewardExp: 16, type: 'steal', target: 'secret_recipe', quantity: 1, sinReward: 4 },
+        { title: '安抚暴怒的角斗士', desc: '血焰角斗场的一位角斗士在战败后暴走，需要人去安抚他。', deadline: 1, rewardGold: 16, rewardExp: 20, type: 'social', target: 'angry_gladiator', quantity: 1 },
+        { title: '收集欲望残渣', desc: '色欲之环的某位魅魔需要收集"被拒绝的欲望"残渣来炼制香水。', deadline: 2, rewardGold: 14, rewardExp: 11, type: 'collect', target: 'desire_residue', quantity: 5, desireReward: 3 },
+        { title: '拆除惰性陷阱', desc: '懒惰之环的某个区域被惰性陷阱覆盖，需要有人去拆除它们。', deadline: 2, rewardGold: 18, rewardExp: 13, type: 'explore', target: 'lazy_trap', quantity: 3 }
+    ];
+    var tpl = templates[Math.floor(Math.random() * templates.length)];
+    var task = {
+        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        title: tpl.title,
+        desc: tpl.desc,
+        deadline: player.daysSurvived + tpl.deadline,
+        rewardGold: tpl.rewardGold + Math.floor(Math.random() * 6),
+        rewardExp: tpl.rewardExp + Math.floor(Math.random() * 4),
+        type: tpl.type,
+        target: tpl.target,
+        quantity: tpl.quantity || 1,
+        progress: 0,
+        sinReward: tpl.sinReward || 0,
+        desireReward: tpl.desireReward || 0,
+        status: 'active'
+    };
+    return task;
+}
+
+function acceptTask(task) {
+    if (player.activeTasks.length >= 3) {
+        st('<p class="highlight">你已有太多未完成的任务，无法承接新的任务。</p>');
+        cb();
+        ab('返回', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+        return;
+    }
+    player.activeTasks.push(task);
+    st('<p>你承接了任务：<span class="gold-text">' + task.title + '</span></p><p style="color:#9a6a6a;font-size:0.82em;">' + task.desc + '</p><p style="color:#e85060;">截止日期：第' + task.deadline + '天</p>');
+    cb();
+    ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+}
+
+function checkTaskDeadlines() {
+    for (var i = player.activeTasks.length - 1; i >= 0; i--) {
+        var t = player.activeTasks[i];
+        if (player.daysSurvived > t.deadline) {
+            t.status = 'failed';
+            player.failedTasks.push(t);
+            player.activeTasks.splice(i, 1);
+            // 惩罚
+            player.sanity = Math.max(0, player.sanity - 2);
+            player.gold = Math.max(0, player.gold - 3);
+            st('<p style="color:#e85060;">⚠️ 任务 "' + t.title + '" 已过期！你失去了信誉，理智-2，金币-3。</p>');
+        }
+    }
+}
+
+function renderTasksHtml() {
+    var html = '<div class="status-box"><p style="color:#e8c060;font-weight:bold;text-align:center;">📋 任务面板</p>';
+    if (player.activeTasks.length === 0 && player.completedTasks.length === 0 && player.failedTasks.length === 0) {
+        html += '<p style="color:#5a5a6a;font-size:0.78em;text-align:center;padding:10px 0;">暂无任务。探索地狱，寻找需要帮助的人。</p>';
+    }
+    if (player.activeTasks.length > 0) {
+        html += '<p style="color:#d4a040;font-size:0.78em;margin-top:6px;">进行中：</p>';
+        for (var i = 0; i < player.activeTasks.length; i++) {
+            var t = player.activeTasks[i];
+            var remain = t.deadline - player.daysSurvived;
+            html += '<div class="task-card"><div class="task-title">' + t.title + '</div>' +
+                '<div style="font-size:0.7em;color:#9a6a6a;">' + t.desc + '</div>' +
+                '<div class="task-deadline">⏳ 剩余 ' + remain + ' 天</div>' +
+                '<div class="task-reward">💰 ' + t.rewardGold + 'G | ⭐ ' + t.rewardExp + 'EXP</div>' +
+                '<button onclick="completeTask(\'' + t.id + '\')" style="padding:2px 8px;font-size:0.65em;background:#1a1008;border:1px solid #3a2810;color:#d4a040;border-radius:4px;cursor:pointer;margin-top:4px;">完成</button> ' +
+                '<button onclick="abandonTask(\'' + t.id + '\')" style="padding:2px 8px;font-size:0.65em;background:#1a0812;border:1px solid #3a0a14;color:#e06060;border-radius:4px;cursor:pointer;margin-top:4px;">放弃</button></div>';
+        }
+    }
+    if (player.completedTasks.length > 0) {
+        html += '<p style="color:#80c080;font-size:0.78em;margin-top:6px;">已完成：' + player.completedTasks.length + ' 项</p>';
+    }
+    if (player.failedTasks.length > 0) {
+        html += '<p style="color:#e85060;font-size:0.78em;margin-top:6px;">已失败：' + player.failedTasks.length + ' 项</p>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function completeTask(taskId) {
+    for (var i = 0; i < player.activeTasks.length; i++) {
+        if (player.activeTasks[i].id === taskId) {
+            var t = player.activeTasks[i];
+            t.status = 'completed';
+            player.gold += t.rewardGold;
+            addExp(t.rewardExp);
+            if (t.sinReward) player.sinValue += t.sinReward;
+            if (t.desireReward) player.desire = Math.min(player.maxDesire, player.desire + t.desireReward);
+            player.completedTasks.push(t);
+            player.activeTasks.splice(i, 1);
+            ua();
+            st('<p>✅ 任务完成：<span class="gold-text">' + t.title + '</span></p><p style="color:#e8c060;">获得 ' + t.rewardGold + ' 金币，' + t.rewardExp + ' 经验。' + (t.sinReward ? ' 罪业值+' + t.sinReward : '') + '</p>');
+            cb();
+            ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            return;
+        }
+    }
+}
+
+function abandonTask(taskId) {
+    for (var i = 0; i < player.activeTasks.length; i++) {
+        if (player.activeTasks[i].id === taskId) {
+            var t = player.activeTasks[i];
+            t.status = 'failed';
+            player.failedTasks.push(t);
+            player.activeTasks.splice(i, 1);
+            st('<p style="color:#e85060;">你放弃了任务：' + t.title + '</p>');
+            cb();
+            ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            return;
+        }
+    }
+}
+
+// ==================== 黑市系统 ====================
+var blackMarketGoods = [];
+
+function generateBlackMarketItem() {
+    var templates = [
+        { name: '暗影之血药剂', price: 25, desc: '一瓶用暗影结晶和恶魔血炼制的药剂，喝下后能在10分钟内隐身。', effects: { buffs: [{ id: 'shadow_blood', name: '暗影之血', desc: '隐身状态，不会被低阶恶魔发现。', type: 'positive', duration: 10 }] } },
+        { name: '欲望之吻香膏', price: 30, desc: '涂抹在皮肤上能散发强烈的魅惑气息，对魅魔和低阶恶魔效果显著。', effects: { charisma: 3, buffs: [{ id: 'desire_kiss', name: '欲望之吻', desc: '魅力+3，持续30分钟。', type: 'positive', duration: 30 }] } },
+        { name: '破碎的灵魂碎片', price: 40, desc: '一块来自高阶恶魔的破碎灵魂，蕴含着强大的力量，但使用后可能引发不可预知的后果。', effects: { strength: 5, sanity: -3, buffs: [{ id: 'soul_fragment', name: '灵魂碎片', desc: '力量+5，但理智-3。', type: 'positive', duration: 60 }] } },
+        { name: '黑市契约书', price: 50, desc: '一份用深渊墨水书写的空白契约，可以填入任何条款，具有强制执行力。', effects: {}, type: 'key' },
+        { name: '腐蚀之刃', price: 45, desc: '一把被黑水浸泡过的短刀，攻击附带腐蚀效果，能削弱敌人的防御。', effects: { attack: 5, buffs: [{ id: 'corrosive_blade', name: '腐蚀之刃', desc: '攻击时概率降低敌人防御。', type: 'positive', duration: 9999 }] }, type: 'weapon' },
+        { name: '厄运护符', price: 20, desc: '一个用诅咒骸骨制成的护符，佩戴后会让周围的人都感到不安，但也可能招来厄运。', effects: { charisma: -2, buffs: [{ id: 'doom_charm', name: '厄运护符', desc: '魅力-2，但有一定概率避免战斗。', type: 'negative', duration: 9999 }] }, type: 'armor' },
+        { name: '时间沙漏（破损）', price: 60, desc: '一个破损的时间沙漏，据说能局部回溯时间，但只能使用一次，且效果不稳定。', effects: {}, type: 'misc' },
+        { name: '魅魔的指尖', price: 35, desc: '一位高阶魅魔的断指，蕴含着浓郁的欲望能量，可用于炼制强力药剂。', effects: { desire: 5, charisma: 2 }, type: 'material' },
+        { name: '地狱犬的獠牙', price: 28, desc: '一头地狱猎犬的獠牙，可以打磨成匕首，或用作施法材料。', effects: { strength: 2 }, type: 'material' },
+        { name: '混沌之卵', price: 70, desc: '一个来自混沌深处的卵，据说孵化后会诞生出不可名状的生物，极度危险。', effects: { sanity: -5, buffs: [{ id: 'chaos_egg', name: '混沌之卵', desc: '理智-5，但获得混沌之力。', type: 'negative', duration: 9999 }] }, type: 'misc' },
+        { name: '虚空之盐', price: 15, desc: '一种能暂时让恶魔失去力量的盐，撒在地上可以制造安全区域。', effects: {}, type: 'consumable' },
+        { name: '血月之花', price: 38, desc: '只在血月之夜绽放的花，能用来炼制强大的迷幻药剂。', effects: { sanity: 4, buffs: [{ id: 'blood_moon', name: '血月之花', desc: '理智+4，但可能产生幻觉。', type: 'positive', duration: 30 }] }, type: 'consumable' }
+    ];
+    var tpl = templates[Math.floor(Math.random() * templates.length)];
+    var item = {
+        id: 'bm_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        name: tpl.name,
+        price: tpl.price + Math.floor(Math.random() * 10) - 5,
+        desc: tpl.desc,
+        effects: tpl.effects || {},
+        type: tpl.type || 'misc'
+    };
+    if (item.price < 5) item.price = 5;
+    return item;
+}
+
+function refreshBlackMarket() {
+    var day = player.daysSurvived;
+    if (player.blackMarketLastRefresh !== day) {
+        player.blackMarketItems = [];
+        var count = 3 + Math.floor(Math.random() * 4);
+        for (var i = 0; i < count; i++) {
+            player.blackMarketItems.push(generateBlackMarketItem());
+        }
+        player.blackMarketLastRefresh = day;
+    }
+}
+
+function enterBlackMarket() {
+    if (!isBlackMarketOpen()) {
+        st('<div class="scene-title">🌙 黑市</div><p>黑市只在夜晚开放（22:00-02:00）。现在还未到营业时间。</p>');
+        cb();
+        ab('返回', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+        return;
+    }
+    refreshBlackMarket();
+    var html = '<div class="scene-title">🌙 黑 市</div><p>暗巷深处，一个被阴影笼罩的摊位前，一个戴着兜帽的商人正在等你。</p><p style="color:#ff6080;font-size:0.82em;">"欢迎光临……我这里有些……特别的货物。"</p>';
+    html += '<div style="background:#180610;border:1px solid #2a0a16;border-radius:6px;padding:10px;margin:8px 0;">';
+    if (player.blackMarketItems.length === 0) {
+        html += '<p style="color:#5a5a6a;text-align:center;">今天没什么好货……改天再来吧。</p>';
+    } else {
+        for (var i = 0; i < player.blackMarketItems.length; i++) {
+            var it = player.blackMarketItems[i];
+            html += '<p>· ' + it.name + ' <span style="color:#e85060;">' + it.price + 'G</span> — ' + it.desc + '</p>';
+        }
+    }
+    html += '</div>';
+    st(html);
+    cb();
+    for (var i = 0; i < player.blackMarketItems.length; i++) {
+        (function(item) {
+            ab('购买 ' + item.name + '（' + item.price + 'G）', function() {
+                if (player.gold >= item.price) {
+                    player.gold -= item.price;
+                    var type = item.type || 'misc';
+                    var effects = item.effects || {};
+                    if (type === 'consumable') {
+                        addItem(item.id, item.name, 'consumable', item.desc, 1, effects);
+                    } else if (type === 'weapon') {
+                        addItem(item.id, item.name, 'weapon', item.desc, 1, effects);
+                    } else if (type === 'armor') {
+                        addItem(item.id, item.name, 'armor', item.desc, 1, effects);
+                    } else {
+                        addItem(item.id, item.name, 'misc', item.desc, 1, effects);
+                    }
+                    ua();
+                    st('<p>✅ 你购买了 <span style="color:#ff6080;">' + item.name + '</span>。</p>');
+                    // 从黑市移除
+                    var idx = player.blackMarketItems.indexOf(item);
+                    if (idx > -1) player.blackMarketItems.splice(idx, 1);
+                } else {
+                    st('<p class="highlight">⚠️ 金币不足。需要 ' + item.price + ' 金币，你只有 ' + player.gold + ' 金币。</p>');
+                }
+                cb();
+                ab('继续购物', function() { enterBlackMarket(); });
+                ab('离开', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            }, 'danger-btn');
+        })(player.blackMarketItems[i]);
+    }
+    ab('离开黑市', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+}
+
+// ==================== 随机探索事件 ====================
+var randomEventPool = [];
+
+function generateRandomEvent() {
+    var events = [
+        {
+            type: 'harass',
+            title: '街头骚扰',
+            text: '你走在街上，一个醉醺醺的恶魔拦住了你的去路。他上下打量着你，咧嘴笑道："新面孔？看起来挺嫩的……陪大爷玩玩？"',
+            options: [
+                { label: '无视他，径直走开', effect: function() { player.sanity = Math.min(player.maxSanity, player.sanity + 1); st('<p>你无视了他，径直走过。他在你身后骂了几句，但没有追上来。</p>'); } },
+                { label: '威胁他', effect: function() { if (player.strength >= 8) { st('<p>你冷冷地盯着他，手按在武器上。他退缩了，嘟囔着走开了。</p>'); } else { st('<p>你的威胁毫无威慑力，他大笑起来，然后一拳打在你肚子上。HP-10。</p>'); player.hp -= 10; } } },
+                { label: '动手打他', effect: function() { startCombat({ name: '醉汉恶魔', hp: 25, physicalAttack: 7, defense: 2, goldReward: 6, sinReward: 2, description: '一个不知天高地厚的醉汉。' }, null, player.currentRing, 'poor'); } },
+                { label: '和他周旋', effect: function() { if (player.charisma >= 8) { st('<p>你用几句话就让他晕头转向，他不仅放你走了，还给了你几枚金币作为"赔罪"。金币+5。</p>'); player.gold += 5; } else { st('<p>你的话术不够高明，他失去了耐心，推了你一把后离开了。</p>'); } } }
+            ]
+        },
+        {
+            type: 'battle',
+            title: '路遇火并',
+            text: '前方传来兵刃碰撞和怒吼声。两伙恶魔正在街道中央火并，地面上已经躺了几具尸体。他们挡住了你的去路。',
+            options: [
+                { label: '绕道离开', effect: function() { st('<p>你不想惹麻烦，绕道离开了。安全第一。</p>'); addTime(10); } },
+                { label: '偷偷观察', effect: function() { st('<p>你躲在阴影中观察。一伙人最终击溃了另一伙，搜刮了尸体后扬长而去。你在他们离开后发现了一些遗落的东西。获得随机道具。</p>'); var items = ['破损的护甲碎片', '几枚金币', '一把断刀']; var r = items[Math.floor(Math.random() * items.length)]; st('<p style="color:#e8c060;">你找到了：' + r + '</p>'); if (r.indexOf('金币') > -1) { player.gold += 3; } else { addItem('found_' + Date.now(), r, 'misc', '从火并现场捡到的遗落物。', 1); } } },
+                { label: '插手帮助一方', effect: function() { st('<p>你决定插手帮助看起来弱势的一方。但当你冲出去时，两伙人同时看向了你……</p>'); startCombat({ name: '火并双方（联手）', hp: 35, physicalAttack: 10, defense: 3, goldReward: 12, sinReward: 4, description: '两伙恶魔暂时放下分歧，一致对外。' }, null, player.currentRing, 'poor'); } },
+                { label: '趁乱搜刮尸体', effect: function() { st('<p>你趁他们打得火热，悄悄摸到一具尸体旁边。你翻找了他的口袋，找到了几枚金币和一些杂物。但就在你准备离开时，有人发现了你……</p>'); startCombat({ name: '愤怒的恶魔', hp: 28, physicalAttack: 8, defense: 2, goldReward: 10, sinReward: 3, description: '他发现你在偷他同伴的尸体。' }, null, player.currentRing, 'poor'); } }
+            ]
+        },
+        {
+            type: 'witness',
+            title: '目睹惨剧',
+            text: '你听到一声凄厉的惨叫。拐角处，一个瘦弱的恶魔被几个高大的恶魔按在地上，他们正在……你不想描述那画面。其中一个抬头看到了你。',
+            options: [
+                { label: '离开，假装没看见', effect: function() { st('<p>你转身离开了。身后传来更加凄厉的声音。你加快了脚步。理智-1。</p>'); player.sanity = Math.max(0, player.sanity - 1); } },
+                { label: '上前干涉', effect: function() { st('<p>你大步上前，喝道："住手！"那几个恶魔转过头来，其中一人咧嘴笑了："又来了一个送死的。"</p>'); startCombat({ name: '施暴者（3人）', hp: 40, physicalAttack: 12, defense: 4, goldReward: 18, sinReward: 6, description: '三个以虐待为乐的恶魔。' }, null, player.currentRing, 'poor'); } },
+                { label: '偷偷记住他们的脸', effect: function() { st('<p>你仔细记住了他们的特征，然后悄悄离开。也许这些信息以后有用。你获得了情报。</p>'); addItem('intel_' + Date.now(), '施暴者情报', 'key', '你记住了三个恶魔的长相和特征。', 1); } }
+            ]
+        },
+        {
+            type: 'stranger',
+            title: '神秘商人',
+            text: '一个穿着破旧斗篷的身影在街角向你招手。他的声音沙哑而急促："嘿，过来……我有好东西，别人那儿买不到。"',
+            options: [
+                { label: '过去看看', effect: function() { st('<p>你走近他。他神秘地掀开斗篷一角，露出里面几件散发着诡异光芒的物品。"便宜卖，只要20金币。"</p>'); cb(); ab('购买神秘物品（20金币）', function() { if (player.gold >= 20) { player.gold -= 20; var r = Math.random(); if (r < 0.3) { addItem('mystery_' + Date.now(), '神秘宝石', 'misc', '一块散发着诡异光芒的宝石，似乎蕴含着某种力量。', 1); st('<p>你买到了一块神秘宝石。</p>'); } else if (r < 0.6) { addItem('mystery_' + Date.now(), '陈旧卷轴', 'misc', '一份写满古老文字的卷轴，内容难以解读。', 1); st('<p>你买到了一张陈旧卷轴。</p>'); } else { st('<p>你买了他的东西，但打开后只是一块普通的石头……你被骗了。</p>'); } } else { st('<p class="highlight">金币不足。</p>'); } cb(); ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); }); }); ab('拒绝', function() { st('<p>你摇了摇头，转身离开。他在你身后低声骂了一句。</p>'); cb(); ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); }); }); } },
+                { label: '警惕地走开', effect: function() { st('<p>你觉得这不太对劲，快步走开了。身后传来一声失望的叹息。</p>'); } }
+            ]
+        },
+        {
+            type: 'trap',
+            title: '陷阱',
+            text: '你脚下的地面突然塌陷！你掉进了一个深坑里，坑底插满了尖锐的骨刺。还好你反应快，只受了点轻伤。头顶传来得意的笑声。',
+            options: [
+                { label: '试图爬出去', effect: function() { if (player.agility >= 10) { st('<p>你凭借敏捷的身手，几下就爬出了深坑。你看到几个恶魔正在不远处大笑，他们看到你出来后立刻逃走了。</p>'); } else { st('<p>你试了几次都爬不上去。你只能大声呼救，过了很久才有人经过把你拉了上来。HP-10，疲劳+20。</p>'); player.hp -= 10; player.fatigue = Math.min(player.maxFatigue, player.fatigue + 20); } } },
+                { label: '检查坑底', effect: function() { st('<p>你忍着疼痛检查了坑底，在骨刺之间发现了一枚被遗忘的戒指。它看起来很古老，上面刻着陌生的符文。</p>'); addItem('trap_ring_' + Date.now(), '骨刺坑底戒指', 'misc', '一枚在陷阱底部发现的古老戒指。', 1); } }
+            ]
+        }
+    ];
+    return events[Math.floor(Math.random() * events.length)];
+}
+
+function triggerRandomEvent() {
+    if (Math.random() > 0.25) return; // 25%概率触发
+    var event = generateRandomEvent();
+    if (!event) return;
+    var html = '<div class="scene-title">⚠️ ' + event.title + '</div><p>' + event.text + '</p>';
+    st(html);
+    cb();
+    for (var i = 0; i < event.options.length; i++) {
+        (function(opt) {
+            ab(opt.label, function() {
+                opt.effect();
+                ua();
+                cb();
+                ab('继续探索', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            }, opt.label.indexOf('动手') >= 0 || opt.label.indexOf('插手') >= 0 ? 'danger-btn' : '');
+        })(event.options[i]);
+    }
+}
+
+// ==================== 工作系统优化 ====================
+function findJob() {
+    var ring = player.currentRing;
+    var statNames = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' };
+
+    var ringJobs = {
+        '傲慢之环': [
+            { name: '水晶矿场搬运', desc: '灰烬区的废弃水晶矿场深处，仍残留着一些蕴含微弱能量的暗紫色水晶碎片。矿场的监工正在招募愿意冒险进入坑道、将沉重的原矿搬运出来的苦力。这项工作对体力要求极高，在搬运过程中，你需要时刻留意头顶摇摇欲坠的碎石——近年来已经有不少搬运工被塌方砸断了脊骨。', stat: 'strength', dc: 12, reward: 8, exp: 10, time: 60, failMsg: '你勉强搬了几趟，但体力很快见底。监工看你气喘吁吁的样子，皱眉扣掉了一半工钱。', successMsg: '你咬牙坚持了整整一个工时。监工用脚尖踢了踢你搬出的矿石堆，难得地点了点头，将说好的工钱一枚不少地扔进你手里。' },
+            { name: '审判厅文书抄写', desc: '星尘区的审判厅正在招募临时抄写员，负责誊录审判记录和归档文件。工作环境阴冷肃穆，空气中只听得见羽毛笔摩擦羊皮纸的沙沙声。你需要用精准的书写将堆积如山的冗长卷宗逐字誊抄，任何错漏都会被退回重写。', stat: 'magic', dc: 11, reward: 7, exp: 9, time: 50, failMsg: '你的字迹太过潦草，执事扫了一眼便扔回你面前。他只付了三分之一的辛苦费。', successMsg: '你伏案誊抄了整整一个下午，手腕酸痛但每一页都干净工整。执事仔细核对了最后一份卷宗后，将报酬整齐地码放在你面前。' },
+            { name: '晨星水晶打磨', desc: '傲慢环中层的一间水晶作坊正在接单——为堕天使们的佩剑打磨装饰用的水晶镶嵌片。这是一门需要专注与耐心的精细活：用不同粗细的砂轮逐层抛光水晶碎片，直到每一片都能在暗光下折射出完美的棱镜光斑。', stat: 'agility', dc: 10, reward: 6, exp: 8, time: 45, failMsg: '你手滑磨碎了两片水晶。工头心疼地捡起碎片，叹了口气后只付了材料费。', successMsg: '你全神贯注地完成了每一片水晶的打磨。当工头举起成品对着暗紫色灯光检查时，棱镜般的光斑映在他脸上——他满意地付了全款。' }
+        ],
+        '贪婪之环': [
+            { name: '收债跑腿', desc: '铜板巷尽头那间挂着"玛门商行催收部"牌子的办公室正在招人。你的工作是挨家挨户敲开债务人的门，用一切"合理"手段将欠款收回来。每个债务人都是一张疲惫且警惕的脸，有些会苦苦哀求延期，有些会试图用破铜烂铁抵债。', stat: 'strength', dc: 12, reward: 10, exp: 10, time: 55, failMsg: '你跑了一整天，只收到几个债务人扔来的零碎铜板。催收部的管事冷笑了一声，丢给你一半跑腿费。', successMsg: '你用了一下午敲开七扇门，收回了三笔欠款。催收部的管事数着金币，在账本上划掉对应名字后，将佣金推到你面前。' },
+            { name: '契约公证处助手', desc: '金丝街上那家小型契约公证处的老恶魔忙得焦头烂额。他需要一个人帮他整理堆积如山的契约文件，协助核对条款中的陷阱和漏洞。你必须逐字检查每一行小字——在贪婪之环，一个不起眼的附属条款足以让签署者倾家荡产。', stat: 'magic', dc: 11, reward: 8, exp: 9, time: 50, failMsg: '你漏掉了两份契约中的关键条款。老恶魔发现后气得用拐杖敲地板，只付了基本工时费。', successMsg: '你发现了一份契约中隐藏的利息陷阱，老恶魔兴奋地拍了桌子。他将那份契约单独归档后，多付了你两枚金币作为奖励。' },
+            { name: '地摊投机倒把', desc: '铜板巷的地下赌场门外，几个投机商正在临时摆摊。他们需要人手帮忙在巷子里吆喝叫卖——商品是一批来源不明但标价极低的"稀世珍品"。你的口才决定了这些垃圾能卖出什么价钱。', stat: 'charisma', dc: 10, reward: 7, exp: 8, time: 45, failMsg: '你的吆喝声淹没在铜板巷的嘈杂中。投机商耸耸肩，分了你几个硬币。', successMsg: '你用三寸不烂之舌将一箱积压的劣质护符吹成了来自人间的古董。投机商笑得合不拢嘴，将利润分成慷慨地塞进你手里。' }
+        ],
+        '暴怒之环': [
+            { name: '角斗场陪练', desc: '血焰角斗场需要一批"沙包"——在正式角斗士热身时充当陪练的活靶子。你不会被杀死，但肯定会疼。训练师递给你一副破旧的皮甲和一柄钝剑，推着你走进满是干涸血迹的铁笼。', stat: 'strength', dc: 13, reward: 12, exp: 14, time: 50, failMsg: '你在笼子里被揍得鼻青脸肿，连最基本的防御架势都没撑住。训练师失望地丢给你几枚硬币当医药费。', successMsg: '你在铁笼里撑过了整整三轮对练。虽然浑身淤青，但训练师拍了拍你的肩膀——"比我想的能抗。下次需要陪练还叫你。"' },
+            { name: '武器工坊淬火', desc: '铁砧大道的武器工坊里，熔炉日夜不熄。你被雇来负责最枯燥的环节——将锻打好的刀坯反复浸入淬火油中，再送进回火炉。这项工作需要稳定的手法和对高温的忍耐力。', stat: 'agility', dc: 10, reward: 6, exp: 8, time: 50, failMsg: '你手抖将刀坯掉进了淬火槽底部，捞出来时刃口已经崩了。工头骂骂咧咧地扣了你一半工资。', successMsg: '你精准地完成了每一把刀坯的淬火和回火。工头用拇指试了试刃口的硬度，难得地咧嘴笑了，将工钱和一小袋磨刀石碎块塞给你。' },
+            { name: '伤兵护理', desc: '碎骨巷的伤兵收容所里挤满了从角斗场抬下来的倒霉蛋。他们断骨错位、伤口化脓，急需有人帮忙换绷带、喂水和按住那些因剧痛而挣扎的伤兵。', stat: 'charisma', dc: 9, reward: 5, exp: 7, time: 40, failMsg: '你笨手笨脚地被一个挣扎的伤兵撞翻在地，打翻了一整盆干净的绷带。护士长用沾着血的手套甩了你一脸水。', successMsg: '你轻声安抚着痛苦的伤兵，熟练地帮他们更换绷带。护士长在结束时分了你一份热汤和几枚硬币。' }
+        ],
+        '色欲之环': [
+            { name: '秀场后台杂役', desc: '霓虹大道的欲焰秀场正在筹备今晚的演出。后台乱成一锅粥——戏服散落一地，道具需要搬运，化妆台前堆满了用过的粉扑和假睫毛。场务总管急需人手在开演前将所有东西归位。', stat: 'agility', dc: 10, reward: 6, exp: 8, time: 45, failMsg: '你不小心打翻了一整盒亮片，场务总管尖叫着将你赶出后台，只扔给你两枚硬币。', successMsg: '你在开演前十分钟将所有戏服按出场顺序挂好。场务总管长舒一口气，将报酬塞进你手里时，顺手在你脸上留了一个带着香水味的指印。' },
+            { name: '陪酒招待', desc: '暗巷深处的一家地下酒馆正在找临时陪酒。你的工作是坐在卡座里，为那些孤独的恶魔倒酒、听他们抱怨地狱的无聊，偶尔附和几句。不需要出卖身体——只需要出卖倾听的耐心。', stat: 'charisma', dc: 11, reward: 9, exp: 9, time: 55, failMsg: '你的木讷让客人更加郁闷了。他喝完最后一杯后挥挥手让你离开，酒保只好付你最低时薪。', successMsg: '你用恰到好处的微笑和适时的附和，让一位中年魅魔把半辈子的故事都倒了出来。临走时他在酒杯下压了丰厚的小费。' },
+            { name: '香水试嗅员', desc: '魅骨时装店的地下室里，一位调香师正在研发新款魅惑香水。她需要"未经训练的鼻子"来测试不同配方的前调、中调和后调。你需要在闻了二十几种香精之后，准确描述每种气味给人的感受。', stat: 'magic', dc: 10, reward: 7, exp: 8, time: 40, failMsg: '你的嗅觉在闻到第十五种香精时彻底失灵了——所有东西闻起来都像发霉的玫瑰。调香师遗憾地付了基础测试费。', successMsg: '你精准地辨识出每一种香精的层次。调香师兴奋地记满了半本笔记本，将报酬和一小管试用装香水塞进你手里。"下次还有新配方，我还找你。"' }
+        ],
+        '嫉妒之环': [
+            { name: '黑水打捞', desc: '水沟区的黑水齐腰深，水面上常年漂浮着从上层环层冲下来的废弃物品。有人专门雇人在黑水中打捞——运气好的话，能捞到完整的旧家具、还能转卖的破损饰品、甚至某位贵族不慎冲进下水道的金笔。', stat: 'strength', dc: 11, reward: 7, exp: 9, time: 50, failMsg: '你在黑水里泡了半天，捞上来的全是无法辨认的破布和锈蚀的铁片。雇主看了一眼就扔回了水里。', successMsg: '你从黑水中捞出了一把还能用的镀银餐具和一只刻着名字的怀表。雇主眯着眼睛端详怀表上的刻字，满意地付了工钱。' },
+            { name: '谣言集市散播', desc: '镜面街区的谣言集市里，一个情报贩子正在招募"扩音器"——将几条真假难辨的消息传遍嫉妒之环的各个角落。你需要在茶馆、栈桥和地下通道之间穿梭，用不经意的口吻把话递出去。', stat: 'charisma', dc: 10, reward: 8, exp: 8, time: 45, failMsg: '你的表演太过刻意，茶馆里的恶魔一眼就看出你是来散布谣言的。情报贩子失望地付了路费。', successMsg: '你像闲聊般将消息洒在三个不同的茶馆里。到傍晚时，谣言已经传遍了整个镜面街区，情报贩子满意地将报酬塞进你手里。' },
+            { name: '仿冒品加工', desc: '镜面街区的深渊镜像工坊正在赶制一批仿冒的"傲慢环水晶吊坠"——实际上只是用普通玻璃染色后打磨而成。你的工作是给这些假吊坠刻上以假乱真的暗纹，让它们看起来像是从晨星高地上捡来的。', stat: 'agility', dc: 12, reward: 9, exp: 10, time: 55, failMsg: '你刻废了好几片玻璃。工坊主捡起残次品对着灯光看了看，皱着眉头付了一半工钱。', successMsg: '你手中的刻刀精准地游走在玻璃表面，每一道暗纹都足以以假乱真。工坊主举起成品对着灯光端详，满意地点了点头。' }
+        ],
+        '暴食之环': [
+            { name: '食材分拣', desc: '美食大道的永饥食品厂后门，堆满了从各环运来的食材原料。你的工作是将腐烂的部分切掉，把勉强能用的部分分拣进不同的筐里。这项工作对胃的承受力是一种考验——腐烂的肉类散发着令人窒息的恶臭。', stat: 'strength', dc: 10, reward: 6, exp: 8, time: 45, failMsg: '你只撑了不到半小时就跑出去吐了两次。工头看着你惨白的脸，叹了口气付了半个工时。', successMsg: '你面不改色地分拣完三大筐食材。工头看着你干净的围裙，竖起拇指——"你是我见过最能扛的新人。"' },
+            { name: '食教传教站帮厨', desc: '食教传教站的执事正在准备今日的免费汤品。他需要人手帮忙削皮、切菜和搅拌那一口永远填不满的大锅。执事一边干活一边低声向你讲述食教的教义——"吞噬是万物最终的归宿"。', stat: 'magic', dc: 10, reward: 7, exp: 9, time: 50, failMsg: '你切菜时不小心切到了手指。执事面无表情地帮你包扎好，但只付了基础帮厨费。', successMsg: '你默契地配合执事的节奏，切菜、投料、搅拌一气呵成。当免费汤品分发完毕时，执事在付你报酬的同时，悄悄往你口袋里塞了一小包干燥的香料。' },
+            { name: '残渣区拾荒', desc: '残渣区的深处，堆积如山的食物残渣中偶尔能翻出还能吃的东西。有人在招募拾荒者——从腐臭的垃圾中翻出还能转卖的边角料。这工作需要敏锐的眼力和强大的胃。', stat: 'agility', dc: 11, reward: 8, exp: 10, time: 50, failMsg: '你翻了半天只找到一堆彻底腐烂的垃圾。雇主捏着鼻子检查后，只付了辛苦费。', successMsg: '你从残渣堆中翻出了半箱还没变质的罐头和几袋包装完好的干粮。雇主惊喜地拍了拍你的背，将报酬和两罐罐头一起递给你。' }
+        ],
+        '懒惰之环': [
+            { name: '帮人躺平', desc: '停滞区的惰性休闲馆正在招募"陪伴躺平员"。你的工作很简单——躺在体验区的躺椅上当活招牌，向路过的恶魔展示躺椅的舒适度。唯一的挑战是不能真的睡着——虽然就算睡着了也没人在乎。', stat: 'charisma', dc: 8, reward: 4, exp: 6, time: 40, failMsg: '你真的睡着了。醒来时发现自己在躺椅上流了一滩口水，休闲馆经理面无表情地扣了一半工资。', successMsg: '你在躺椅上保持着半睡半醒的完美状态，好几个路过的恶魔被你的舒适感感染，当场付钱买了躺椅。经理难得地说了句"干得不错"。' },
+            { name: '文件代交', desc: '懒鬼外包公司的前台趴在一叠积压了数月的文件上，用极其缓慢的语速告诉你——他们需要人帮客户把一份拖延了半年的申请表交到对面那栋楼。距离：不到一百米。原因：客户懒得亲自走过去。', stat: 'agility', dc: 5, reward: 3, exp: 5, time: 20, failMsg: '你也懒得走了。前台用眼神表达了一种惺惺相惜的失望。', successMsg: '你走了不到一百米，将申请表塞进对面楼的信箱。前台用慢动作竖起一根拇指，将报酬推到你面前。' },
+            { name: '灰雾冥想指导', desc: '停滞区的一间低价惰性休闲馆里，几个长期失眠的恶魔正在参加"灰雾冥想"课程。你的工作是坐在他们面前，用最缓慢、最催眠的语调念出指导语，帮助他们进入深层放松状态。', stat: 'magic', dc: 9, reward: 5, exp: 7, time: 35, failMsg: '你的语速太快了，一个学员反而变得更加焦躁。冥想老师无奈地接过指导语，只付了你一半报酬。', successMsg: '你的声音像灰雾一样缓慢而温柔。课程结束时，所有学员都陷入了深沉的睡眠。冥想老师轻手轻脚地将报酬递给你。' }
+        ]
+    };
+
+    var jobs = ringJobs[ring];
+    if (!jobs || jobs.length === 0) {
+        jobs = [
+            { name: '矿场搬运', desc: '在水晶矿场搬运矿石。需要体力。', stat: 'strength', dc: 12, reward: 8, exp: 10, time: 60, failMsg: '你体力不支，只拿到一半报酬。', successMsg: '工作顺利完成！' },
+            { name: '酒馆招待', desc: '在酒馆端盘子。需要魅力。', stat: 'charisma', dc: 10, reward: 6, exp: 8, time: 60, failMsg: '你笨手笨脚，只拿到一半报酬。', successMsg: '工作顺利完成！' },
+            { name: '街头卖艺', desc: '用你的魔力表演杂耍。', stat: 'magic', dc: 10, reward: 7, exp: 9, time: 50, failMsg: '你的表演无人喝彩，只拿到一半报酬。', successMsg: '表演大获成功！' },
+            { name: '暗巷交易', desc: '参与地下交易，需要敏捷和胆量。', stat: 'agility', dc: 12, reward: 12, exp: 12, time: 40, failMsg: '交易搞砸了，只拿到一半报酬。', successMsg: '交易顺利完成！' }
+        ];
+    }
+
+    var job = jobs[Math.floor(Math.random() * jobs.length)];
+    // 工作事件随机文本
+    var eventTexts = [
+        '工作中，你听到工友在谈论一个隐藏的宝库。',
+        '你发现了一个偷懒的好地方，休息了一会儿。',
+        '监工今天心情不错，多给了你一些报酬。',
+        '一个同事试图偷你的东西，你及时发现了。',
+        '你无意中听到了一段关于某个君主的秘密谈话。'
+    ];
+    var eventChance = Math.random();
+    var extraEvent = '';
+    if (eventChance < 0.15) {
+        extraEvent = '<p style="color:#c09080;font-style:italic;">' + eventTexts[Math.floor(Math.random() * eventTexts.length)] + '</p>';
+    }
+
+    st('<div class="scene-title">工作机会</div><p>' + job.desc + '</p><p>需求：' + statNames[job.stat] + ' ≥ ' + job.dc + '</p>' + extraEvent);
+    cb();
+    ab('接受（耗时' + job.time + '分钟）', function() {
+        addTime(job.time);
+        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 15 + Math.floor(player.fatigue/10));
+        // 工作意外事件
+        var accident = Math.random();
+        if (accident < 0.05) {
+            st('<p style="color:#e85060;">⚠️ 工作中发生了意外！你被掉落的石块砸伤，HP-15。</p>');
+            player.hp -= 15;
+            cb();
+            ab('继续', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+            return;
+        }
+        if (player[job.stat] >= job.dc) {
+            player.gold += job.reward;
+            addExp(job.exp);
+            st('<p>' + (job.successMsg || '工作顺利完成！获得了 ' + job.reward + ' 金币，' + job.exp + ' 经验。') + '</p><p style="color:#e8c060;">获得了 ' + job.reward + ' 金币，' + job.exp + ' 经验。</p>' + extraEvent);
+        } else {
+            var half = Math.floor(job.reward / 2);
+            player.gold += half;
+            st('<p>' + (job.failMsg || '你勉强完成，但效果不佳。') + '</p><p style="color:#e85060;">获得了 ' + half + ' 金币。</p>' + extraEvent);
+        }
+        cb();
+        ab('返回（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing, 'poor'); });
+    });
+    ab('拒绝', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
+}
+
+// ==================== NPC 交互（修复：次数限制+好感审视） ====================
 function getNpcFirstMeetText(npcId) {
     var sin = player.sin, race = player.race;
     if (npcId === '莱利') {
         if (race === 'sinner' && (sin === '贪婪' || sin === '色欲')) return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着，动作极轻。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的两只猫耳瞬间向后折起，进入高度警觉的状态。原本还在缓慢晃动的长尾巴猛地绷直，尾尖的毛发微微炸开。他浑身的肌肉肉眼可见地紧绷起来，目光死死地锁定在你的位置。<em>贪婪……还是色欲？</em>他的声音没有丝毫情绪起伏，语气生硬且冷漠，如同从这座废弃矿坑最深处吹上来的寒风，带着明显的排斥与防备。<em>我不喜欢这两种味道。离我远点。</em>他收回视线，转过身去再次背对着你。他手中的小刀在金属片上重重地划过，刺耳的摩擦声中迸发出几点明亮的火星。周围的金属碎屑和地上的废弃铁器开始发生有规律的轻微震颤。你能清晰地感觉到，一股由金属幻化而成的锁链力量正被他强行压制在掌心之中。只要你再向前靠近半步，那些锁链就会瞬间爆发。';
-        if (race === 'sinner') return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着，动作极轻。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的视线越过倾斜的水晶板，直直地投向你。那双左金右银的异色瞳孔里既没有被打扰的愤怒，也没有任何欢迎的意味，只剩下一种夹杂着深度戒备与疲惫的冷漠审视。<em>……又是一个罪人。</em>他冷冷地吐出几个字，常年极少与人交谈让他的声音听起来有些干涩沙哑。他站在原地没有动，连脸上的表情都凝固着，只有头顶竖起的猫耳微微转动了一下方向，敏锐地捕捉着你这边的每一丝呼吸声。<em>我也曾是。如果你是来找茬的，现在就可以走了。</em>刀刃刮擦金属的声音重新在死寂的矿区里响起。但他握刀的手腕没有了刚才那种专注的流畅感，金属片被剥落的节奏明显变慢、变沉了。那条原本因警惕而僵直的长尾巴也缓缓松懈下来，垂在地上，尾尖在满是粉尘的石块上无意识地轻轻扫动。他虽然没有再抬头看你，但紧绷的肩膀和停顿的刀尖都暴露出他并没有放松警惕——他在安静地等待你开口，或是走出下一步。';
-        return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着，动作极轻。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的头顶，那对灰色的猫耳敏锐地捕捉到了你靠近的细微声响，耳尖向后微不可察地抖动了一下。紧接着，那条原本垂落在地上的长尾巴迅速收拢，带着十足的防备，紧紧卷住了他自己的小腿。<em>新面孔。</em>他率先开了口。由于极少与人交谈，他的嗓音听起来有些发干。语气像生铁一样生硬冷淡，但并没有直接表露出攻击的敌意。察觉到你的视线正落在他左金右银的异色瞳孔上，他浑身的肌肉瞬间紧绷。他下意识地偏过头，利用黑色卫衣的兜帽阴影遮挡住部分侧脸，声音骤然沉了下来，透出一股烦躁。<em>别盯着我的眼睛看。如果你是来嘲笑我的，现在就可以走了。</em>警告完，他重新转回视线。那双锐利的异色瞳自上而下快速扫过你的全身，目光在你的双手和腰间短暂停留，默默评估着你身上是否带有武器或潜在威胁。但在你持续的直白注视下，他的眼神很快出现了细微的闪躲。他显然极不习惯被人这样盯着看。他握着金属片的手指无意识地收紧，指关节因用力而微微泛白。同时，他身体的重心悄然向后脚跟偏移了半寸，做好了随时隐蔽或拉开距离的准备。';
+        if (race === 'sinner') return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的视线越过倾斜的水晶板，直直地投向你。那双左金右银的异色瞳孔里既没有被打扰的愤怒，也没有任何欢迎的意味，只剩下一种夹杂着深度戒备与疲惫的冷漠审视。<em>……又是一个罪人。</em>他冷冷地吐出几个字，常年极少与人交谈让他的声音听起来有些干涩沙哑。他站在原地没有动，连脸上的表情都凝固着，只有头顶竖起的猫耳微微转动了一下方向，敏锐地捕捉着你这边的每一丝呼吸声。<em>我也曾是。如果你是来找茬的，现在就可以走了。</em>刀刃刮擦金属的声音重新在死寂的矿区里响起。但他握刀的手腕没有了刚才那种专注的流畅感，金属片被剥落的节奏明显变慢、变沉了。那条原本因警惕而僵直的长尾巴也缓缓松懈下来，垂在地上，尾尖在满是粉尘的石块上无意识地轻轻扫动。他虽然没有再抬头看你，但紧绷的肩膀和停顿的刀尖都暴露出他并没有放松警惕——他在安静地等待你开口，或是走出下一步。';
+        return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的头顶，那对灰色的猫耳敏锐地捕捉到了你靠近的细微声响，耳尖向后微不可察地抖动了一下。紧接着，那条原本垂落在地上的长尾巴迅速收拢，带着十足的防备，紧紧卷住了他自己的小腿。<em>新面孔。</em>他率先开了口。由于极少与人交谈，他的嗓音听起来有些发干。语气像生铁一样生硬冷淡，但并没有直接表露出攻击的敌意。察觉到你的视线正落在他左金右银的异色瞳孔上，他浑身的肌肉瞬间紧绷。他下意识地偏过头，利用黑色卫衣的兜帽阴影遮挡住部分侧脸，声音骤然沉了下来，透出一股烦躁。<em>别盯着我的眼睛看。如果你是来嘲笑我的，现在就可以走了。</em>警告完，他重新转回视线。那双锐利的异色瞳自上而下快速扫过你的全身，目光在你的双手和腰间短暂停留，默默评估着你身上是否带有武器或潜在威胁。但在你持续的直白注视下，他的眼神很快出现了细微的闪躲。他显然极不习惯被人这样盯着看。他握着金属片的手指无意识地收紧，指关节因用力而微微泛白。同时，他身体的重心悄然向后脚跟偏移了半寸，做好了随时隐蔽或拉开距离的准备。';
     }
     if (npcId === '弗雷迪') {
         if (race === 'sinner') return '贪婪之环的金丝街上，整条街道的地面都铺满了金币。万宝商行分店的奢华建筑在这片反光中投下巨大的倒影。你推开沉重的水晶大门，一股混合了陈旧羊皮纸、浓郁檀香以及生锈金属的复杂气味立刻扑面而来。柜台后方站着一个身形极高的男人。他穿着一件深棕色、边缘镶嵌着金线的长袍，苍白修长的手指间捏着一块干净的布，正不紧不慢地擦拭着一枚银币。\n\n听到大门的动静，他停下手里的动作，缓缓抬起头。深红棕色的披肩长发下，是一张苍白且透着冷酷的脸。他的右眼角横亘着一道狰狞的刀疤，右眼戴着一枚单片眼镜。那双细长上挑的眼睛里，暗红色的锋利瞳孔透过镜片，带着毫不掩饰的审视与冰冷打量着你。最引人注目的是他的右臂——那根本不是人类的血肉之躯，而是一只巨大的灰色乌鸦羽翼，末端长着尖锐的利爪。层层叠叠的羽毛边缘在室内灯光下，泛着一层幽暗的蓝光。<em>一位罪人。</em>他缓缓开口，语调沉稳，带着浓厚的旧时代英国绅士腔调，但语气里却透着一股拒人于千里之外的傲慢。<em>欢迎光临。不过请记住，在这里，虚无的身份远不如实打实的金币来得重要。如果您有值钱的物件需要出售，或者想购买什么罕见的珍品，我很乐意为您效劳。</em>说完，他将擦拭好的银币整齐地叠放在一旁。他用那只正常的左手，极其优雅且严谨地整理了一下领口的金色徽章和胸前佩戴的银色十字架。他右侧那只巨大的乌鸦羽翼也随着动作微微向内收拢。尽管他嘴里说着敬语，但微微扬起的下颌与居高临下的眼神，将他病态的阶级执念暴露无遗。那种刻意维持的体面姿态，让你一眼就能看出——他在极力彰显自己曾经属于更高阶层的地方。';
@@ -824,7 +1489,7 @@ var npcInteractionData = {
         { text: '问他为什么在这里', loveChange: 1, response: '你问他为什么在这里，埃文的身体微微颤抖了一下。那只未被绷带遮盖的浅金色单眼失神地望着前方——不是在看你，而是在看某个你无法触及的遥远记忆。他沉默了几秒，残缺的身体在地面上微微蜷缩，项圈上的银色锁链随着动作发出细碎的碰撞声。<em>我……我不记得自己是怎么到这里的。我只记得……很痛。</em>他的声音越来越小，小到最后几个字几乎听不到。<em>然后我就什么都感觉不到了。再然后——</em>他低头看了看自己残缺的身体，嘴角却不受控制地微微上扬，露出一个与痛苦回忆完全矛盾的病态微笑。<em>在这里，没有人会问我的过去。他们只在乎我现在能提供什么。</em>' },
         { text: '给他一些金币', loveChange: 5, response: '你给他一些金币，埃文看着你手中的金币，那只浅金色的瞳孔中瞬间闪过一丝复杂的光芒。那里面有感激——真实的、纯粹的感激——但也有某种更深的、你不理解的空虚。他用那两截极短的肩膀残端抵着地面，艰难地向前蠕动了半寸。金币在昏暗的光线中泛着微弱的金色光芒，映在他被绷带缠绕的脸侧。<em>……金币。谢谢您。</em>他犹豫了一下，兔耳轻轻颤动。<em>但——</em>他的声音变得更小了，几乎是耳语——<em>您不想要什么回报吗？大多数人给我东西，都是想要……某种回报的。</em>他的兔耳微微向前倾斜，浅金色的瞳孔中闪烁着一种复杂的期待——那期待不是对金币的，而是对接下来可能发生的任何事情的。' },
         { text: '试图解开他的锁链', loveChange: -1, response: '你试图解开他的锁链，埃文突然惊恐地往后缩。他的身体剧烈颤抖着，那两截残缺的肩膀残端慌乱地在地面上刮擦，留下一道浑浊的拖痕。他拼命摇头，软塌的兔耳紧紧贴在头皮上，整个身体缩成了一团。<em>不！不要碰锁链——主人会生气的——</em>他的声音里充满了真切的恐惧，比之前任何一次都要尖锐。他用仅存的上臂残端死死护住脖子上的黑色项圈，像是那粗糙的皮革是他最后的防线。那条银色锁链随着他的动作发出刺耳的碰撞声，在死寂的暗巷中久久回荡。你意识到——对他来说，这条锁链不仅是束缚。也是某种扭曲的安全感来源。他害怕失去它。更害怕因此受到的惩罚。' },
-        { text: '陪他安静地坐一会儿', loveChange: 4, response: '你陪他安静地坐一会儿，你没有说话，只是在他旁边的破旧木箱上坐了下来。木箱发出一声沉闷的呻吟，但撑住了。埃文一开始还在颤抖——他的兔耳紧紧贴在头皮上，那半截残缺的身体微不可察地发着抖。但随着时间的推移，暗巷里只剩下远处隐约的风声和锁链偶尔碰撞的轻响。他的兔耳渐渐放松下来，不再紧贴头皮，柔软的浅紫色绒毛在昏暗的光线中微微晃动。<em>……您和别人不一样。</em>他轻声说。那只浅金色的瞳孔中倒映着暗巷深处微弱的暗紫色光芒——那是从远处霓虹大道渗过来的一丝残光，落在他被绷带缠绕的脸上，竟然有了一丝温度。<em>请……请多待一会儿。哪怕只有几分钟。</em>' }
+        { text: '陪他安静地坐一会儿', loveChange: 4, response: '你陪他安静地坐一会儿，你没有说话，只是在他旁边的破旧木箱上坐了下来。木箱发出一声沉闷的呻吟，但撑住了。埃文一开始还在颤抖——他的兔耳紧紧贴在头皮上，那半截残缺的身体微不可察地发着抖。但随着时间的推移，暗巷里只剩下远处隐约的风声和锁链偶尔碰撞的轻响。他的兔耳渐渐放松下来，不再紧贴头皮，柔软的浅紫色绒毛在昏暗的光线中微微晃动。<em>您和别人不一样。</em>他轻声说。那只浅金色的瞳孔中倒映着暗巷深处微弱的暗紫色光芒——那是从远处霓虹大道渗过来的一丝残光，落在他被绷带缠绕的脸上，竟然有了一丝温度。<em>请……请多待一会儿。哪怕只有几分钟。</em>' }
     ],
     '卡恩': [
         { text: '请他喝一杯', loveChange: 4, response: '你请他喝一杯，卡恩的眼睛亮了一下——那是一种真实的、不加掩饰的意外与惊喜。他玫红色的狐狸眼微微睁大，眼尾的十字线花纹随着表情的变化而微微扬起。<em>哦？请我喝一杯？</em>他笑了——这次的笑容与之前那种公式化的魅魔职业微笑截然不同。嘴角上翘的弧度更自然，连尖利的犬齿都忘了遮掩。<em>很少有人会请我喝酒。他们大多觉得魅魔不需要被请客——我们只需要被诱惑。</em>他从吧台后面拿出一瓶暗紫色的酒，瓶身在他白皙的手指间灵活地转了一圈。<em>但事实上——</em>他拧开瓶盖，一股混合了蜂蜜与迷迭香的甜腻酒香弥漫开来，<em>我喜欢被当作普通的恶魔对待。哪怕只有一杯酒的时间。</em>他给你倒了一杯，又给自己斟满。' },
@@ -848,9 +1513,12 @@ var npcInteractionData = {
         { text: '问他是否寂寞', loveChange: 5, response: '你问他是否寂寞，泽洛斯的笑容变得有点神秘。他暗红色的眼眸在细框眼镜后闪烁了一下，瞳孔边缘那圈暗红色的微光缓缓流转。<em>寂寞？</em>他轻声重复了这个词，仿佛在品味它的含义。他低下头，用手拨弄了一下腰间那条带有银色大扣的黑色皮带。锯齿状的短披风下摆随着他的动作微微晃动。<em>我从不寂寞。我有我的研究，有我的追随者——虽然他们都是些低阶恶魔，不值一提。</em>他抬起头，看着你的眼神变得柔和了一些——那是你在他脸上见过的最接近温暖的表情。<em>不过——偶尔和你这样的灵魂交谈，确实是一种难得的享受。</em>他肩头的黑雾缓缓散去，只留下一丝淡淡的暗紫色幻光在他周身缭绕。<em>下次见面，希望你还这么有趣。</em>' }
     ]
 };
+
 function getNpcFirstImpression(npcId) { var nd = npcData[npcId]; if (!nd) return { love: 5, desire: 0, anger: 0, opinion: '初次见面。' }; var love = 5; var opinion = '对你没有特别的看法。'; if (nd.dislikeSins && nd.dislikeSins.indexOf(player.sin) >= 0) { love -= 3; opinion = '因为你的罪孽，对你有些戒备。'; } if (player.race === 'demon') { love += 2; opinion += ' 作为原生恶魔，他略微高看你一眼。'; } else if (player.race === 'sinner') { love -= 1; opinion += ' 作为罪人，你感到他的审视多了一分。'; } return { love: Math.max(0, love), desire: 0, anger: 0, opinion: opinion }; }
+
 function checkNpcAvailable(npcId) { var nd = npcData[npcId]; if (!nd) return false; if (player.flags['npcLeft_'+npcId]) return false; var t = player.gameTime % 1440; if (nd.timeStart <= nd.timeEnd) { if (t < nd.timeStart || t > nd.timeEnd) return false; } else { if (t < nd.timeStart && t > nd.timeEnd) return false; } if (nd.ring !== 'random' && nd.ring !== player.currentRing) return false; if (nd.ring === 'random') { if (Math.random() < 0.7) return false; } return true; }
-	function getNpcUnavailableReason(npcId) {
+
+function getNpcUnavailableReason(npcId) {
     var nd = npcData[npcId];
     if (!nd) return 'unknown';
     var t = player.gameTime % 1440;
@@ -861,26 +1529,92 @@ function checkNpcAvailable(npcId) { var nd = npcData[npcId]; if (!nd) return fal
     }
     if (nd.ring !== 'random' && nd.ring !== player.currentRing) return 'time';
     if (player.flags['npcLeft_' + npcId]) return 'left';
+    if (!canTalkNPC(npcId)) return 'max_talk';
     return null;
 }
+
 function ensureNpcInSocial(npcId) { if (!player.relationships[npcId]) { var init = getNpcFirstImpression(npcId); player.relationships[npcId] = { love: init.love, desire: init.desire, anger: init.anger, opinion: init.opinion }; } }
+
 function tryEncounterNPC(ring, level) { var available = []; for (var nid in npcData) { var nd = npcData[nid]; if (nd.ring === ring && nd.level === level) { if (checkNpcAvailable(nid)) { available.push(nid); } } if (nd.ring === 'random' && Math.random() < 0.15) { if (checkNpcAvailable(nid)) { available.push(nid); } } } return available.length > 0 ? available[Math.floor(Math.random() * available.length)] : null; }
-function sceneNpcFirstMeet(npcId, returnRing, returnLevel) { ensureNpcInSocial(npcId); addTime(10); ua(); var customText = getNpcFirstMeetText(npcId); st('<div class="scene-title">初 遇 · ' + npcId + '</div><p>' + customText + '</p><p style="color:#9a6a6a;font-size:0.82em;">（' + npcId + '已被记录到社交栏。当前好感度：' + (player.relationships[npcId].love || 5) + '）</p>'); cb(); ab('继续交谈（耗时10分钟）', function() { addTime(10); sceneNpcInteraction(npcId, returnRing, returnLevel); }); ab('稍后再来', function() { sceneExploreDistrict(returnRing, returnLevel); }); }
-function sceneNpcInteraction(npcId, returnRing, returnLevel) { ensureNpcInSocial(npcId); var rel = player.relationships[npcId]; var talkKey = 'talk_' + npcId; var count = player.npcTalkCounts[talkKey] || 0; if (count >= 5) { player.npcTalkCounts[talkKey] = 0; player.flags['npcLeft_'+npcId] = true; st('<div class="scene-title">' + npcId + '</div><p>' + npcId + '看了你一眼，摇了摇头：<em>今天已经聊得够多了。我需要一些自己的空间。</em></p><p>他转身离开了。</p>'); addTime(15); cb(); ab('继续探索（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(returnRing, returnLevel); }); return; } var pool = npcInteractionData[npcId] || [{ text: '随便聊聊', loveChange: 0, response: '<em>……嗯。</em>' }]; var interaction = pool[count % pool.length]; player.npcTalkCounts[talkKey] = count + 1; addTime(10); st('<div class="scene-title">' + npcId + '</div><p>' + interaction.response + '</p><p style="color:#9a6a6a;font-size:0.78em;">好感度变化：' + (interaction.loveChange >= 0 ? '+' : '') + interaction.loveChange + ' | 当前好感：' + (rel.love + interaction.loveChange) + '</p>'); rel.love = Math.min(100, Math.max(0, (rel.love || 5) + interaction.loveChange)); cb(); if (count < 4) { ab('继续交谈（耗时10分钟）', function() { addTime(10); sceneNpcInteraction(npcId, returnRing, returnLevel); }); } ab('结束对话', function() { player.npcTalkCounts[talkKey] = 0; sceneExploreDistrict(returnRing, returnLevel); }); }
+
+function sceneNpcFirstMeet(npcId, returnRing, returnLevel) {
+    ensureNpcInSocial(npcId);
+    addTime(10);
+    ua();
+    var customText = getNpcFirstMeetText(npcId);
+    var attitude = getNpcAttitude(npcId);
+    st('<div class="scene-title">初 遇 · ' + npcId + '</div><p>' + customText + '</p><p style="color:#9a6a6a;font-size:0.82em;">（' + npcId + '已被记录到社交栏。当前好感度：' + (player.relationships[npcId].love || 5) + '）</p><p style="color:#c09080;font-size:0.78em;">' + attitude.text + '</p>');
+    cb();
+    ab('继续交谈（耗时10分钟）', function() { addTime(10); sceneNpcInteraction(npcId, returnRing, returnLevel); });
+    ab('稍后再来', function() { sceneExploreDistrict(returnRing, returnLevel); });
+}
+
+function sceneNpcInteraction(npcId, returnRing, returnLevel) {
+    // 检查是否可以交谈
+    if (!canTalkNPC(npcId)) {
+        var attitude = getNpcAttitude(npcId);
+        st('<div class="scene-title">' + npcId + '</div><p>' + npcId + '似乎正在忙自己的事，没有继续交谈的意思。他看了你一眼，那眼神中带着' + (attitude.level === 'hostile' ? '敌意' : attitude.level === 'cold' ? '疏离' : attitude.level === 'neutral' ? '平淡' : '一丝歉意') + '。</p><p style="color:#9a6a6a;font-size:0.82em;">（今天已经聊得够多了。明天再来吧。）</p>');
+        addTime(5);
+        cb();
+        ab('离开', function() { sceneExploreDistrict(returnRing, returnLevel); });
+        return;
+    }
+
+    ensureNpcInSocial(npcId);
+    var rel = player.relationships[npcId];
+    var talkKey = 'talk_' + npcId;
+    var count = player.npcTalkCounts[talkKey] || 0;
+
+    // 检查是否已满5次
+    if (count >= 5) {
+        player.npcTalkCounts[talkKey] = 0;
+        player.flags['npcLeft_'+npcId] = true;
+        st('<div class="scene-title">' + npcId + '</div><p>' + npcId + '看了你一眼，摇了摇头：<em>今天已经聊得够多了。我需要一些自己的空间。</em></p><p>他转身离开了。</p>');
+        addTime(15);
+        cb();
+        ab('继续探索（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(returnRing, returnLevel); });
+        return;
+    }
+
+    var pool = npcInteractionData[npcId] || [{ text: '随便聊聊', loveChange: 0, response: '<em>……嗯。</em>' }];
+    var interaction = pool[count % pool.length];
+    player.npcTalkCounts[talkKey] = count + 1;
+    // 增加NPC对话计数
+    incrementNpcTalk(npcId);
+    addTime(10);
+
+    var newLove = Math.min(100, Math.max(0, (rel.love || 5) + interaction.loveChange));
+    rel.love = newLove;
+    var attitude = getNpcAttitude(npcId);
+
+    st('<div class="scene-title">' + npcId + '</div><p>' + interaction.response + '</p><p style="color:#9a6a6a;font-size:0.78em;">好感度变化：' + (interaction.loveChange >= 0 ? '+' : '') + interaction.loveChange + ' | 当前好感：' + newLove + '</p><p style="color:#c09080;font-size:0.75em;">' + attitude.text + '</p>');
+    cb();
+    if (count < 4) {
+        ab('继续交谈（耗时10分钟）', function() { addTime(10); sceneNpcInteraction(npcId, returnRing, returnLevel); });
+    }
+    ab('结束对话', function() {
+        player.npcTalkCounts[talkKey] = 0;
+        sceneExploreDistrict(returnRing, returnLevel);
+    });
+}
 
 function addNpcButton(npcId, ring, level) {
     var reason = getNpcUnavailableReason(npcId);
     if (reason === 'time') {
-        return; // 时段未到或不在同一环，不显示任何按钮
+        return;
     }
     if (reason === 'left') {
-        // NPC已离开，显示忙碌文本（追加到当前画面）
         var currentHtml = tc.innerHTML;
         st(currentHtml + '<p style="color:#9a6a6a;font-style:italic;margin-top:10px;">（' + npcId + '正忙着自己的事，还是别去打扰了。）</p>');
         return;
     }
-    // 可交谈
-    ab('💬 与 ' + npcId + ' 交谈', function() {
+    if (reason === 'max_talk') {
+        var attitude = getNpcAttitude(npcId);
+        st(tc.innerHTML + '<p style="color:#9a6a6a;font-style:italic;margin-top:10px;">（' + npcId + '看起来有些疲惫，似乎不太想再说话了。' + attitude.text + '）</p>');
+        return;
+    }
+    var remain = getNpcTalkRemaining(npcId);
+    ab('💬 与 ' + npcId + ' 交谈（剩余' + remain + '次）', function() {
         addTime(5);
         if (!player.relationships[npcId]) {
             sceneNpcFirstMeet(npcId, ring, level);
@@ -889,120 +1623,128 @@ function addNpcButton(npcId, ring, level) {
         }
     });
 }
-	
-// ==================== 工作系统（各环特色版） ====================
-function findJob() {
-    var ring = player.currentRing;
-    var statNames = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' };
 
-    var ringJobs = {
-        '傲慢之环': [
-            { name: '水晶矿场搬运', desc: '灰烬区的废弃水晶矿场深处，仍残留着一些蕴含微弱能量的暗紫色水晶碎片。矿场的监工正在招募愿意冒险进入坑道、将沉重的原矿搬运出来的苦力。这项工作对体力要求极高，在搬运过程中，你需要时刻留意头顶摇摇欲坠的碎石——近年来已经有不少搬运工被塌方砸断了脊骨。', stat: 'strength', dc: 12, reward: 8, exp: 10, time: 60, failMsg: '你勉强搬了几趟，但体力很快见底。监工看你气喘吁吁的样子，皱眉扣掉了一半工钱。', successMsg: '你咬牙坚持了整整一个工时。监工用脚尖踢了踢你搬出的矿石堆，难得地点了点头，将说好的工钱一枚不少地扔进你手里。' },
-            { name: '审判厅文书抄写', desc: '星尘区的审判厅正在招募临时抄写员，负责誊录审判记录和归档文件。工作环境阴冷肃穆，空气中只听得见羽毛笔摩擦羊皮纸的沙沙声。你需要用精准的书写将堆积如山的冗长卷宗逐字誊抄，任何错漏都会被退回重写。', stat: 'magic', dc: 11, reward: 7, exp: 9, time: 50, failMsg: '你的字迹太过潦草，执事扫了一眼便扔回你面前。他只付了三分之一的辛苦费。', successMsg: '你伏案誊抄了整整一个下午，手腕酸痛但每一页都干净工整。执事仔细核对了最后一份卷宗后，将报酬整齐地码放在你面前。' },
-            { name: '晨星水晶打磨', desc: '傲慢环中层的一间水晶作坊正在接单——为堕天使们的佩剑打磨装饰用的水晶镶嵌片。这是一门需要专注与耐心的精细活：用不同粗细的砂轮逐层抛光水晶碎片，直到每一片都能在暗光下折射出完美的棱镜光斑。', stat: 'agility', dc: 10, reward: 6, exp: 8, time: 45, failMsg: '你手滑磨碎了两片水晶。工头心疼地捡起碎片，叹了口气后只付了材料费。', successMsg: '你全神贯注地完成了每一片水晶的打磨。当工头举起成品对着暗紫色灯光检查时，棱镜般的光斑映在他脸上——他满意地付了全款。' }
-        ],
-        '贪婪之环': [
-            { name: '收债跑腿', desc: '铜板巷尽头那间挂着"玛门商行催收部"牌子的办公室正在招人。你的工作是挨家挨户敲开债务人的门，用一切"合理"手段将欠款收回来。每个债务人都是一张疲惫且警惕的脸，有些会苦苦哀求延期，有些会试图用破铜烂铁抵债。', stat: 'strength', dc: 12, reward: 10, exp: 10, time: 55, failMsg: '你跑了一整天，只收到几个债务人扔来的零碎铜板。催收部的管事冷笑了一声，丢给你一半跑腿费。', successMsg: '你用了一下午敲开七扇门，收回了三笔欠款。催收部的管事数着金币，在账本上划掉对应名字后，将佣金推到你面前。' },
-            { name: '契约公证处助手', desc: '金丝街上那家小型契约公证处的老恶魔忙得焦头烂额。他需要一个人帮他整理堆积如山的契约文件，协助核对条款中的陷阱和漏洞。你必须逐字检查每一行小字——在贪婪之环，一个不起眼的附属条款足以让签署者倾家荡产。', stat: 'magic', dc: 11, reward: 8, exp: 9, time: 50, failMsg: '你漏掉了两份契约中的关键条款。老恶魔发现后气得用拐杖敲地板，只付了基本工时费。', successMsg: '你发现了一份契约中隐藏的利息陷阱，老恶魔兴奋地拍了桌子。他将那份契约单独归档后，多付了你两枚金币作为奖励。' },
-            { name: '地摊投机倒把', desc: '铜板巷的地下赌场门外，几个投机商正在临时摆摊。他们需要人手帮忙在巷子里吆喝叫卖——商品是一批来源不明但标价极低的"稀世珍品"。你的口才决定了这些垃圾能卖出什么价钱。', stat: 'charisma', dc: 10, reward: 7, exp: 8, time: 45, failMsg: '你的吆喝声淹没在铜板巷的嘈杂中。投机商耸耸肩，分了你几个硬币。', successMsg: '你用三寸不烂之舌将一箱积压的劣质护符吹成了来自人间的古董。投机商笑得合不拢嘴，将利润分成慷慨地塞进你手里。' }
-        ],
-        '暴怒之环': [
-            { name: '角斗场陪练', desc: '血焰角斗场需要一批"沙包"——在正式角斗士热身时充当陪练的活靶子。你不会被杀死，但肯定会疼。训练师递给你一副破旧的皮甲和一柄钝剑，推着你走进满是干涸血迹的铁笼。', stat: 'strength', dc: 13, reward: 12, exp: 14, time: 50, failMsg: '你在笼子里被揍得鼻青脸肿，连最基本的防御架势都没撑住。训练师失望地丢给你几枚硬币当医药费。', successMsg: '你在铁笼里撑过了整整三轮对练。虽然浑身淤青，但训练师拍了拍你的肩膀——"比我想的能抗。下次需要陪练还叫你。"' },
-            { name: '武器工坊淬火', desc: '铁砧大道的武器工坊里，熔炉日夜不熄。你被雇来负责最枯燥的环节——将锻打好的刀坯反复浸入淬火油中，再送进回火炉。这项工作需要稳定的手法和对高温的忍耐力。', stat: 'agility', dc: 10, reward: 6, exp: 8, time: 50, failMsg: '你手抖将刀坯掉进了淬火槽底部，捞出来时刃口已经崩了。工头骂骂咧咧地扣了你一半工资。', successMsg: '你精准地完成了每一把刀坯的淬火和回火。工头用拇指试了试刃口的硬度，难得地咧嘴笑了，将工钱和一小袋磨刀石碎块塞给你。' },
-            { name: '伤兵护理', desc: '碎骨巷的伤兵收容所里挤满了从角斗场抬下来的倒霉蛋。他们断骨错位、伤口化脓，急需有人帮忙换绷带、喂水和按住那些因剧痛而挣扎的伤兵。', stat: 'charisma', dc: 9, reward: 5, exp: 7, time: 40, failMsg: '你笨手笨脚地被一个挣扎的伤兵撞翻在地，打翻了一整盆干净的绷带。护士长用沾着血的手套甩了你一脸水。', successMsg: '你轻声安抚着痛苦的伤兵，熟练地帮他们更换绷带。护士长在结束时分了你一份热汤和几枚硬币。' }
-        ],
-        '色欲之环': [
-            { name: '秀场后台杂役', desc: '霓虹大道的欲焰秀场正在筹备今晚的演出。后台乱成一锅粥——戏服散落一地，道具需要搬运，化妆台前堆满了用过的粉扑和假睫毛。场务总管急需人手在开演前将所有东西归位。', stat: 'agility', dc: 10, reward: 6, exp: 8, time: 45, failMsg: '你不小心打翻了一整盒亮片，场务总管尖叫着将你赶出后台，只扔给你两枚硬币。', successMsg: '你在开演前十分钟将所有戏服按出场顺序挂好。场务总管长舒一口气，将报酬塞进你手里时，顺手在你脸上留了一个带着香水味的指印。' },
-            { name: '陪酒招待', desc: '暗巷深处的一家地下酒馆正在找临时陪酒。你的工作是坐在卡座里，为那些孤独的恶魔倒酒、听他们抱怨地狱的无聊，偶尔附和几句。不需要出卖身体——只需要出卖倾听的耐心。', stat: 'charisma', dc: 11, reward: 9, exp: 9, time: 55, failMsg: '你的木讷让客人更加郁闷了。他喝完最后一杯后挥挥手让你离开，酒保只好付你最低时薪。', successMsg: '你用恰到好处的微笑和适时的附和，让一位中年魅魔把半辈子的故事都倒了出来。临走时他在酒杯下压了丰厚的小费。' },
-            { name: '香水试嗅员', desc: '魅骨时装店的地下室里，一位调香师正在研发新款魅惑香水。她需要"未经训练的鼻子"来测试不同配方的前调、中调和后调。你需要在闻了二十几种香精之后，准确描述每种气味给人的感受。', stat: 'magic', dc: 10, reward: 7, exp: 8, time: 40, failMsg: '你的嗅觉在闻到第十五种香精时彻底失灵了——所有东西闻起来都像发霉的玫瑰。调香师遗憾地付了基础测试费。', successMsg: '你精准地辨识出每一种香精的层次。调香师兴奋地记满了半本笔记本，将报酬和一小管试用装香水塞进你手里。"下次还有新配方，我还找你。"' }
-        ],
-        '嫉妒之环': [
-            { name: '黑水打捞', desc: '水沟区的黑水齐腰深，水面上常年漂浮着从上层环层冲下来的废弃物品。有人专门雇人在黑水中打捞——运气好的话，能捞到完整的旧家具、还能转卖的破损饰品、甚至某位贵族不慎冲进下水道的金笔。', stat: 'strength', dc: 11, reward: 7, exp: 9, time: 50, failMsg: '你在黑水里泡了半天，捞上来的全是无法辨认的破布和锈蚀的铁片。雇主看了一眼就扔回了水里。', successMsg: '你从黑水中捞出了一把还能用的镀银餐具和一只刻着名字的怀表。雇主眯着眼睛端详怀表上的刻字，满意地付了工钱。' },
-            { name: '谣言集市散播', desc: '镜面街区的谣言集市里，一个情报贩子正在招募"扩音器"——将几条真假难辨的消息传遍嫉妒之环的各个角落。你需要在茶馆、栈桥和地下通道之间穿梭，用不经意的口吻把话递出去。', stat: 'charisma', dc: 10, reward: 8, exp: 8, time: 45, failMsg: '你的表演太过刻意，茶馆里的恶魔一眼就看出你是来散布谣言的。情报贩子失望地付了路费。', successMsg: '你像闲聊般将消息洒在三个不同的茶馆里。到傍晚时，谣言已经传遍了整个镜面街区，情报贩子满意地将报酬塞进你手里。' },
-            { name: '仿冒品加工', desc: '镜面街区的深渊镜像工坊正在赶制一批仿冒的"傲慢环水晶吊坠"——实际上只是用普通玻璃染色后打磨而成。你的工作是给这些假吊坠刻上以假乱真的暗纹，让它们看起来像是从晨星高地上捡来的。', stat: 'agility', dc: 12, reward: 9, exp: 10, time: 55, failMsg: '你刻废了好几片玻璃。工坊主捡起残次品对着灯光看了看，皱着眉头付了一半工钱。', successMsg: '你手中的刻刀精准地游走在玻璃表面，每一道暗纹都足以以假乱真。工坊主举起成品对着灯光端详，满意地点了点头。' }
-        ],
-        '暴食之环': [
-            { name: '食材分拣', desc: '美食大道的永饥食品厂后门，堆满了从各环运来的食材原料。你的工作是将腐烂的部分切掉，把勉强能用的部分分拣进不同的筐里。这项工作对胃的承受力是一种考验——腐烂的肉类散发着令人窒息的恶臭。', stat: 'strength', dc: 10, reward: 6, exp: 8, time: 45, failMsg: '你只撑了不到半小时就跑出去吐了两次。工头看着你惨白的脸，叹了口气付了半个工时。', successMsg: '你面不改色地分拣完三大筐食材。工头看着你干净的围裙，竖起拇指——"你是我见过最能扛的新人。"' },
-            { name: '食教传教站帮厨', desc: '食教传教站的执事正在准备今日的免费汤品。他需要人手帮忙削皮、切菜和搅拌那一口永远填不满的大锅。执事一边干活一边低声向你讲述食教的教义——"吞噬是万物最终的归宿"。', stat: 'magic', dc: 10, reward: 7, exp: 9, time: 50, failMsg: '你切菜时不小心切到了手指。执事面无表情地帮你包扎好，但只付了基础帮厨费。', successMsg: '你默契地配合执事的节奏，切菜、投料、搅拌一气呵成。当免费汤品分发完毕时，执事在付你报酬的同时，悄悄往你口袋里塞了一小包干燥的香料。' },
-            { name: '残渣区拾荒', desc: '残渣区的深处，堆积如山的食物残渣中偶尔能翻出还能吃的东西。有人在招募拾荒者——从腐臭的垃圾中翻出还能转卖的边角料。这工作需要敏锐的眼力和强大的胃。', stat: 'agility', dc: 11, reward: 8, exp: 10, time: 50, failMsg: '你翻了半天只找到一堆彻底腐烂的垃圾。雇主捏着鼻子检查后，只付了辛苦费。', successMsg: '你从残渣堆中翻出了半箱还没变质的罐头和几袋包装完好的干粮。雇主惊喜地拍了拍你的背，将报酬和两罐罐头一起递给你。' }
-        ],
-        '懒惰之环': [
-            { name: '帮人躺平', desc: '停滞区的惰性休闲馆正在招募"陪伴躺平员"。你的工作很简单——躺在体验区的躺椅上当活招牌，向路过的恶魔展示躺椅的舒适度。唯一的挑战是不能真的睡着——虽然就算睡着了也没人在乎。', stat: 'charisma', dc: 8, reward: 4, exp: 6, time: 40, failMsg: '你真的睡着了。醒来时发现自己在躺椅上流了一滩口水，休闲馆经理面无表情地扣了一半工资。', successMsg: '你在躺椅上保持着半睡半醒的完美状态，好几个路过的恶魔被你的舒适感感染，当场付钱买了躺椅。经理难得地说了句"干得不错"。' },
-            { name: '文件代交', desc: '懒鬼外包公司的前台趴在一叠积压了数月的文件上，用极其缓慢的语速告诉你——他们需要人帮客户把一份拖延了半年的申请表交到对面那栋楼。距离：不到一百米。原因：客户懒得亲自走过去。', stat: 'agility', dc: 5, reward: 3, exp: 5, time: 20, failMsg: '你也懒得走了。前台用眼神表达了一种惺惺相惜的失望。', successMsg: '你走了不到一百米，将申请表塞进对面楼的信箱。前台用慢动作竖起一根拇指，将报酬推到你面前。' },
-            { name: '灰雾冥想指导', desc: '停滞区的一间低价惰性休闲馆里，几个长期失眠的恶魔正在参加"灰雾冥想"课程。你的工作是坐在他们面前，用最缓慢、最催眠的语调念出指导语，帮助他们进入深层放松状态。', stat: 'magic', dc: 9, reward: 5, exp: 7, time: 35, failMsg: '你的语速太快了，一个学员反而变得更加焦躁。冥想老师无奈地接过指导语，只付了你一半报酬。', successMsg: '你的声音像灰雾一样缓慢而温柔。课程结束时，所有学员都陷入了深沉的睡眠。冥想老师轻手轻脚地将报酬递给你。' }
-        ]
-    };
-
-    var jobs = ringJobs[ring];
-    if (!jobs || jobs.length === 0) {
-        jobs = [
-            { name: '矿场搬运', desc: '在水晶矿场搬运矿石。需要体力。', stat: 'strength', dc: 12, reward: 8, exp: 10, time: 60, failMsg: '你体力不支，只拿到一半报酬。', successMsg: '工作顺利完成！' },
-            { name: '酒馆招待', desc: '在酒馆端盘子。需要魅力。', stat: 'charisma', dc: 10, reward: 6, exp: 8, time: 60, failMsg: '你笨手笨脚，只拿到一半报酬。', successMsg: '工作顺利完成！' },
-            { name: '街头卖艺', desc: '用你的魔力表演杂耍。', stat: 'magic', dc: 10, reward: 7, exp: 9, time: 50, failMsg: '你的表演无人喝彩，只拿到一半报酬。', successMsg: '表演大获成功！' },
-            { name: '暗巷交易', desc: '参与地下交易，需要敏捷和胆量。', stat: 'agility', dc: 12, reward: 12, exp: 12, time: 40, failMsg: '交易搞砸了，只拿到一半报酬。', successMsg: '交易顺利完成！' }
-        ];
-    }
-
-    var job = jobs[Math.floor(Math.random() * jobs.length)];
-    st('<div class="scene-title">工作机会</div><p>' + job.desc + '</p><p>需求：' + statNames[job.stat] + ' ≥ ' + job.dc + '</p>');
-    cb();
-    ab('接受（耗时' + job.time + '分钟）', function() {
-        addTime(job.time);
-        // 工作增加疲劳值
-        player.fatigue = Math.min(player.maxFatigue, player.fatigue + 15 + Math.floor(player.fatigue/10));
-        if (player[job.stat] >= job.dc) {
-            player.gold += job.reward;
-            addExp(job.exp);
-            st('<p>' + (job.successMsg || '工作顺利完成！获得了 ' + job.reward + ' 金币，' + job.exp + ' 经验。') + '</p><p style="color:#e8c060;">获得了 ' + job.reward + ' 金币，' + job.exp + ' 经验。</p>');
-        } else {
-            var half = Math.floor(job.reward / 2);
-            player.gold += half;
-            st('<p>' + (job.failMsg || '你勉强完成，但效果不佳。') + '</p><p style="color:#e85060;">获得了 ' + half + ' 金币。</p>');
-        }
-        cb();
-        ab('返回（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing, 'poor'); });
-    });
-    ab('拒绝', function() { sceneExploreDistrict(player.currentRing, 'poor'); });
-}
-
-// ==================== 商店数据 ====================
+// ==================== 商店数据（扩展） ====================
 var shopData = {
     '傲慢之环': {
-        food: [{ name: '水晶尘饼干', price: 3, hp: 5, desc: '用傲慢环水晶粉末烤制的饼干，口感冰冷。' },{ name: '暗紫能量饮', price: 6, hp: 8, magic: 1, desc: '注入微量星尘能量的饮料，恢复魔力。' },{ name: '冷光薄荷糖', price: 2, hp: 3, sanity: 1, desc: '带着傲慢环特有冷光的糖果，提神醒脑。' }],
-        cloth: [{ name: '暗纹斗篷', price: 15, charisma: 1, desc: '绣有堕天使暗纹的斗篷，魅力+1。' },{ name: '星尘长袍', price: 30, charisma: 2, magic: 1, desc: '用星尘粒子编织的长袍。' },{ name: '傲慢礼帽', price: 10, charisma: 1, desc: '一顶象征身份的礼帽。' }],
-        item: [{ name: '星尘碎片', price: 10, desc: '一小片路西法宫殿附近飘落的星尘。' },{ name: '傲慢之环通行证', price: 25, desc: '允许在中层区域停留3日。' },{ name: '破损的堕天使羽毛', price: 8, desc: '一根失去光泽的羽毛。' }]
+        food: [
+            { name: '水晶尘饼干', price: 3, hp: 5, food: 15, desc: '用傲慢环水晶粉末烤制的饼干，口感冰冷清脆，能略微充饥。', buffs: [{ id: 'crystal_dust', name: '水晶微光', desc: '微弱的魔力恢复，持续30分钟。', type: 'positive', duration: 30 }] },
+            { name: '暗紫能量饮', price: 6, hp: 8, magic: 1, food: 10, desc: '注入微量星尘能量的饮料，能恢复魔力和饱腹感。', buffs: [{ id: 'energy_drink', name: '星尘涌动', desc: '魔力恢复速度提升，持续20分钟。', type: 'positive', duration: 20 }] },
+            { name: '冷光薄荷糖', price: 2, hp: 3, sanity: 1, food: 5, desc: '带着傲慢环特有冷光的糖果，提神醒脑，略微缓解饥饿。' }
+        ],
+        cloth: [
+            { name: '暗纹斗篷', price: 15, charisma: 1, desc: '绣有堕天使暗纹的斗篷，魅力+1。' },
+            { name: '星尘长袍', price: 30, charisma: 2, magic: 1, desc: '用星尘粒子编织的长袍，魅力+2，魔力+1。' },
+            { name: '傲慢礼帽', price: 10, charisma: 1, desc: '一顶象征身份的礼帽，魅力+1。' }
+        ],
+        item: [
+            { name: '星尘碎片', price: 10, desc: '一小片路西法宫殿附近飘落的星尘，蕴含着微弱的魔力。' },
+            { name: '傲慢之环通行证', price: 25, desc: '允许在中层区域停留3日。' },
+            { name: '破损的堕天使羽毛', price: 8, desc: '一根失去光泽的羽毛，据说来自某个低阶堕天使。' }
+        ]
     },
     '贪婪之环': {
-        food: [{ name: '金币巧克力', price: 5, hp: 10, charisma: 1, desc: '镀金巧克力，象征财富。' },{ name: '契约墨水咖啡', price: 4, hp: 6, magic: 1, desc: '用契约墨水调制的咖啡。' },{ name: '碎银面包', price: 2, hp: 4, desc: '掺有银粉的面包。' }],
-        cloth: [{ name: '金丝长衫', price: 20, charisma: 2, desc: '绣满金线的长衫。' },{ name: '商人之帽', price: 12, charisma: 1, desc: '一顶精明的帽子。' },{ name: '镀金眼镜', price: 15, charisma: 1, magic: 1, desc: '玛门同款单片眼镜。' }],
-        item: [{ name: '虚拟股票', price: 20, desc: '一张股市凭证。' },{ name: '收债人徽章', price: 15, desc: '佩戴后可震慑部分债务人。' },{ name: '假币制造模具', price: 30, desc: '风险极高。' }]
+        food: [
+            { name: '金币巧克力', price: 5, hp: 10, charisma: 1, food: 20, desc: '镀金巧克力，象征财富与甜蜜。', buffs: [{ id: 'gold_chocolate', name: '财富之味', desc: '魅力+1，持续1小时。', type: 'positive', duration: 60 }] },
+            { name: '契约墨水咖啡', price: 4, hp: 6, magic: 1, food: 12, desc: '用契约墨水调制的咖啡，苦涩中带着魔力。' },
+            { name: '碎银面包', price: 2, hp: 4, food: 18, desc: '掺有银粉的面包，能填饱肚子。' }
+        ],
+        cloth: [
+            { name: '金丝长衫', price: 20, charisma: 2, desc: '绣满金线的长衫，魅力+2。' },
+            { name: '商人之帽', price: 12, charisma: 1, desc: '一顶精明的帽子，魅力+1。' },
+            { name: '镀金眼镜', price: 15, charisma: 1, magic: 1, desc: '玛门同款单片眼镜，魅力+1，魔力+1。' }
+        ],
+        item: [
+            { name: '虚拟股票', price: 20, desc: '一张股市凭证，可以在恶魔股市交易。' },
+            { name: '收债人徽章', price: 15, desc: '佩戴后可震慑部分债务人。' },
+            { name: '假币制造模具', price: 30, desc: '风险极高，但收益巨大。' }
+        ]
     },
     '暴怒之环': {
-        food: [{ name: '熔岩烤肉', price: 4, hp: 15, strength: 1, desc: '在火山口烤制的肉，充满力量。' },{ name: '怒火辣椒', price: 3, hp: 5, strength: 1, desc: '一口下去怒气上涌。' },{ name: '铁血啤酒', price: 5, hp: 10, fatigue: -10, desc: '角斗士最爱的饮料。' }],
-        cloth: [{ name: '角斗士皮甲', price: 18, strength: 1, desc: '旧角斗场留下的皮甲。' },{ name: '铁拳护腕', price: 10, strength: 1, desc: '一对加重护腕。' },{ name: '血焰披风', price: 25, strength: 2, desc: '边缘燃烧着怒焰的披风。' }],
-        item: [{ name: '碎骨短刀', price: 12, attack: 3, desc: '乌尔里克锻造的短刀，物攻+3。' },{ name: '狂暴药水', price: 8, desc: '暂时提升力量，但会降低理智。' },{ name: '角斗场门票', price: 5, desc: '可观看一场角斗比赛。' }]
+        food: [
+            { name: '熔岩烤肉', price: 4, hp: 15, strength: 1, food: 25, desc: '在火山口烤制的肉，充满力量与热量。', buffs: [{ id: 'lava_meat', name: '熔岩之力', desc: '力量+1，持续1小时。', type: 'positive', duration: 60 }] },
+            { name: '怒火辣椒', price: 3, hp: 5, strength: 1, food: 8, desc: '一口下去怒气上涌，精神焕发。' },
+            { name: '铁血啤酒', price: 5, hp: 10, fatigue: -10, food: 15, desc: '角斗士最爱的饮料，能缓解疲劳。' }
+        ],
+        cloth: [
+            { name: '角斗士皮甲', price: 18, strength: 1, desc: '旧角斗场留下的皮甲，力量+1。' },
+            { name: '铁拳护腕', price: 10, strength: 1, desc: '一对加重护腕，力量+1。' },
+            { name: '血焰披风', price: 25, strength: 2, desc: '边缘燃烧着怒焰的披风，力量+2。' }
+        ],
+        item: [
+            { name: '碎骨短刀', price: 12, attack: 3, desc: '乌尔里克锻造的短刀，物攻+3。' },
+            { name: '狂暴药水', price: 8, desc: '暂时提升力量，但会降低理智。' },
+            { name: '角斗场门票', price: 5, desc: '可观看一场角斗比赛。' }
+        ]
     },
     '色欲之环': {
-        food: [{ name: '欲望蜜酒', price: 6, hp: 8, desire: 2, desc: '能唤起内心欲望的甜酒。' },{ name: '红雾软糖', price: 4, hp: 6, charisma: 1, desc: '用红雾精华制成的软糖。' },{ name: '魅魔之吻', price: 8, hp: 12, desire: 4, desc: '强烈的魅惑饮料。' }],
-        cloth: [{ name: '魅骨丝巾', price: 15, charisma: 2, desc: '提升魅力的丝巾。' },{ name: '欲望晚礼服', price: 35, charisma: 3, desc: '用欲望丝线编织的华丽礼服。' },{ name: '黑色项圈', price: 8, charisma: 1, desc: '阿斯蒙蒂斯同款项圈。' }],
-        item: [{ name: '欲望契约', price: 20, desc: '可与低阶魅魔签订临时契约。' },{ name: '魅惑香水', price: 10, desc: '使用后短时间内魅力大增。' },{ name: '红雾精华', price: 15, desc: '可暂时操控红雾的精华液。' }]
+        food: [
+            { name: '欲望蜜酒', price: 6, hp: 8, desire: 2, food: 12, desc: '能唤起内心欲望的甜酒，让人沉醉。', buffs: [{ id: 'desire_wine', name: '欲望微醺', desc: '欲望+2，魅力+1，持续30分钟。', type: 'positive', duration: 30 }] },
+            { name: '红雾软糖', price: 4, hp: 6, charisma: 1, food: 10, desc: '用红雾精华制成的软糖，甜腻诱人。' },
+            { name: '魅魔之吻', price: 8, hp: 12, desire: 4, food: 8, desc: '强烈的魅惑饮料，欲望高涨。' }
+        ],
+        cloth: [
+            { name: '魅骨丝巾', price: 15, charisma: 2, desc: '提升魅力的丝巾，魅力+2。' },
+            { name: '欲望晚礼服', price: 35, charisma: 3, desc: '用欲望丝线编织的华丽礼服，魅力+3。' },
+            { name: '黑色项圈', price: 8, charisma: 1, desc: '阿斯蒙蒂斯同款项圈，魅力+1。' }
+        ],
+        item: [
+            { name: '欲望契约', price: 20, desc: '可与低阶魅魔签订临时契约。' },
+            { name: '魅惑香水', price: 10, desc: '使用后短时间内魅力大增。' },
+            { name: '红雾精华', price: 15, desc: '可暂时操控红雾的精华液。' }
+        ]
     },
     '嫉妒之环': {
-        food: [{ name: '黑水酸枣', price: 2, hp: 3, desc: '在黑水中浸泡的酸枣。' },{ name: '暗鳍鱼干', price: 4, hp: 8, desc: '水沟区特产鱼干。' },{ name: '镜厅薄荷', price: 5, hp: 5, sanity: 2, desc: '让你在嫉妒中保持一丝清醒。' }],
-        cloth: [{ name: '暗潮斗篷', price: 12, agility: 1, desc: '便于在水沟区潜行的斗篷。' },{ name: '镜片眼镜', price: 10, desc: '模仿利维坦的眼距风格。' },{ name: '仿制君主披风', price: 20, charisma: 1, desc: '拙劣模仿路西法的披风。' }],
-        item: [{ name: '情报水晶', price: 8, desc: '记录一条随机情报的碎片。' },{ name: '黑水毒液', price: 10, desc: '涂在武器上可增加腐蚀效果。' },{ name: '窥视镜', price: 15, desc: '可偷看他人隐私的镜子。' }]
+        food: [
+            { name: '黑水酸枣', price: 2, hp: 3, food: 10, desc: '在黑水中浸泡的酸枣，酸涩难咽但能充饥。' },
+            { name: '暗鳍鱼干', price: 4, hp: 8, food: 20, desc: '水沟区特产鱼干，咸腥而饱腹。' },
+            { name: '镜厅薄荷', price: 5, hp: 5, sanity: 2, food: 6, desc: '让你在嫉妒中保持一丝清醒的薄荷。' }
+        ],
+        cloth: [
+            { name: '暗潮斗篷', price: 12, agility: 1, desc: '便于在水沟区潜行的斗篷，敏捷+1。' },
+            { name: '镜片眼镜', price: 10, desc: '模仿利维坦的眼距风格。' },
+            { name: '仿制君主披风', price: 20, charisma: 1, desc: '拙劣模仿路西法的披风，魅力+1。' }
+        ],
+        item: [
+            { name: '情报水晶', price: 8, desc: '记录一条随机情报的碎片。' },
+            { name: '黑水毒液', price: 10, desc: '涂在武器上可增加腐蚀效果。' },
+            { name: '窥视镜', price: 15, desc: '可偷看他人隐私的镜子。' }
+        ]
     },
     '暴食之环': {
-        food: [{ name: '残渣炖汤', price: 2, hp: 20, desc: '残渣区免费提供的汤。' },{ name: '永饥饼干', price: 3, hp: 10, desc: '吃了反而更饿的饼干。' },{ name: '虚无珍馐套餐', price: 25, hp: 30, all: 1, desc: '高级餐厅的套餐，全面提升属性。' }],
-        cloth: [{ name: '食教长袍', price: 15, magic: 1, desc: '暴食教会的标准服饰。' },{ name: '饕餮围裙', price: 10, strength: 1, desc: '厨师格鲁姆同款围裙。' }],
-        item: [{ name: '饥饿药水', price: 12, desc: '喝下后短时间内不会感到饥饿。' },{ name: '消化酶样本', price: 18, desc: '伊莱亚斯正在研究的强效消化酶。' },{ name: '空间胃袋', price: 30, desc: '小型空间储存袋。' }]
+        food: [
+            { name: '残渣炖汤', price: 2, hp: 20, food: 35, desc: '残渣区免费提供的汤，虽然卖相不佳但非常饱腹。', buffs: [{ id: 'stew_fill', name: '暴食满足', desc: '饱食度恢复速度提升，持续2小时。', type: 'positive', duration: 120 }] },
+            { name: '永饥饼干', price: 3, hp: 10, food: 15, desc: '吃了反而更饿的饼干，但能暂时填满胃。' },
+            { name: '虚无珍馐套餐', price: 25, hp: 30, all: 1, food: 50, desc: '高级餐厅的套餐，全面提升属性，极度饱腹。' }
+        ],
+        cloth: [
+            { name: '食教长袍', price: 15, magic: 1, desc: '暴食教会的标准服饰，魔力+1。' },
+            { name: '饕餮围裙', price: 10, strength: 1, desc: '厨师格鲁姆同款围裙，力量+1。' }
+        ],
+        item: [
+            { name: '饥饿药水', price: 12, desc: '喝下后短时间内不会感到饥饿。' },
+            { name: '消化酶样本', price: 18, desc: '伊莱亚斯正在研究的强效消化酶。' },
+            { name: '空间胃袋', price: 30, desc: '小型空间储存袋。' }
+        ]
     },
     '懒惰之环': {
-        food: [{ name: '灰雾软糖', price: 2, hp: 4, sanity: 2, desc: '由惰性灰雾凝成的糖。' },{ name: '怠惰茶', price: 3, hp: 3, fatigue: -20, desc: '一杯热茶，大幅缓解疲劳。' },{ name: '虚无躺椅饼干', price: 5, hp: 8, desc: '模仿躺椅形状的饼干。' }],
-        cloth: [{ name: '灰雾披肩', price: 10, sanity: 1, desc: '让你随时都想躺下的披肩。' },{ name: '懒人拖鞋', price: 5, agility: -1, desc: '极度舒适的拖鞋。' }],
-        item: [{ name: '惰性能量块', price: 8, desc: '可用来短暂降低敌人行动力。' },{ name: '睡眠符咒', price: 12, desc: '贴在身上可快速入睡。' },{ name: '懒鬼服务券', price: 5, desc: '可委托懒鬼公司做一件事。' }]
+        food: [
+            { name: '灰雾软糖', price: 2, hp: 4, sanity: 2, food: 10, desc: '由惰性灰雾凝成的糖，让人放松。' },
+            { name: '怠惰茶', price: 3, hp: 3, fatigue: -20, food: 8, desc: '一杯热茶，大幅缓解疲劳。' },
+            { name: '虚无躺椅饼干', price: 5, hp: 8, food: 18, desc: '模仿躺椅形状的饼干，适合躺着吃。' }
+        ],
+        cloth: [
+            { name: '灰雾披肩', price: 10, sanity: 1, desc: '让你随时都想躺下的披肩，理智+1。' },
+            { name: '懒人拖鞋', price: 5, agility: -1, desc: '极度舒适的拖鞋，敏捷-1。' }
+        ],
+        item: [
+            { name: '惰性能量块', price: 8, desc: '可用来短暂降低敌人行动力。' },
+            { name: '睡眠符咒', price: 12, desc: '贴在身上可快速入睡。' },
+            { name: '懒鬼服务券', price: 5, desc: '可委托懒鬼公司做一件事。' }
+        ]
     }
 };
+
 function enterShop(type) {
     var ring = player.currentRing;
     var items = shopData[ring] ? shopData[ring][type] : [];
@@ -1017,60 +1759,40 @@ function enterShop(type) {
     html += '<p style="color:#8a5a62;font-size:0.78em;margin-bottom:6px;">📦 可购买物品：</p>';
     for (var i = 0; i < items.length; i++) {
         var it = items[i];
-        html += '<p>· ' + it.name + ' <span style="color:#e8c060;">' + it.price + 'G</span> — ' + (it.desc || '') + '</p>';
+        var extra = '';
+        if (it.food) extra += ' 🍖+' + it.food;
+        if (it.hp) extra += ' ❤️+' + it.hp;
+        if (it.strength) extra += ' 💪+' + it.strength;
+        if (it.charisma) extra += ' 💋+' + it.charisma;
+        if (it.magic) extra += ' ✨+' + it.magic;
+        if (it.sanity) extra += ' 🧠+' + it.sanity;
+        html += '<p>· ' + it.name + ' <span style="color:#e8c060;">' + it.price + 'G</span> — ' + (it.desc || '') + extra + '</p>';
+        if (it.buffs) {
+            for (var b = 0; b < it.buffs.length; b++) {
+                html += '<p style="font-size:0.65em;color:#80c080;padding-left:16px;">✨ ' + it.buffs[b].name + ': ' + it.buffs[b].desc + '</p>';
+            }
+        }
     }
     html += '</div>';
     html += '<p style="color:#8a5a62;font-size:0.78em;margin-top:8px;">请选择要购买的物品：</p>';
     st(html);
     cb();
-    
+
     for (var i = 0; i < items.length; i++) {
         (function(item) {
             ab('购买 ' + item.name + '（' + item.price + 'G）', function() {
                 if (player.gold >= item.price) {
                     player.gold -= item.price;
-
+                    var effects = { hp: item.hp || 0, strength: item.strength || 0, magic: item.magic || 0, charisma: item.charisma || 0, sanity: item.sanity || 0, desire: item.desire || 0, fatigue: item.fatigue || 0, food: item.food || 0, buffs: item.buffs || [] };
                     if (type === 'food') {
-                        addItem(
-                            item.name.replace(/\s/g,'_'),
-                            item.name,
-                            'consumable',
-                            item.desc,
-                            1,
-                            {
-                                hp: item.hp || 0,
-                                strength: item.strength || 0,
-                                magic: item.magic || 0,
-                                charisma: item.charisma || 0,
-                                sanity: item.sanity || 0,
-                                desire: item.desire || 0,
-                                fatigue: item.fatigue || 0
-                            }
-                        );
-                    }
-                    else if (type === 'cloth') {
+                        addItem(item.name.replace(/\s/g,'_'), item.name, 'consumable', item.desc, 1, effects);
+                    } else if (type === 'cloth') {
                         unequipCurrentCloth();
                         equipCloth(item);
-                        addItem(
-                            item.name.replace(/\s/g,'_'),
-                            item.name,
-                            'armor',
-                            item.desc,
-                            1,
-                            {
-                                charisma: item.charisma || 0,
-                                strength: item.strength || 0,
-                                magic: item.magic || 0,
-                                agility: item.agility || 0,
-                                sanity: item.sanity || 0
-                            },
-                            true
-                        );
+                        addItem(item.name.replace(/\s/g,'_'), item.name, 'armor', item.desc, 1, { charisma: item.charisma || 0, strength: item.strength || 0, magic: item.magic || 0, agility: item.agility || 0, sanity: item.sanity || 0, buffs: item.buffs || [] }, true);
+                    } else if (type === 'item') {
+                        addItem(item.name.replace(/\s/g,'_'), item.name, 'misc', item.desc, 1, { buffs: item.buffs || [] });
                     }
-                    else if (type === 'item') {
-                        addItem(item.name.replace(/\s/g,'_'), item.name, 'misc', item.desc);
-                    }
-
                     ua();
                     st('<p>✅ 你购买了 <span style="color:#e8c060;">' + item.name + '</span>。</p>');
                 } else {
@@ -1089,7 +1811,8 @@ function enterShop(type) {
 function travelToRing(ring) {
     if (ring === player.currentRing) { sceneExploreDistrict(ring, 'poor'); return; }
     var cost = 5; var time = 60 + Math.floor(Math.random()*30);
-    st('<p>前往' + ring + '需要乘坐跨环马车，花费' + cost + '金币，耗时约' + time + '分钟。</p>'); cb();
+    st('<p>前往' + ring + '需要乘坐跨环马车，花费' + cost + '金币，耗时约' + time + '分钟。</p>');
+    cb();
     ab('支付并出发（-' + cost + '金币，耗时' + time + '分钟）', function() {
         if (player.gold >= cost) { player.gold -= cost; addTime(time); player.currentRing = ring; player.residenceRing = ring; ua(); sceneExploreDistrict(ring, 'poor'); }
         else { st('<p class="highlight">金币不足。</p>'); cb(); ab('返回', function() { sceneExploreDistrict(player.currentRing, 'poor'); }); }
@@ -1229,9 +1952,9 @@ function sceneTutorialOption1(ring) {
             if (player.gold >= 5) {
                 player.gold -= 5;
                 player.flags[flagKey] = true;
-                addItem('mystery_soup', '格鲁姆的秘制浓汤（残渣）', 'consumable', '一碗用残渣区食材熬制的浓汤。虽然不知道里面放了什么，但确实能让人恢复体力。使用后恢复15HP。', 1, { hp: 15 });
+                addItem('mystery_soup', '格鲁姆的秘制浓汤（残渣）', 'consumable', '一碗用残渣区食材熬制的浓汤。虽然不知道里面放了什么，但确实能让人恢复体力。使用后恢复15HP，饱食+20。', 1, { hp: 15, food: 20 });
                 ua();
-                st('<div class="scene-title">一 碗 热 汤</div><p>格鲁姆用大汤勺舀了一碗深色的液体递给你。碗里的液体浓稠得几乎像粥，表面浮着一层金色的油光。你把碗举到嘴边——那味道难以形容。有肉的鲜美，有香料的辛辣，还有一种说不清道不明的回甘。一口下去，你的整个身体都感到了一阵暖意。格鲁姆还贴心地用一个小罐子装了一份让你带走。<em>留着路上喝。凉了也没关系——我的汤凉了也好喝。</em></p><p style="color:#e8c060;">失去5金币。获得道具：格鲁姆的秘制浓汤（使用后恢复15HP）。</p>');
+                st('<div class="scene-title">一 碗 热 汤</div><p>格鲁姆用大汤勺舀了一碗深色的液体递给你。碗里的液体浓稠得几乎像粥，表面浮着一层金色的油光。你把碗举到嘴边——那味道难以形容。有肉的鲜美，有香料的辛辣，还有一种说不清道不明的回甘。一口下去，你的整个身体都感到了一阵暖意。格鲁姆还贴心地用一个小罐子装了一份让你带走。<em>留着路上喝。凉了也没关系——我的汤凉了也好喝。</em></p><p style="color:#e8c060;">失去5金币。获得道具：格鲁姆的秘制浓汤（使用后恢复15HP，饱食+20）。</p>');
                 cb();
                 ab('离开棚子', function() { sceneExploreDistrict(ring, 'poor'); });
             } else {
@@ -1392,8 +2115,8 @@ var RD = {
     '傲慢之环': {
         poor: {
             name: '灰烬区',
-            desc: '傲慢环最底层的区域。暗紫色的光芒到这里已经稀薄。罪人和低阶恶魔混杂在此。',
-            features: ['破旧酒馆', '废弃水晶矿场', '低阶市场', '流浪者聚集地'],
+            desc: '傲慢环最底层的区域。暗紫色的光芒到这里已经稀薄。罪人和低阶恶魔混杂在此。街道两侧是歪斜的石砌建筑，有些门扉紧闭，有些透出微弱的光。空气中飘浮着细小的水晶粉尘，在冷光中闪烁如星尘。',
+            features: ['破旧酒馆', '废弃水晶矿场', '低阶市场', '流浪者聚集地', '暗巷角落'],
             featureScenes: {
                 '破旧酒馆': function(ring, level) { sceneTavernTutorialIntro(ring, level); },
                 '废弃水晶矿场': function(ring, level) {
@@ -1403,8 +2126,66 @@ var RD = {
                     ab('返回', function() { sceneExploreDistrict(ring, level); });
                     addNpcButton('莱利', ring, level);
                 },
-                '低阶市场': '灰烬区的低阶市场是一个露天的交易场所。几张歪斜的桌子拼在一起，上面摆满了各种来源不明的商品——旧武器、破损的护甲、来历不明的水晶碎片、甚至一些看起来像是从活物身上取下来的器官。商贩们用沙哑的嗓子叫卖着，价格可以讨价还价。',
-                '流浪者聚集地': '在灰烬区最偏僻的角落，有一片流浪者聚集地。这里挤满了没有固定居所的低阶恶魔和罪人。他们用废弃的材料搭建了简陋的棚屋，围坐在用废铁桶改成的火堆旁取暖。空气中弥漫着绝望和劣质酒精的气味。'
+                '低阶市场': function(ring, level) {
+                    st('<div class="scene-title">低阶市场</div><p>灰烬区的低阶市场是一个露天的交易场所。几张歪斜的桌子拼在一起，上面摆满了各种来源不明的商品——旧武器、破损的护甲、来历不明的水晶碎片、甚至一些看起来像是从活物身上取下来的器官。商贩们用沙哑的嗓子叫卖着，价格可以讨价还价。</p><p>一个商贩向你招手："嘿，新面孔！看看这个——上好的傲慢环水晶碎片，只要8金币！"</p>');
+                    addTime(5);
+                    cb();
+                    ab('购买水晶碎片（8金币）', function() {
+                        if (player.gold >= 8) { player.gold -= 8; addItem('crystal_frag_' + Date.now(), '傲慢水晶碎片', 'material', '一块拇指大小的暗紫色水晶碎片，散发着微弱的冷光。', 1); st('<p>你买下了一块水晶碎片。</p>'); } else { st('<p class="highlight">金币不足。</p>'); }
+                        cb(); ab('返回', function() { sceneExploreDistrict(ring, level); });
+                    });
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
+                },
+                '流浪者聚集地': function(ring, level) {
+                    st('<div class="scene-title">流浪者聚集地</div><p>在灰烬区最偏僻的角落，有一片流浪者聚集地。这里挤满了没有固定居所的低阶恶魔和罪人。他们用废弃的材料搭建了简陋的棚屋，围坐在用废铁桶改成的火堆旁取暖。空气中弥漫着绝望和劣质酒精的气味。</p><p>一个老者抬头看了看你，用一种沙哑的声音说："新来的？这里没什么值钱的东西——但如果你需要消息，可以问问那边的瘸腿恶魔。他什么都知道，就是不太爱说话。"</p>');
+                    addTime(5);
+                    cb();
+                    ab('和瘸腿恶魔交谈（耗时10分钟）', function() {
+                        addTime(10);
+                        var r = Math.random();
+                        if (r < 0.3) {
+                            st('<p>瘸腿恶魔低声告诉你："东边矿场深处有一条密道，通往中层区域。但那里盘踞着一些危险的东西。"</p><p style="color:#e8c060;">获得情报：废弃矿场密道。</p>');
+                        } else if (r < 0.6) {
+                            st('<p>他摇了摇头："今天不想说话。改天吧。"</p>');
+                        } else {
+                            st('<p>他看了你一眼："你身上有金币吗？有的话我可以告诉你一些有趣的事。"</p>');
+                            cb();
+                            ab('给他3金币', function() {
+                                if (player.gold >= 3) { player.gold -= 3; st('<p>他接过金币，压低声音："贪婪环的金丝街最近不太平——有人在大规模收购灵魂碎片。如果你有货，可以去那里碰碰运气。"</p>'); } else { st('<p class="highlight">金币不足。</p>'); }
+                                cb(); ab('返回', function() { sceneExploreDistrict(ring, level); });
+                            });
+                            ab('拒绝', function() { sceneExploreDistrict(ring, level); });
+                            return;
+                        }
+                        cb(); ab('返回', function() { sceneExploreDistrict(ring, level); });
+                    });
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
+                },
+                '暗巷角落': function(ring, level) {
+                    st('<div class="scene-title">暗巷角落</div><p>一条狭窄的暗巷，两侧是高耸的石墙，墙面上爬满了暗色的苔藓。巷子深处传来滴水声和某种低沉的呻吟。地上散落着一些破碎的陶器和几根发黑的骨头。</p><p>你注意到墙角有一个人影蜷缩着——他似乎在发抖。</p>');
+                    addTime(5);
+                    cb();
+                    ab('靠近查看', function() {
+                        addTime(5);
+                        var r = Math.random();
+                        if (r < 0.4) {
+                            st('<p>你靠近后，发现那是一个受伤的恶魔。他的腹部有一道深可见骨的伤口，正在渗血。他看到你，用微弱的声音说："……帮帮我……"</p>');
+                            cb();
+                            ab('帮他包扎（耗时10分钟）', function() {
+                                addTime(10);
+                                player.hp = Math.min(player.maxHp, player.hp + 5);
+                                player.gold += 3;
+                                st('<p>你撕下衣角帮他包扎好了伤口。他感激地看着你："谢谢你……我没什么值钱的东西，但这些金币你拿着。"你获得3金币，HP+5。</p>');
+                                cb(); ab('返回', function() { sceneExploreDistrict(ring, level); });
+                            });
+                            ab('无视他，离开', function() { st('<p>你看了他一眼，然后转身离开了。身后传来一声微弱的叹息。</p>'); cb(); ab('返回', function() { sceneExploreDistrict(ring, level); }); });
+                        } else {
+                            st('<p>那是一个醉汉，只是靠在墙边打盹。你白紧张了一场。</p>');
+                            cb(); ab('返回', function() { sceneExploreDistrict(ring, level); });
+                        }
+                    });
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
+                }
             }
         },
         middle: { name: '星尘区', desc: '君主直属手下的居所。建筑整齐而冰冷，由暗色石材建成。街道干净但毫无生气。', features: ['审判厅附属建筑', '执事宿舍', '档案库', '训练场'] },
@@ -1413,7 +2194,7 @@ var RD = {
     '贪婪之环': {
         poor: {
             name: '铜板巷',
-            desc: '破产商人、被榨干的债务人聚居地。玛门商行的收债人每周来三次。',
+            desc: '破产商人、被榨干的债务人聚居地。玛门商行的收债人每周来三次。空气中弥漫着铜锈和绝望的气息。',
             features: ['诚信典当行', '债奴工坊', '地下赌场', '收债人据点'],
             featureScenes: {
                 '诚信典当行': function(ring, level) { sceneRingTutorial(ring, level); }
@@ -1425,7 +2206,7 @@ var RD = {
     '暴怒之环': {
         poor: {
             name: '碎骨巷',
-            desc: '失败角斗士、逃兵、付不起保护费的小贩挤在这里。斗殴随时发生。',
+            desc: '失败角斗士、逃兵、付不起保护费的小贩挤在这里。斗殴随时发生。空气中弥漫着铁锈和血腥味。',
             features: ['碎骨铁匠铺', '废兵器回收铺', '廉价酒馆', '伤兵收容所'],
             featureScenes: {
                 '碎骨铁匠铺': function(ring, level) { sceneRingTutorial(ring, level); }
@@ -1437,7 +2218,7 @@ var RD = {
     '色欲之环': {
         poor: {
             name: '暗巷',
-            desc: '被榨干欲望的傀儡、失宠魅魔徘徊之地。灯光昏暗。',
+            desc: '被榨干欲望的傀儡、失宠魅魔徘徊之地。灯光昏暗，空气中弥漫着甜腻的香水味和更原始的体液气息。',
             features: ['暗红之门', '地下契约所', '失宠者收容所'],
             featureScenes: {
                 '暗红之门': function(ring, level) { sceneRingTutorial(ring, level); },
@@ -1456,7 +2237,7 @@ var RD = {
     '嫉妒之环': {
         poor: {
             name: '水沟区',
-            desc: '常年浸泡在黑水中的最低洼区域。水质腐蚀一切光鲜。',
+            desc: '常年浸泡在黑水中的最低洼区域。水质腐蚀一切光鲜。水面上漂浮着各种被丢弃的物品和碎片。',
             features: ['栈桥下的阴影', '暗潮之眼下级据点', '黑水浸泡区'],
             featureScenes: {
                 '栈桥下的阴影': function(ring, level) { sceneRingTutorial(ring, level); }
@@ -1468,7 +2249,7 @@ var RD = {
     '暴食之环': {
         poor: {
             name: '残渣区',
-            desc: '堆满食物残渣的垃圾处理区。空气中弥漫腐烂和发酵气味。',
+            desc: '堆满食物残渣的垃圾处理区。空气中弥漫腐烂和发酵气味。地面湿滑油腻。',
             features: ['铁锅旁的棚子', '永饥食品厂废弃物区', '拾荒者营地'],
             featureScenes: {
                 '铁锅旁的棚子': function(ring, level) { sceneRingTutorial(ring, level); },
@@ -1487,7 +2268,7 @@ var RD = {
     '懒惰之环': {
         poor: {
             name: '停滞区',
-            desc: '待太久的恶魔会逐渐失去行动力。地上散落着分不清是睡着还是消亡的身影。',
+            desc: '待太久的恶魔会逐渐失去行动力。地上散落着分不清是睡着还是消亡的身影。灰雾弥漫。',
             features: ['灰雾中的躺椅', '惰性休闲馆（低价）', '长期沉睡者收容站'],
             featureScenes: {
                 '灰雾中的躺椅': function(ring, level) { sceneRingTutorial(ring, level); }
@@ -1497,6 +2278,7 @@ var RD = {
         rich: { name: '虚无之床', desc: '贝尔芬格的永恒休憩之所。靠近就会感到无法抵抗的困意。', features: ['贝尔芬格沉睡处', '惰性力场核心', '禁入——靠近就会睡着'] }
     }
 };
+
 // 中层区域事件
 var middleRingScenes = {
     '傲慢之环': { name: '星尘区', desc: '你踏入了星尘区。这里是傲慢环的中层——君主直属手下的居所。低阶堕天使、审判厅的文书官、执事们在此居住与工作。建筑由暗色石材建成，每一块都经过精确的切割，棱角分明。街道干净得近乎冷酷——没有灰烬区的污渍，也没有晨星高地的辉煌。这里的一切都被一种冰冷的秩序所统治。每一个行人都穿着规整的制服，步履匆匆，面无表情。偶尔有几个低阶堕天使从你身边走过，他们的翅膀被整齐地折叠在背后，羽尖泛着暗紫色的微光。一个执事模样的恶魔站在公告栏前，正在张贴新的审判日程。', events: [{ name: '📋 查看公告栏', desc: '公告栏上贴着最近的审判安排和招募信息。你仔细看了看——上面写着审判厅正在招募低阶文书官，要求是能读写地狱通用语。你目前还不符合条件，但至少知道了一条潜在的职业路径。一个正在看公告的执事注意到了你的目光：<em>想应征？先把通用语学好。审判厅不收文盲。</em>', effect: '获得情报：审判厅招募文书官' }, { name: '💬 与路过的小贩交谈', desc: '一个推着木车的小贩在街角售卖水晶碎片——据说是从晨星高地的边缘捡来的边角料。他用沙哑的声音向你推销：<em>真正的傲慢环水晶，能让你在灰烬区显得与众不同。只要20金币一块。不贵——比起真正的地位，这点钱算什么？</em>', effect: '可购买水晶碎片（20金币）' }, { name: '🏛️ 参观训练场', desc: '星尘区的训练场是低阶堕天使们进行战斗训练的地方。你站在围栏外观看了一会儿——两个年轻的堕天使正在用木剑对练，他们的动作精准而优雅，每一击都经过了精密的计算。一个教官模样的老堕天使注意到了你：<em>新面孔？想加入训练的话，需要得到执事长的许可。不过——</em>他上下打量了你一番——<em>你大概还差得远。</em>', effect: '获得经验值+5' }] },
@@ -1507,6 +2289,7 @@ var middleRingScenes = {
     '暴食之环': { name: '美食大道', desc: '美食大道——暴食之环的饕餮天堂。从低端的"深渊秽食自助"到高端的"虚无珍馐会所"，各种档次的餐饮场所鳞次栉比。空气中混合着数百种食物的香气——烤肉的焦香、甜点的奶油味、发酵酒类的醇香、以及某种更深层的、让人无法抑制地感到饥饿的原始气息。你的胃在你踏入这条街的瞬间就开始咕咕作响。永饥食品厂的巨大烟囱在远处冒着暗色的烟雾，食教的传教站门口站着一个身穿执事袍的恶魔，正在向路人分发免费的汤品样品。', events: [{ name: '🍽️ 虚无珍馐会所', desc: '虚无珍馐会所的大门由两根巨大的骨头拱卫。门口的侍者穿着洁白的制服——在暴食之环，白色是最难保持的颜色。<em>欢迎。今晚的主厨推荐是"时间慢炖地狱牛尾"——用时间碎片慢炖了三百年的牛尾。价格是60金币一位。当然——</em>他看了看你的衣着——<em>我们也有更实惠的午间套餐，30金币。</em>', effect: '可购买珍馐套餐（30-60金币）' }, { name: '🥘 食教传教站', desc: '食教传教站的执事递给你一小杯暗色的汤品——免费的。<em>尝尝看。</em>他微笑着说，<em>这是用暴食之环最普通的食材熬制的。但如果你加入食教——</em>他的眼睛中闪过一丝蓝绿色的光芒——<em>你可以品尝到更高级的食材。天使的羽翼碎片、人类的记忆精华、甚至空间本身的边角料。一切都可以被吞噬。一切都可以成为你的养分。</em>', effect: '获得免费汤品（恢复5HP），了解食教' }, { name: '🍖 深渊秽食自助', desc: '深渊秽食自助的门面简陋得几乎像一个垃圾站——但门口的队伍却排得很长。一个服务员站在门口收钱：<em>5金币一位，随便吃！不限量！吃到你走不动为止！</em>从门口飘出来的气味混合了各种廉价食材的味道——不精致，但量大管饱。', effect: '可购买自助餐（5金币，恢复10HP）' }] },
     '懒惰之环': { name: '慵懒大道', desc: '慵懒大道——懒惰之环的居民区。时间在这里流动得极为缓慢，空气像温吞的糖浆包裹着一切。虚无躺椅总店的门口陈列着各种型号的躺椅——从基础款到可以自动调节惰性能量的豪华款。懒鬼外包公司的办事员们以令人抓狂的低效率处理着其他环委托来的事务，但没有人催促他们——在懒惰之环，催促本身就是一种冒犯。惰性能量采集站的巨大管道从地面延伸到灰雾深处，发出低沉的嗡嗡声。路边的长椅上躺着几个半睡半醒的恶魔，他们的呼吸缓慢到几乎不可察觉。', events: [{ name: '🛋️ 虚无躺椅总店', desc: '虚无躺椅总店的店员——一个几乎被灰雾完全包裹的恶魔——用极其缓慢的语速向你介绍：<em>这……是……我们……的……基础……款……只要……20……金币……可以……让你……更快……入睡……这……是……豪华……款……50……金币……自带……惰性……力场……调节……功能……</em>你听了整整五分钟才听完两句话。', effect: '可购买虚无躺椅（20-50金币）' }, { name: '📄 懒鬼外包公司', desc: '懒鬼外包公司的前台趴在一个抱枕上，抬头看了你一眼——那个动作花了十秒钟。<em>有……什么……需要……委托……的……吗……？</em>你看了看墙上的服务列表：文件抄写（3个工作日——但通常需要两周）、低阶清洁（可能只扫一半）、消息传递（如果传递者没有中途睡着的话）。价格倒是非常便宜——每项服务只要2金币。', effect: '可委托懒鬼公司服务（2金币起）' }, { name: '🌫️ 惰性能量采集站', desc: '惰性能量采集站的门口站着一个身穿灰色制服的技术员——在懒惰之环，能站着工作已经是最高级别的勤快了。他看到你走近，懒洋洋地指了指墙上的价目表：<em>惰性能量提取——10金币。让你在一小时内完全放松。副作用是可能会睡过头。不过——</em>他打了个呵欠——<em>在懒惰之环，睡过头是正常的。</em>', effect: '可购买惰性能量提取（10金币，恢复10理智，但可能触发随机睡眠事件）' }] }
 };
+
 function renderMiddleRing(ring) {
     var scene = middleRingScenes[ring];
     if (!scene) { sceneExploreDistrict(ring, 'poor'); return; }
@@ -1534,6 +2317,7 @@ function renderMiddleRing(ring) {
     ab('👗 服装店', function() { enterShop('cloth'); });
     ab('🍽️ 食品店', function() { enterShop('food'); });
     ab('📦 道具店', function() { enterShop('item'); });
+    ab('🌙 黑市（22:00-02:00）', function() { enterBlackMarket(); });
     ab('返回贫民区（耗时10分钟）', function() { addTime(10); sceneExploreDistrict(ring, 'poor'); });
     ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
     ab('📋 打开属性面板', function() { toggleSidebar(); });
@@ -1541,6 +2325,7 @@ function renderMiddleRing(ring) {
 
 // ==================== 酒馆新手教程 ====================
 function sceneTavernTutorialIntro(ring, level) {
+    // 修复BUG：确保一次性完成
     if (player.flags.tavernTutorialDone) {
         st('<div class="scene-title">灰 烬 区 · 破 旧 酒 馆</div><p>你再次推开酒馆的木门。里面的景象和上次一样——几张歪斜的桌子，独眼酒保在吧台后面擦着杯子，角落里蜷缩着几个醉鬼。空气中弥漫着劣质酒精和硫磺的气味。</p><p>你扫了一眼角落——那个曾经坐着扎里克的桌子现在是空的。只有桌面上几道深深的刀痕证明他曾经在那里待过。酒保朝你点了点头，没有多说什么。这里不再有新手教程等着你了。</p><p style="color:#9a6a6a;font-size:0.82em;">（新手教程已完成。酒馆现在是普通的探索地点。）</p>');
         cb();
@@ -1706,7 +2491,6 @@ function sceneTavernMurder() {
 
 // ==================== 场景函数 ====================
 function sceneTitle() {
-    // 自动加载存档
     var saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
         try {
@@ -1715,13 +2499,15 @@ function sceneTitle() {
         } catch(e) {}
     }
     stage = 'title'; selectedRace = ''; player.race = ''; st('<div style="text-align:center;padding:30px 0;"><div style="font-size:1.6em;letter-spacing:0.12em;color:#e8c060;text-shadow:0 0 20px rgba(200,60,40,0.5);margin-bottom:6px;">七 环 地 狱</div><div style="color:#9a5a5a;font-size:0.8em;letter-spacing:0.1em;">—— 傲慢之醒 ——</div><div class="divider">◆ ◆ ◆</div><p>在人间与天堂之下，横亘着<span class="highlight">七环地狱</span>。七个环形领域层层嵌套，每一环由一位原罪君主统治。</p><p>你即将坠入这片永恒黑暗。你是谁？</p></div>'); cb(); ab('🔥 开始角色创建', function() { sceneCreate(); }, 'primary-btn'); }
+
 function sceneCreate() { stage = 'create'; selectedRace = ''; selectedGender = ''; st('<div class="scene-title">角 色 创 建</div><p>选择你的<span class="highlight">种族</span>：</p><p><span class="highlight">罪人</span>：曾是人类，犯下罪孽后坠入地狱。在傲慢之环接受路西法的审判。</p><p><span class="gold-text">原生恶魔</span>：诞生于地狱混沌能量。在诞生环直接觐见君主。每个环有独特的诞生场景和君主对话。</p><div class="input-group"><div class="race-select" id="race-btns"><span class="clickable" id="race-sinner" onclick="sr(\'sinner\')">⚰️ 罪人</span><span class="clickable" id="race-demon" onclick="sr(\'demon\')">👿 原生恶魔</span></div></div><div id="race-desc" style="font-size:0.85em;color:#9a6a6a;margin-top:8px;"></div><p style="margin-top:10px;">选择你的<span class="highlight">性别</span>：</p><div class="input-group"><div class="race-select" id="gender-btns"><span class="clickable" id="gender-male" onclick="sg(\'male\')">♂ 男性</span><span class="clickable" id="gender-female" onclick="sg(\'female\')">♀ 女性</span></div></div><div class="input-group" style="margin-top:12px;"><label>输入你的<span class="highlight">姓名</span>：</label><input type="text" id="name-input" placeholder="输入姓名……" maxlength="20"></div>'); cb(); ab('✅ 确认并继续', function() { var nv = document.getElementById('name-input').value.trim(); if (!selectedRace) { st('<p class="highlight">请先选择种族！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!selectedGender) { st('<p class="highlight">请先选择性别！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!nv) { st('<p class="highlight">请输入姓名！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } player.name = nv; player.race = selectedRace; player.gender = selectedGender; ua(); if (selectedRace === 'sinner') { sceneSinSelect(); } else { sceneDemonBirthRing(); } }, 'primary-btn'); }
+
 function sr(race) { selectedRace = race; document.getElementById('race-sinner').classList.toggle('active', race === 'sinner'); document.getElementById('race-demon').classList.toggle('active', race === 'demon'); var d = document.getElementById('race-desc'); if (race === 'sinner') d.innerHTML = '<span class="highlight">罪人</span>——背负生前罪孽。在傲慢环接受路西法审判。初始理智-3。'; else d.innerHTML = '<span class="gold-text">原生恶魔</span>——在诞生环觐见君主。初始理智+3，随机属性+3。每个环有独特的诞生场景和君主对话。'; }
+
 function sg(gender) { selectedGender = gender; document.getElementById('gender-male').classList.toggle('active', gender === 'male'); document.getElementById('gender-female').classList.toggle('active', gender === 'female'); }
 
 // ==================== 罪人生前背景故事库 ====================
 var sinBackstories = {
-
     '傲慢': [{ crime: '你是一位天才外科医生。从医学院毕业那天起，你的导师就说你拥有"神之手"——精准、稳定、从不颤抖。你救过三百条命。每一个被你切开又缝合的身体，都是你才华的证明。但你忘记了一件事：你不是神。在一次高难度心脏手术中，助手反复提醒你患者的血压正在危险下降。你连头都没抬——你从不听助手的话，因为你觉得他们不配。患者死在了手术台上。事后你伪造了病历，把责任推给了那位助手。他在法庭上哭了。你没有任何感觉。直到某天深夜，他在停车场等着你。', flavor: '刀尖刺入时，你脑中闪过的不是疼痛，而是那句"我怎么可能错"。你救过三百条命，但你始终认为那是理所应当。直到冰冷的停车场地面告诉你——你也不过是一具肉体。' },{ crime: '你是某跨国企业的CEO。从白手起家到行业巨头，你用了二十年。你的座右铭刻在办公室的墙上：商场如战场，弱者活该被淘汰。你主导的商业欺诈导致数万人失业，数十家供应商破产。当记者在镜头前质问你时，你微笑着说：我只是做了一个商人该做的事。三年后的一个雨夜，一位破产供应商的老板闯入了你的办公室。他手里拿着的东西，不是你惯常见到的合同。', flavor: '枪响时你还在整理领带。你最后看到的东西，是自己倒映在落地窗上的脸——那张脸上没有恐惧，只有不可思议。你到死都不相信，有人会因为"钱"这种东西杀人。' }],
     '暴怒': [{ crime: '你在公司被上司当众羞辱了整整十年。十年。每天早上走进办公室，你都能听到同事的窃窃私语。他在会议上把你的方案扔在地上，在茶水间叫你废物，在年会舞台上当着一千人的面模仿你的口吃。你忍了十年。然后某天下午，当他又一次把你的报告摔在桌上时，你拿起了旁边的办公椅。之后的事情像一部快进的电影——你砸了他十七下。然后你点燃了办公室。火焰蔓延到整个楼层。七名同事没能逃出来。你坐在火焰中央，看着这一切发生，感到了一种从未有过的平静。浓烟灌入肺部的最后一刻，你想：这比忍耐容易多了。', flavor: '火焰比你想象中更吵。它吞噬隔间挡板的声音像野兽咀嚼骨头。你在浓烟中听到有人在哭——那声音和十年前你在镜子前听到的，一模一样。' },{ crime: '你是战场上的老兵。三次服役，两次负伤，一枚勋章。你在战壕里学会了如何在半秒内判断敌友，如何在黑暗中徒手杀死一个成年人。但没人教过你如何回到和平的生活。退役后你做过保安、货车司机、工地搬运工——每一份工作都以打架告终。那天在街上，一个年轻人撞到了你的肩膀。他没有道歉。你的手在他脖子上停留了四十五秒——你数的。法官问你为什么，你说：他撞了我。法警把你按在地上时，你还在挣扎。不是因为你想逃跑——是因为你无法忍受被压制的屈辱。', flavor: '法庭的灯光很亮。你看着陪审团的脸，每一张脸上都写着恐惧。你忽然意识到——在他们眼中，你不是老兵，不是英雄。你只是一头该被关起来的野兽。' }],
     '贪婪': [{ crime: '你是巴黎某银行的出纳员。二十年间，你每天坐在同一个窗口后面，经手数以百万计的资金——但没有一分钱属于你。你可以摸到它们、数它们、闻它们——但你不能拥有它们。这种折磨持续了三年后，你找到了系统的漏洞。一开始只是小数点后的零头，然后是几十、几百、几千。二十年后，你已经转移了足够让数千名储户养老金蒸发的巨款。当那些老人因为失去毕生积蓄而自杀的消息传来时，你正在摩纳哥的赌场挥霍。最终，一位受害者的儿子找到了你。他在酒店阳台上对你说了三句话，然后扣动了扳机。', flavor: '海风把钞票吹散的那一刻，你还在笑。直到子弹穿过胸口，你才想起那些储户的名字——他们的脸你从未看过，但他们的钱，你每一分都记得。你最后看到的东西，是漫天飞舞的纸币，像一场你永远无法兑现的梦。' },{ crime: '你是医疗公司的销售代表。你的任务很简单——把过期疫苗和假药卖到贫困地区。你觉得这不是什么大不了的事。反正那些地方的人本来就活不长。你用赚来的钱在市中心买了三套房，开上了跑车。无数孩子因为你的"药品"落下终身残疾，但你没有看过任何一张照片——你刻意不去看。直到一个受害者的父亲跟踪了你六个月。他研究你的作息、你的路线、你车库里那个监控死角。那天晚上你加班到很晚，车库里很暗。你听到身后有脚步声——然后什么都不知道了。', flavor: '铁管砸下来之前，你还在算这个月的佣金有多少。最后一个念头不是悔恨、不是恐惧——而是"我还没收完那笔账"。你到死都在算。' }],
@@ -1778,14 +2564,23 @@ function setSinTraits() {
         player.sinTrait = '色欲';
     }
 }
+
 function sceneSinnerAwaken() { player.hp = player.maxHp; player.currentRing = '傲慢之环'; ua(); st('<div class="scene-title">傲 慢 之 环</div><p>意识像一根被拉出水面的绳索，缓慢而痛苦地凝聚。然后——你睁开了眼。</p><p>头顶不是天空。是<span class="highlight">水晶</span>。暗紫色的水晶穹顶覆盖着整个视野，望不到边际。从中透出的光不来自任何星辰，不来自任何太阳——那光是傲慢本身发出的冷光，将一切照得清晰而残酷。你从不知道光也可以如此冰冷。你躺在黑色的石板上，石板表面刻满了你看不懂的古老符文——那是审判的文字，在你接触它的瞬间便印入了你的意识。</p><p>周围是和你一样刚坠入地狱的灵魂。有的蜷缩着无声哭泣，有的疯狂咒骂着这片黑暗，有的已经吓得说不出话，只是呆呆地望着头顶的水晶穹顶。空气中弥漫着一种难以形容的压迫感——不是重量，是<span class="highlight">目光</span>。仿佛有什么不可名状的存在正从上方俯视着这一切。</p><p>远处，一座水晶宫殿悬浮在半空。它不依附于任何支撑，只是静静地漂浮在暗紫色的光晕中。塔尖刺入更深层的黑暗。你知道那座宫殿属于谁。地狱中的每一个存在都知道。</p><p>一阵脚步声接近。一个穿着暗色长袍的低阶恶魔走到你面前。他的面孔模糊不清，仿佛五官只是临时拼凑的。他用不带任何感情的声音说：</p><p><em>新到的罪人。君主今日亲自审判。起来。去审判厅。</em></p>'); cb(); ab('挣扎着站起来，跟随恶魔前往审判厅', function() { sceneSinnerHall(); }); }
+
 function sceneSinnerHall() { st('<div class="scene-title">审 判 厅</div><p>审判厅比你想象中更大。大到你无法看到尽头。暗紫色的光从穹顶的棱镜中折射下来，将整个空间切割成无数明暗交错的碎片。厅堂两侧矗立着巨大的水晶柱，每根柱子都有数十米高——但让你脊背发凉的，不是柱子的宏伟，而是柱中封存的东西。</p><p><span class="highlight">罪人的遗骸。</span>不知多少年前的灵魂，保持着坠入地狱时的姿态，被永远凝固在水晶之中。他们的表情清晰可见——有的惊恐，有的愤怒，有的在最后一刻终于流露出了悔恨。他们已成为这座厅堂的装饰，成为对每一位新到者的无声警告。</p><p>你被推搡着站到了厅堂中央。周围是数十个和你一样的新到者，挤在一起，像待宰的牲畜。哭泣声渐渐停止了——因为所有人都感觉到了——空气变了。不是变冷。是变得<span class="highlight">稀薄</span>。然后你听到了脚步声。每一下都像踩在所有人的心脏上。</p><p>银白色的长发，赤金色的眼眸，暗紫金边的长袍——<span class="highlight">路西法</span>降临在审判席上。他没有看任何人。他的目光越过所有新到的罪人，仿佛他们只是一片不值得聚焦的模糊背景。</p>'); cb(); ab('屏住呼吸，等待审判', function() { var verdictText = ''; switch (player.sin) { case '傲慢': verdictText = '他的目光在你身上多停了半秒——在那双赤金色的眼眸中，你捕捉到了一丝几乎不可察觉的玩味。<em>傲慢——</em>他微微侧头，银白长发从肩上滑落，<em>倒是与吾同源。但你配不上这份罪孽。你犯下的傲慢如此渺小，连给吾提鞋都不配。不过——至少你选择了最高贵的罪。</em>'; break; case '暴怒': verdictText = '他的目光扫过你，嘴角微微下撇——那表情介于轻蔑和厌烦之间。<em>暴怒——野蛮人的罪孽。</em>他连评价都懒得多说一个字。在他眼中，你的愤怒不过是一只野兽在笼中的咆哮——吵闹，但毫无意义。'; break; case '贪婪': verdictText = '他看了你一眼——那眼神中闪过一丝毫不掩饰的鄙夷。<em>贪婪——为铜臭折腰的灵魂。</em>他的语气里没有愤怒，只有一种居高临下的嫌恶，<em>连罪孽都犯得如此庸俗。你追逐了一辈子的东西，在吾眼中不过是脚下的尘埃。</em>'; break; case '嫉妒': verdictText = '他甚至没有正眼看你。<em>嫉妒——最卑微的罪孽。</em>他的声音里带着一种独特的蔑视——那种蔑视不是针对你的罪行，而是针对你选择了如此低劣的罪，<em>连罪都不配光明正大地犯。永远活在别人的阴影里，连自己站出来的勇气都没有。</em>'; break; case '暴食': verdictText = '他的目光冷冷掠过你，像掠过一块不值得停留的残渣。<em>暴食——把灵魂浪费在填饱肚子上。</em>他轻轻摇了摇头，<em>真是可悲。你一生的追求，不过是满足一个永远填不满的胃。连罪都犯得如此没有野心。</em>'; break; case '色欲': verdictText = '他轻哼了一声——那声音里混合着厌倦和轻微的不耐烦。<em>色欲——被欲望驱使的动物。</em>他的手指在王座扶手上轻轻敲了一下，<em>连自制都做不到，也配称罪人？你不过是欲望的奴隶，而奴隶——在任何地方都是最底层的存在。</em>'; break; case '懒惰': verdictText = '他几乎懒得开口。沉默了许久，才吐出几个字：<em>懒惰——连罪都犯得如此敷衍。</em>他挥了挥手，仿佛连审判你都是一种浪费，<em>你甚至不配被审判。你的存在本身，就是对地狱效率的侮辱。</em>'; break; } st('<div class="scene-title">审 判</div><p>路西法的目光终于扫过你——当那双赤金色的眼眸与你短暂接触时，你感到一阵前所未有的<span class="highlight">自惭形秽</span>。仿佛你的一生、你的罪孽、你自认为刻骨铭心的痛苦——在他眼中都轻如尘埃。</p><p>' + verdictText + '</p><p>他轻轻挥了挥手，语气恢复了平淡：<em>罪孽浅薄。平庸至极。按惯例，依罪孽送往对应环层。至于这些连罪孽都犯得如此平庸的——暂留傲慢环底层。若有价值，自有去处。若无价值——</em></p><p>他没有说完。他不需要说完。那个未完成的句子像一把悬在半空的刀，让每一个人都清楚地意识到：在这里，你的存在本身，不过是一种<span class="highlight">暂缓</span>。</p>'); player.flags.judged = true; cb(); ab('低头承受审判结果', function() { sceneSinnerAfter(); }); }); ab('直视路西法', function() { player.sanity -= 1; player.flags.daredToLook = true; ua(); var dareText = ''; switch (player.sin) { case '傲慢': dareText = '在所有低垂的头颅中，你抬起了头。路西法的嘴角微微上扬——那不是赞赏，而是看到一只蚂蚁试图模仿飞鸟时的嘲弄。他微微偏头，银白长发从肩上滑落。<em>有趣。</em>他说这两个字时，眼中终于映出了你的倒影——但那倒影如此渺小，<em>你至少还有抬头的勇气。但这不能改变你的平庸。傲慢——是需要实力来支撑的。而你没有。</em>'; break; case '暴怒': dareText = '你抬起头。路西法甚至没有回应你的目光——他的无视本身就是最锋利的回应。他沉默了很久，久到你的脖子开始酸痛。然后他才开口：<em>你以为愤怒能让你与众不同？每一个暴怒的灵魂在审判时都会抬头。你们都一样——除了蛮力一无所有。</em>'; break; case '贪婪': dareText = '你抬起头。路西法终于正眼看了你——但只是短短一瞬。随即移开，仿佛你的存在污染了他的视线。<em>连审判都要讨价还价？</em>他语气里的嫌恶加深了，<em>你以为直视吾能让你获得更好的待遇？贪婪——真是从头到脚都写着廉价。</em>'; break; case '嫉妒': dareText = '你抬起头。路西法的目光掠过你，像掠过一片不值得停留的阴影。<em>你在看吾？还是你在想——凭什么坐在上面的是他而不是你？</em>他替你回答了：<em>因为你永远只敢在下面看。嫉妒者最大的可悲，是永远不敢伸手去拿自己想要的东西。</em>'; break; case '暴食': dareText = '你抬起头。路西法微微偏头——那姿态不像在看你，更像在确认一件物品是否值得被踢开。<em>你的胃填不满，你的胆量倒是不小。</em>他的语气中带着一丝意外的玩味，<em>但饥饿带来的勇气，和饥饿本身一样——不过是本能。</em>'; break; case '色欲': dareText = '你抬起头。路西法面无表情，你的直视在他眼中和一只飞虫掠过面前没有区别。<em>你在试图诱惑谁？</em>他的声音冷淡至极，<em>吾见过最美的天使坠落，也见过最丑陋的欲望膨胀。你的这点小把戏，连让吾多看一眼的资格都没有。</em>'; break; case '懒惰': dareText = '你抬起头。路西法甚至懒得回应你的目光。他挥了挥手——那动作随意得像在赶走一阵无关紧要的风。<em>连抬头都抬得这么敷衍。</em>他的语气中没有愤怒，只有一种深深的疲惫，<em>退下吧。你连被审判的价值都没有。</em>'; break; } st('<p>你不知从哪来的勇气——或许是愚蠢，或许是残存的尊严——在所有头颅都低垂的时刻，你抬起了头。你直视了那双赤金色的眼眸。仅仅一瞬。但那一瞬间漫长得像一个世纪。</p><p>你没有感到愤怒。没有感到惩罚。你只感到一种<span class="highlight">彻底的无视</span>——比蔑视更令人窒息的，是他甚至懒得对你施加蔑视。一个人类抬头看天，天不会感到被冒犯。一只蚂蚁举起前肢，踩死它的人不会觉得那是挑衅。</p><p>' + dareText + '</p>'); cb(); ab('……', function() { sceneSinnerAfter(); }); }, 'danger-btn'); }
+
 function sceneSinnerAfter() { st('<div class="scene-title">灰 烬 区</div><p>审判结束了。路西法的身影从审判席上消失，仿佛从未存在过。只有空气中残留的星尘粒子提醒你，刚才的一切都是真实的——那位傲慢君主真的曾经坐在那张座椅上，用最漫不经心的语气决定了所有新到者的命运。</p><p>你和其他被判定为"平庸"的存在一起，被带到了傲慢环的底层区域。这里被称为<span class="highlight">灰烬区</span>——罪人、低阶恶魔、以及各种不入流的存在混杂的地方。水晶宫殿的光芒到这里已经变得稀薄，暗紫色的辉煌被灰色的平庸取代。街道狭窄而肮脏，两旁是歪歪扭扭的建筑。</p><p>但至少——你还存在。一个路过的低阶恶魔告诉你，被判定为罪孽平庸的存在可以在七环中自行选择居所。这是傲慢之主的"仁慈"——在他看来，安排你们这些平庸者的去向根本不值得他亲自费神。</p><p>你抬起头，望向灰烬区昏暗的天际线。远处，通往其他环层的通道隐约可见。你的地狱之旅——真正属于你自己的旅程——从现在开始。</p>'); cb(); ab('🗺️ 选择定居环', function() { sceneChooseResidence(); }); ab('🔍 在灰烬区探索', function() { sceneExploreDistrict('傲慢之环', 'poor'); }); }
+
 function sceneDemonBirthRing() { st('<div class="scene-title">诞 生 之 环</div><p><span class="highlight">' + player.name + '</span>——你是地狱的造物。选择你的<span class="gold-text">诞生环</span>，每个环都有独特的诞生场景和君主。</p>'); cb(); var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环']; var sinMap = { '傲慢之环': '傲慢', '贪婪之环': '贪婪', '暴怒之环': '暴怒', '色欲之环': '色欲', '嫉妒之环': '嫉妒', '暴食之环': '暴食', '懒惰之环': '懒惰' }; var attrMap = { '傲慢': '魔力+2·魅力+1·理智-1', '暴怒': '力量+3·理智-2', '嫉妒': '敏捷+2·魔力+1', '贪婪': '魅力+2·魔力+1', '暴食': '力量+1·敏捷-1·理智-1', '色欲': '魅力+3·力量-1', '懒惰': '理智+2·敏捷-2' }; for (var i = 0; i < rings.length; i++) { (function(r) { var s = sinMap[r]; var cls = ''; if (r === '贪婪之环') cls = 'gold-btn'; if (r === '暴怒之环') cls = 'danger-btn'; ab(r + '（' + attrMap[s] + '）', function() { player.birthRing = r; player.sin = s; player.currentRing = r; ua(); st('<div class="scene-title">' + r + '</div><p>属性修正：<span class="highlight">' + attrMap[s] + '</span></p><p>君主：<span class="gold-text">' + L[s].name + '</span></p>'); cb(); ab('🎲 掷出命运之骰', function() { sceneDiceDemon(); }, 'primary-btn'); }, cls); })(rings[i]); } }
+
 function sceneDiceDemon() { player.strength = roll(); player.agility = roll(); player.magic = roll(); player.charisma = roll(); player.sanity = roll() + 3; var bs = ['strength', 'agility', 'magic', 'charisma']; var bst = bs[Math.floor(Math.random() * 4)]; var bn = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' }; player[bst] += 3; switch (player.sin) { case '暴怒': player.strength += 3; player.sanity -= 2; break; case '贪婪': player.charisma += 2; player.magic += 1; break; case '嫉妒': player.agility += 2; player.magic += 1; break; case '色欲': player.charisma += 3; player.strength -= 1; break; case '傲慢': player.magic += 2; player.charisma += 1; player.sanity -= 1; break; case '暴食': player.strength += 1; player.agility -= 1; player.sanity -= 1; break; case '懒惰': player.sanity += 2; player.agility -= 2; break; } setSinTraits(); ua(); st('<div class="scene-title">命 运 之 骰</div><div class="divider">🎲 🎲 🎲</div><p><span class="highlight">' + player.name + '</span> | 原生恶魔 | ' + player.sin + '</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' + player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility + '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic + '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma + '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity + '</span></span></div><p>混沌能量额外强化了<span class="highlight">' + bn[bst] + '</span>（+3）。</p>'); cb(); ab('⚡ 在' + player.birthRing + '中苏醒……', function() { sceneDemonAwaken(); }, 'primary-btn'); }
+
 function sceneDemonAwaken() { player.hp = player.maxHp; player.currentRing = player.birthRing; ua(); var ld = L[player.sin]; st('<div class="scene-title">诞 生</div><p>' + ld.birthScene + '</p><p style="margin-top:10px;">你诞生于<span class="highlight">' + player.birthRing + '</span>。你的君主——<span class="highlight">' + ld.name + '</span>——正在等你。</p>'); cb(); ab('前往觐见' + ld.name, function() { sceneDemonAudience(); }, 'primary-btn'); }
+
 function sceneDemonAudience() { var ld = L[player.sin]; st('<div class="scene-title">觐 见 君 主</div><p>' + ld.audience.replace(/\n/g, '<br>') + '</p>'); player.flags.audiencedLord = true; player.relationships[ld.name] = { love: 5, desire: 0, anger: 0, opinion: '一个刚诞生的原生恶魔。' }; player.residenceRing = player.birthRing; if (player.sin === '贪婪') { player.gold += 1; st(tc.innerHTML + '<p style="margin-top:10px;"><span class="gold-text">获得玛门的投资：1金币。</span></p>'); } cb(); ab('选择居所', function() { sceneDemonChooseDistrict(); }, 'primary-btn'); }
+
 function sceneDemonChooseDistrict() { var ring = player.birthRing; var d = RD[ring]; st('<div class="scene-title">选 择 居 所</div><p><span class="highlight">' + d.poor.name + '</span>——' + d.poor.desc + '</p><p><span class="gold-text">' + d.middle.name + '</span>——' + d.middle.desc + '</p><p><span style="color:#ff6080;">' + d.rich.name + '</span>——' + d.rich.desc + '</p>'); cb(); ab('在' + d.poor.name + '落脚（免费）', function() { player.currentDistrict = d.poor.name; ua(); sceneExploreDistrict(ring, 'poor'); }); ab('在' + d.middle.name + '落脚（需要10金币）', function() { if (player.gold >= 10) { player.gold -= 10; player.currentDistrict = d.middle.name; ua(); sceneExploreDistrict(ring, 'middle'); } else { st('<p class="highlight">金币不足。需要10金币。</p>'); cb(); ab('去贫民区免费落脚', function() { player.currentDistrict = d.poor.name; ua(); sceneExploreDistrict(ring, 'poor'); }); } }, 'gold-btn'); ab('尝试进入' + d.rich.name, function() { st('<p class="highlight">贵族区需要君主许可。</p><p>' + d.rich.desc + '</p><p>守卫拦住了你。</p>'); cb(); ab('返回', function() { sceneDemonChooseDistrict(); }); }, 'danger-btn'); }
+
 function sceneExploreDistrict(ring, level) {
     if (level === 'middle') { renderMiddleRing(ring); return; }
     var d = RD[ring][level];
@@ -1796,7 +2591,8 @@ function sceneExploreDistrict(ring, level) {
     ua();
     var fl = '';
     for (var i = 0; i < d.features.length; i++) { fl += '<p>—— ' + d.features[i] + '</p>'; }
-    st('<div class="scene-title">' + d.name + '</div><p>' + d.desc + '</p><div class="divider">◆ ◆ ◆</div><p><span class="gold-text">可探索地点：</span></p>' + fl);
+    var bmStatus = isBlackMarketOpen() ? '<p style="color:#ff6080;font-weight:bold;">🌙 黑市已开放！</p>' : '';
+    st('<div class="scene-title">' + d.name + '</div><p>' + d.desc + '</p>' + bmStatus + '<div class="divider">◆ ◆ ◆</div><p><span class="gold-text">可探索地点：</span></p>' + fl);
     cb();
     if (level === 'poor' && d.featureScenes) {
         var keys = Object.keys(d.featureScenes);
@@ -1810,6 +2606,11 @@ function sceneExploreDistrict(ring, level) {
                 else if (key === '栈桥下的阴影') label = '👁️ 走向栈桥下的身影';
                 else if (key === '铁锅旁的棚子') label = '🍖 走向铁锅旁的棚子';
                 else if (key === '灰雾中的躺椅') label = '💤 走向灰雾中的躺椅';
+                else if (key === '低阶市场') label = '🛒 逛低阶市场';
+                else if (key === '流浪者聚集地') label = '🏕️ 走进流浪者聚集地';
+                else if (key === '暗巷角落') label = '🌑 探索暗巷角落';
+                else if (key === '失宠者收容所') label = '🏚️ 走进失宠者收容所';
+                else if (key === '拾荒者营地') label = '🗑️ 探索拾荒者营地';
                 ab(label, function() {
                     var scene = d.featureScenes[key];
                     if (typeof scene === 'function') { scene(ring, level); }
@@ -1821,13 +2622,25 @@ function sceneExploreDistrict(ring, level) {
     ab('👗 服装店', function() { enterShop('cloth'); });
     ab('🍽️ 食品店', function() { enterShop('food'); });
     ab('📦 道具店', function() { enterShop('item'); });
+    ab('🌙 黑市（22:00-02:00）', function() { enterBlackMarket(); });
     ab('🔨 寻找工作（耗时30分钟）', function() { addTime(30); findJob(); });
     ab('😴 睡觉（选择住处）', function() { chooseSleepPlace(); });
     if (ring === '傲慢之环' && level === 'poor' && !player.hasClock) { ab('🕐 购买时钟（10金币）', function() { buyClock(); }); }
+    // 随机任务生成
+    if (Math.random() < 0.2 && player.activeTasks.length < 3) {
+        ab('📋 接取随机任务', function() {
+            var task = generateTask();
+            st('<div class="scene-title">📋 新任务</div><p><span class="gold-text">' + task.title + '</span></p><p>' + task.desc + '</p><p style="color:#e85060;">截止：第' + task.deadline + '天</p><p style="color:#e8c060;">奖励：' + task.rewardGold + '金币，' + task.rewardExp + '经验</p>');
+            cb();
+            ab('接受任务', function() { acceptTask(task); });
+            ab('拒绝', function() { sceneExploreDistrict(ring, level); });
+        });
+    }
     if (level === 'poor' && RD[ring].middle) { ab('🚶 前往' + RD[ring].middle.name + '（需要10金币，耗时20分钟）', function() { if (player.gold >= 10) { player.gold -= 10; addTime(20); ua(); sceneExploreDistrict(ring, 'middle'); } else { st('<p class="highlight">金币不足。需要10金币。</p>'); cb(); ab('返回', function() { sceneExploreDistrict(ring, 'poor'); }); } }, 'gold-btn'); }
     ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
     ab('📋 打开属性面板', function() { toggleSidebar(); });
 }
+
 // ==================== 睡眠系统 ====================
 function getSleepPlaces(ring, level) {
     var places = {
@@ -1932,7 +2745,6 @@ function getSleepPlaces(ring, level) {
 function chooseSleepPlace() {
     var ring = player.currentRing || '傲慢之环';
     var level = 'poor';
-    // 从player.currentDistrict判断当前层级
     var d = RD[ring];
     if (player.currentDistrict) {
         if (d.rich && player.currentDistrict === d.rich.name) level = 'rich';
@@ -1970,11 +2782,9 @@ function chooseSleepPlace() {
                 }
                 player.gold -= p.cost;
                 if (player.hasClock) {
-                    // 时钟模式：让玩家选择睡眠时长
                     var currentHour = Math.floor(player.gameTime / 60) % 24;
                     showSleepClock(p, currentHour);
                 } else {
-                    // 无时钟：自动计算睡眠时长
                     var baseHours = 4 + (player.fatigue / 100) * 6;
                     baseHours = Math.round(baseHours * 10) / 10;
                     doSleep(p, baseHours);
@@ -2036,14 +2846,9 @@ function doSleep(place, hours) {
 function sceneChooseResidence() { st('<div class="scene-title">选 择 居 所</div><p>选择你想前往的环层。跨环移动需要支付5金币路费并耗时。</p>'); cb(); var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环']; for (var i = 0; i < rings.length; i++) { (function(r) { var cls = ''; if (r === '贪婪之环') cls = 'gold-btn'; if (r === '暴怒之环') cls = 'danger-btn'; ab('前往' + r, function() { travelToRing(r); }, cls); })(rings[i]); } }
 
 // ==================== 存档系统 ====================
-// ==================== 存档系统 ====================
-var SAVE_KEY = 'qclaw_hell_ring_save';
-
 function saveGame() {
     try {
-        // 优先保存到 LocalStorage
         localStorage.setItem(SAVE_KEY, JSON.stringify(player));
-        // 同时保留文件导出
         var data = JSON.stringify(player, null, 2);
         var blob = new Blob([data], { type: 'application/json' });
         var url = URL.createObjectURL(blob);
@@ -2063,7 +2868,6 @@ function saveGame() {
 }
 
 function loadGame(event) {
-    // 优先从 LocalStorage 加载
     var saved = localStorage.getItem(SAVE_KEY);
     if (saved) {
         try {
@@ -2074,19 +2878,14 @@ function loadGame(event) {
             cb();
             ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
             return;
-        } catch(e) {
-            // 如果 LocalStorage 解析失败，继续尝试文件加载
-        }
+        } catch(e) {}
     }
-    
-    // 其次从文件加载
     if (!event || !event.target.files.length) {
         st('<p class="highlight">未找到存档。</p>');
         cb();
         ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
         return;
     }
-    
     var file = event.target.files[0];
     if (!file) return;
     var reader = new FileReader();
@@ -2106,6 +2905,7 @@ function loadGame(event) {
     };
     reader.readAsText(file);
 }
+
 function resetGame() {
     if (confirm('确定要重置游戏吗？所有进度将丢失。')) {
         location.reload();
@@ -2114,26 +2914,25 @@ function resetGame() {
 
 // ==================== 侧边栏 ====================
 function toggleSidebar() { sidebarOpen = !sidebarOpen; sb.classList.toggle('open'); ov.classList.toggle('open'); mp.classList.toggle('sidebar-open'); if (sidebarOpen) usb(); }
+
 function switchTab(tab) { sidebarTab = tab; document.querySelectorAll('#sidebar-tabs button').forEach(function(b) { b.classList.remove('active'); }); var btn = document.getElementById('tab-' + tab); if (btn) btn.classList.add('active'); usb(); }
 
 // ==================== 初始化 ====================
 ua(); sceneTitle();
 
-// ==================== 修复：renderMiddleRing 中重复添加 NPC 按钮的补丁 ====================
-// 已在原函数中修复
-
-// ==================== 修复：场景中 renderCombat 拼写错误 ====================
-// 已在 startCombat 中修正为 renderCombat
-
 console.log('✅ 七环地狱 · 傲慢之醒 已启动！');
 console.log('📌 修复内容：');
-console.log('  1. 新增完整的战斗系统 (startCombat)');
-console.log('  2. 修复 findJob 默认工作缺少 successMsg/failMsg');
-console.log('  3. 修复 sleepRest 闹钟时间倒退问题');
-console.log('  4. 修复 useConsumable 疲劳值上下限检查');
-console.log('  5. 修复 addNpcButton 重复追加内容问题');
-console.log('  6. 修复 renderCombat 拼写错误');
-console.log('  7. 新增存档/读档/重置功能');
+console.log('  1. 修复新手教程重复进入BUG（tavernTutorialDone标志）');
+console.log('  2. 修复NPC每日5次对话限制（npcTalkDaily）');
+console.log('  3. 修复食物系统（增加饱食度food恢复）');
+console.log('  4. 新增黑市系统（22:00-02:00开放，每日刷新）');
+console.log('  5. 新增探索随机事件（骚扰、火并、路人事件等）');
+console.log('  6. 新增NPC好感审视系统（态度随好感变化）');
+console.log('  7. 新增物品buff系统（食物/武器/装备特效）');
+console.log('  8. 新增地图系统（七环导航）');
+console.log('  9. 新增任务系统（有时限，可接取/完成/放弃）');
+console.log('  10. 新增工作系统优化（文本变化+随机事件）');
+console.log('  11. 新增大量探索区域和文本内容');
 </script>
 </body>
 </html>
