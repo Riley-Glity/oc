@@ -118,7 +118,7 @@
         <div id="topbar">
             <div>
                 <div class="title">七环地狱</div>
-                <div class="subtitle">傲慢之醒 <span style="font-size:0.65em;color:#6a5a5a;margin-left:6px;">v0.6.3</span></div>
+                <div class="subtitle">傲慢之醒 <span style="font-size:0.65em;color:#6a5a5a;margin-left:6px;">v0.6.4</span></div>
             </div>
             <button id="menuBtn" onclick="toggleSidebar()">⚙️ 属性</button>
         </div>
@@ -153,6 +153,7 @@ var player = {
     equippedWeaponId: null,
     equippedWeaponData: null,
     sinTrait: '',
+    randomEventCooldown: 0, 
     // 新增：NPC对话追踪
     npcTalkDaily: {},
     // 新增：任务系统
@@ -375,8 +376,62 @@ function uqs() {
     document.getElementById('qs-fatigue').textContent = Math.floor(player.fatigue);
 }
 function ua() { uqs(); usb(); }
-function applyBuffEffects(id, add) { var mappings = { 'weapon_attack': 'strength', 'armor_defense': 'agility', 'crystal_dust': 'magic', 'energy_drink': 'magic', 'gold_chocolate': 'charisma', 'lava_meat': 'strength', 'desire_wine': 'charisma', 'stew_fill': 'food', 'lazy_rest': 'sanity', 'velvet_satisfaction': 'charisma', 'dark_deed': 'agility', 'scavenger_eye': 'agility' }; var stat = mappings[id]; if (!stat) return; if (add) { if (id === 'velvet_satisfaction' || id === 'dark_deed') player[stat] += (id === 'velvet_satisfaction' ? 2 : 1); } else { if (id === 'velvet_satisfaction' || id === 'dark_deed') player[stat] -= (id === 'velvet_satisfaction' ? 2 : 1); } }
-function addBuff(id, name, desc, type, duration) { applyBuffEffects(id, false); player.buffs = player.buffs.filter(function(b) { return b.id !== id; }); player.buffs.push({ id: id, name: name, desc: desc, type: type, duration: duration, startTime: player.gameTime }); }
+function applyBuffEffects(id, add) {
+    var mappings = {
+        'weapon_attack': 'strength',
+        'armor_defense': 'agility',
+        'crystal_dust': 'magic',
+        'energy_drink': 'magic',
+        'gold_chocolate': 'charisma',
+        'lava_meat': 'strength',
+        'desire_wine': 'charisma',
+        'stew_fill': 'food',
+        'lazy_rest': 'sanity',
+        'velvet_satisfaction': 'charisma',
+        'dark_deed': 'agility',
+        'scavenger_eye': 'agility',
+        'fatigue_layer_1': 'strength',
+        'fatigue_layer_2': 'agility',
+        'fatigue_layer_3': 'strength',
+        'fatigue_layer_4': 'agility',
+        'fatigue_layer_5': 'strength',
+        'fatigue_layer_6': 'agility',
+        'fatigue_layer_7': 'strength',
+        'fatigue_layer_8': 'agility',
+        'exhausted': 'strength'
+    };
+    var stat = mappings[id];
+    if (!stat) return;
+    
+    var val = 1;
+    if (id === 'exhausted') val = 2;
+    if (id === 'velvet_satisfaction') val = 2;
+
+    if (add) {
+        if (id.indexOf('fatigue_layer') === 0 || id === 'exhausted') {
+            player[stat] = Math.max(1, player[stat] - val);
+        } else {
+            player[stat] += val;
+        }
+    } else {
+        if (id.indexOf('fatigue_layer') === 0 || id === 'exhausted') {
+            player[stat] += val;
+        } else {
+            player[stat] = Math.max(1, player[stat] - val);
+        }
+    }
+}
+function addBuff(id, name, desc, type, duration) { 
+    player.buffs = player.buffs.filter(function(b) { 
+        if (b.id === id) {
+            applyBuffEffects(b.id, false); // 先移除旧buff效果
+            return false;
+        }
+        return true;
+    }); 
+    player.buffs.push({ id: id, name: name, desc: desc, type: type, duration: duration, startTime: player.gameTime }); 
+    applyBuffEffects(id, true); // 应用新buff效果
+}
 function removeBuff(id) { applyBuffEffects(id, false); player.buffs = player.buffs.filter(function(b) { return b.id !== id; }); }
 function addExp(amount) { player.exp = (player.exp||0) + amount; while (player.exp >= player.level * 20) { player.exp -= player.level * 20; player.level++; player.maxHp += 10; player.hp = player.maxHp; player.maxSanity += 2; player.sanity = Math.min(player.maxSanity, player.sanity + 2); } ua(); }
 function addItem(id, name, type, desc, quantity, effects, equipped) {
@@ -1216,8 +1271,6 @@ function updateFatigue() {
         for (var i = 1; i <= 8; i++) {
             if (i <= newLayers) {
                 addBuff('fatigue_layer_' + i, '疲劳层' + i, '疲劳累积过多，力量-1，敏捷-1。', 'negative', 999);
-                player.strength = Math.max(1, player.strength - 1);
-                player.agility = Math.max(1, player.agility - 1);
             } else {
                 removeBuff('fatigue_layer_' + i);
             }
@@ -1229,8 +1282,6 @@ function updateFatigue() {
     }
     if (player.fatigue >= 80 && !player.buffs.find(function(b){return b.id==='exhausted';})) {
         addBuff('exhausted', '极度疲劳', '你感到极度疲惫，行动力大幅下降。力量-2，敏捷-2。', 'negative', 999);
-        player.strength = Math.max(1, player.strength - 2);
-        player.agility = Math.max(1, player.agility - 2);
     }
     if ((player.sin === '色欲' || player.birthRing === '色欲之环') && !player.flags.isSleeping) {
         player.desire = Math.min(player.maxDesire, player.desire + 1);
@@ -1240,6 +1291,57 @@ function updateFatigue() {
     }
 }
 
+function checkHp() {
+    if (player.hp <= 0) {
+        player.hp = 0;
+        triggerFaint();
+    }
+}
+
+function triggerFaint() {
+    var outcomes = [
+        { 
+            name: '被洗劫', 
+            text: '你眼前一黑倒在了地上。当你醒来时，发现身上值钱的东西都被搜走了。', 
+            effect: function() { 
+                var loss = Math.floor(player.gold * 0.3);
+                player.gold -= loss;
+                st('<p style="color:#e85060;">丢失了 ' + loss + ' 金币。</p>');
+            } 
+        },
+        { 
+            name: '路过的恶魔', 
+            text: '你倒在了街头。幸运的是，一个路过的老恶魔将你拖到了路边，并给你灌了一些苦涩的药水。', 
+            effect: function() { 
+                player.hp = 10;
+                st('<p style="color:#80c080;">HP 恢复至 10。</p>');
+            } 
+        },
+        { 
+            name: '遭到侵犯', 
+            text: '你醒来时发现自己躺在暗巷的垃圾堆里，衣服凌乱，身体各处传来异样的疼痛和酸软……', 
+            effect: function() { 
+                player.sanity = Math.max(0, player.sanity - 5);
+                player.desire = 0;
+                st('<p style="color:#e85060;">理智-5，欲望已清零。</p>');
+            } 
+        }
+    ];
+    
+    var outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
+    player.gameTime += 240; // 昏迷4小时
+    player.fatigue = Math.max(0, player.fatigue - 30);
+    
+    st('<div class="scene-title">昏 迷</div><p>' + outcome.text + '</p>');
+    outcome.effect();
+    cb();
+    ab('挣扎着站起来', function() { 
+        if (player.hp <= 0) player.hp = 5;
+        ua(); 
+        sceneExploreDistrict(player.currentRing, getCurrentLevel()); 
+    });
+}
+
 function triggerFaintDeep() {
     player.hp = Math.max(1, player.hp - 10);
     player.sanity = Math.max(0, player.sanity - 3);
@@ -1247,7 +1349,6 @@ function triggerFaintDeep() {
         removeBuff('fatigue_layer_' + i);
     }
     removeBuff('exhausted');
-    player.strength = Math.max(1, player.strength - 0);
     player.gameTime += 360;
     player.fatigue = 0;
     player.flags.isSleeping = false;
@@ -1982,13 +2083,13 @@ var npcRandomReactions = {
         };
 
 function triggerRandomEvent() {
-            if (player.randomEventCooldown > 0) {
-                player.randomEventCooldown--;
-                return false;
-            }
+    if (player.randomEventCooldown > 0) {
+        player.randomEventCooldown--;
+        return false;
+    }
 
-            // 约25%概率触发
-            if (Math.random() > 0.25) return false;
+    // 概率提升至 45%
+    if (Math.random() > 0.45) return false;
 
             // 首先尝试生成NPC随机事件（已遇NPC，好感度不同反应）
             // 但概率降低 — 只有15%的概率遇到NPC事件
@@ -2380,127 +2481,7 @@ function addNpcButton(npcId, ring, level) {
             });
         }
 
-// ==================== 商店数据（扩展） ====================
-var shopData = {
-    '傲慢之环': {
-        food: [
-            { name: '水晶尘饼干', price: 3, hp: 5, food: 15, desc: '用傲慢环水晶粉末烤制的饼干，口感冰冷清脆，能略微充饥。', buffs: [{ id: 'crystal_dust', name: '水晶微光', desc: '微弱的魔力恢复，持续30分钟。', type: 'positive', duration: 30 }] },
-            { name: '暗紫能量饮', price: 6, hp: 8, magic: 1, food: 10, desc: '注入微量星尘能量的饮料，能恢复魔力和饱腹感。', buffs: [{ id: 'energy_drink', name: '星尘涌动', desc: '魔力恢复速度提升，持续20分钟。', type: 'positive', duration: 20 }] },
-            { name: '冷光薄荷糖', price: 2, hp: 3, sanity: 1, food: 5, desc: '带着傲慢环特有冷光的糖果，提神醒脑，略微缓解饥饿。' }
-        ],
-        cloth: [
-            { name: '暗纹斗篷', price: 15, charisma: 1, desc: '绣有堕天使暗纹的斗篷，魅力+1。' },
-            { name: '星尘长袍', price: 30, charisma: 2, magic: 1, desc: '用星尘粒子编织的长袍，魅力+2，魔力+1。' },
-            { name: '傲慢礼帽', price: 10, charisma: 1, desc: '一顶象征身份的礼帽，魅力+1。' }
-        ],
-        item: [
-            { name: '星尘碎片', price: 10, desc: '一小片路西法宫殿附近飘落的星尘，蕴含着微弱的魔力。' },
-            { name: '傲慢之环通行证', price: 25, desc: '允许在中层区域停留3日。' },
-            { name: '破损的堕天使羽毛', price: 8, desc: '一根失去光泽的羽毛，据说来自某个低阶堕天使。' }
-        ]
-    },
-    '贪婪之环': {
-        food: [
-            { name: '金币巧克力', price: 5, hp: 10, charisma: 1, food: 20, desc: '镀金巧克力，象征财富与甜蜜。', buffs: [{ id: 'gold_chocolate', name: '财富之味', desc: '魅力+1，持续1小时。', type: 'positive', duration: 60 }] },
-            { name: '契约墨水咖啡', price: 4, hp: 6, magic: 1, food: 12, desc: '用契约墨水调制的咖啡，苦涩中带着魔力。' },
-            { name: '碎银面包', price: 2, hp: 4, food: 18, desc: '掺有银粉的面包，能填饱肚子。' }
-        ],
-        cloth: [
-            { name: '金丝长衫', price: 20, charisma: 2, desc: '绣满金线的长衫，魅力+2。' },
-            { name: '商人之帽', price: 12, charisma: 1, desc: '一顶精明的帽子，魅力+1。' },
-            { name: '镀金眼镜', price: 15, charisma: 1, magic: 1, desc: '玛门同款单片眼镜，魅力+1，魔力+1。' }
-        ],
-        item: [
-            { name: '虚拟股票', price: 20, desc: '一张股市凭证，可以在恶魔股市交易。' },
-            { name: '收债人徽章', price: 15, desc: '佩戴后可震慑部分债务人。' },
-            { name: '假币制造模具', price: 30, desc: '风险极高，但收益巨大。' }
-        ]
-    },
-    '暴怒之环': {
-        food: [
-            { name: '熔岩烤肉', price: 4, hp: 15, strength: 1, food: 25, desc: '在火山口烤制的肉，充满力量与热量。', buffs: [{ id: 'lava_meat', name: '熔岩之力', desc: '力量+1，持续1小时。', type: 'positive', duration: 60 }] },
-            { name: '怒火辣椒', price: 3, hp: 5, strength: 1, food: 8, desc: '一口下去怒气上涌，精神焕发。' },
-            { name: '铁血啤酒', price: 5, hp: 10, fatigue: -10, food: 15, desc: '角斗士最爱的饮料，能缓解疲劳。' }
-        ],
-        cloth: [
-            { name: '角斗士皮甲', price: 18, strength: 1, desc: '旧角斗场留下的皮甲，力量+1。' },
-            { name: '铁拳护腕', price: 10, strength: 1, desc: '一对加重护腕，力量+1。' },
-            { name: '血焰披风', price: 25, strength: 2, desc: '边缘燃烧着怒焰的披风，力量+2。' }
-        ],
-        item: [
-            { name: '碎骨短刀', price: 12, attack: 3, desc: '乌尔里克锻造的短刀，物攻+3。' },
-            { name: '狂暴药水', price: 8, desc: '暂时提升力量，但会降低理智。' },
-            { name: '角斗场门票', price: 5, desc: '可观看一场角斗比赛。' }
-        ]
-    },
-    '色欲之环': {
-        food: [
-            { name: '欲望蜜酒', price: 6, hp: 8, desire: 2, food: 12, desc: '能唤起内心欲望的甜酒，让人沉醉。', buffs: [{ id: 'desire_wine', name: '欲望微醺', desc: '欲望+2，魅力+1，持续30分钟。', type: 'positive', duration: 30 }] },
-            { name: '红雾软糖', price: 4, hp: 6, charisma: 1, food: 10, desc: '用红雾精华制成的软糖，甜腻诱人。' },
-            { name: '魅魔之吻', price: 8, hp: 12, desire: 4, food: 8, desc: '强烈的魅惑饮料，欲望高涨。' }
-        ],
-        cloth: [
-            { name: '魅骨丝巾', price: 15, charisma: 2, desc: '提升魅力的丝巾，魅力+2。' },
-            { name: '欲望晚礼服', price: 35, charisma: 3, desc: '用欲望丝线编织的华丽礼服，魅力+3。' },
-            { name: '黑色项圈', price: 8, charisma: 1, desc: '阿斯蒙蒂斯同款项圈，魅力+1。' }
-        ],
-        item: [
-            { name: '欲望契约', price: 20, desc: '可与低阶魅魔签订临时契约。' },
-            { name: '魅惑香水', price: 10, desc: '使用后短时间内魅力大增。' },
-            { name: '红雾精华', price: 15, desc: '可暂时操控红雾的精华液。' }
-        ]
-    },
-    '嫉妒之环': {
-        food: [
-            { name: '黑水酸枣', price: 2, hp: 3, food: 10, desc: '在黑水中浸泡的酸枣，酸涩难咽但能充饥。' },
-            { name: '暗鳍鱼干', price: 4, hp: 8, food: 20, desc: '水沟区特产鱼干，咸腥而饱腹。' },
-            { name: '镜厅薄荷', price: 5, hp: 5, sanity: 2, food: 6, desc: '让你在嫉妒中保持一丝清醒的薄荷。' }
-        ],
-        cloth: [
-            { name: '暗潮斗篷', price: 12, agility: 1, desc: '便于在水沟区潜行的斗篷，敏捷+1。' },
-            { name: '镜片眼镜', price: 10, desc: '模仿利维坦的眼距风格。' },
-            { name: '仿制君主披风', price: 20, charisma: 1, desc: '拙劣模仿路西法的披风，魅力+1。' }
-        ],
-        item: [
-            { name: '情报水晶', price: 8, desc: '记录一条随机情报的碎片。' },
-            { name: '黑水毒液', price: 10, desc: '涂在武器上可增加腐蚀效果。' },
-            { name: '窥视镜', price: 15, desc: '可偷看他人隐私的镜子。' }
-        ]
-    },
-    '暴食之环': {
-        food: [
-            { name: '残渣炖汤', price: 2, hp: 20, food: 35, desc: '残渣区免费提供的汤，虽然卖相不佳但非常饱腹。', buffs: [{ id: 'stew_fill', name: '暴食满足', desc: '饱食度恢复速度提升，持续2小时。', type: 'positive', duration: 120 }] },
-            { name: '永饥饼干', price: 3, hp: 10, food: 15, desc: '吃了反而更饿的饼干，但能暂时填满胃。' },
-            { name: '虚无珍馐套餐', price: 25, hp: 30, all: 1, food: 50, desc: '高级餐厅的套餐，全面提升属性，极度饱腹。' }
-        ],
-        cloth: [
-            { name: '食教长袍', price: 15, magic: 1, desc: '暴食教会的标准服饰，魔力+1。' },
-            { name: '饕餮围裙', price: 10, strength: 1, desc: '厨师格鲁姆同款围裙，力量+1。' }
-        ],
-        item: [
-            { name: '饥饿药水', price: 12, desc: '喝下后短时间内不会感到饥饿。' },
-            { name: '消化酶样本', price: 18, desc: '伊莱亚斯正在研究的强效消化酶。' },
-            { name: '空间胃袋', price: 30, desc: '小型空间储存袋。' }
-        ]
-    },
-    '懒惰之环': {
-        food: [
-            { name: '灰雾软糖', price: 2, hp: 4, sanity: 2, food: 10, desc: '由惰性灰雾凝成的糖，让人放松。' },
-            { name: '怠惰茶', price: 3, hp: 3, fatigue: -20, food: 8, desc: '一杯热茶，大幅缓解疲劳。' },
-            { name: '虚无躺椅饼干', price: 5, hp: 8, food: 18, desc: '模仿躺椅形状的饼干，适合躺着吃。' }
-        ],
-        cloth: [
-            { name: '灰雾披肩', price: 10, sanity: 1, desc: '让你随时都想躺下的披肩，理智+1。' },
-            { name: '懒人拖鞋', price: 5, agility: -1, desc: '极度舒适的拖鞋，敏捷-1。' }
-        ],
-        item: [
-            { name: '惰性能量块', price: 8, desc: '可用来短暂降低敌人行动力。' },
-            { name: '睡眠符咒', price: 12, desc: '贴在身上可快速入睡。' },
-            { name: '懒鬼服务券', price: 5, desc: '可委托懒鬼公司做一件事。' }
-        ]
-    }
-};
-
+// ==================== 商店数据（扩展已被合并） ====================
 function enterShop(type) {
             var ring = player.currentRing;
             var level = getCurrentLevel();
@@ -2585,23 +2566,35 @@ function enterShop(type) {
 
 // ==================== 跨环移动 ====================
 function travelToRing(ring) {
-            if (ring === player.currentRing) { sceneExploreDistrict(ring, getCurrentLevel()); return; }
-            var cost = 5;
-            var time = 60 + Math.floor(Math.random() * 30);
-            st('<p>前往' + ring + '需要乘坐跨环马车，花费' + cost + '金币，耗时约' + time + '分钟。</p>');
+    if (ring === player.currentRing) { sceneExploreDistrict(ring, getCurrentLevel()); return; }
+    
+    var hasPass = player.inventory.some(function(it) { return it.name === '跨环通行证（永久）'; });
+    var cost = hasPass ? 0 : 5;
+    var time = 60 + Math.floor(Math.random() * 30);
+    
+    var msg = hasPass ? 
+        '<p>你持有<span style="color:#e8c060;">跨环通行证</span>，无需支付马车费用。</p>' : 
+        '<p>前往' + ring + '需要乘坐跨环马车，花费' + cost + '金币。</p>';
+        
+    st('<div class="scene-title">跨 环 旅 行</div>' + msg + '<p>路程预计耗时约 ' + time + ' 分钟。</p>');
+    cb();
+    ab('出发（耗时' + time + '分钟' + (cost > 0 ? '，-' + cost + '金币' : '') + '）', function() {
+        if (player.gold >= cost) {
+            player.gold -= cost;
+            addTime(time);
+            player.currentRing = ring;
+            ua();
+            st('<p>马车在一阵颠簸中到达了<span class="highlight">' + ring + '</span>。</p>');
             cb();
-            ab('支付并出发（-' + cost + '金币，耗时' + time + '分钟）', function() {
-                if (player.gold >= cost) { player.gold -= cost;
-                    addTime(time);
-                    player.currentRing = ring;
-                    player.residenceRing = ring;
-                    ua();
-                    sceneExploreDistrict(ring, 'poor'); } else { st('<p class="highlight">金币不足。</p>');
-                    cb();
-                    ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); }); }
-            });
-            ab('取消', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+            ab('下车', function() { sceneExploreDistrict(ring, 'poor'); });
+        } else {
+            st('<p class="highlight">⚠️ 金币不足。你需要 ' + cost + ' 金币。</p>');
+            cb();
+            ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
         }
+    });
+    ab('取消', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+}
 
 // ==================== 时钟购买 ====================
 function buyClock() {
@@ -3383,12 +3376,25 @@ function renderMiddleRing(ring) {
 
             if (level === 'poor' && RD[ring].middle) {
                 ab('🚶 前往' + RD[ring].middle.name + '（需要10金币，耗时20分钟）', function() {
-                    if (player.gold >= 10) { player.gold -= 10;
+                    var hasMiddlePass = player.inventory.some(function(it) { return it.name === '中层通行证' || it.name === '跨环通行证（永久）'; });
+                    var passCost = hasMiddlePass ? 0 : 10;
+                    
+                    if (player.gold >= passCost) {
+                        player.gold -= passCost;
                         addTime(20);
                         ua();
-                        sceneExploreDistrict(ring, 'middle'); } else { st('<p class="highlight">金币不足。需要10金币。</p>');
+                        if (hasMiddlePass) {
+                            st('<p>你出示了通行证，卫兵恭敬地放行了。</p>');
+                            cb();
+                            ab('进入', function() { sceneExploreDistrict(ring, 'middle'); });
+                        } else {
+                            sceneExploreDistrict(ring, 'middle');
+                        }
+                    } else {
+                        st('<p class="highlight">⚠️ 贪婪的卫兵拦住了你："进入' + RD[ring].middle.name + '需要10金币入城税！"</p><p>你身上只有 ' + player.gold + ' 金币。</p>');
                         cb();
-                        ab('返回', function() { sceneExploreDistrict(ring, 'poor'); }); }
+                        ab('返回', function() { sceneExploreDistrict(ring, 'poor'); });
+                    }
                 }, 'gold-btn');
             }
             ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
@@ -3417,67 +3423,83 @@ function renderMiddleRing(ring) {
 
         // ==================== 存档系统 ====================
         function saveGame() {
-    try {
-        LS.s(SAVE_KEY, JSON.stringify(player));
-        var data = JSON.stringify(player, null, 2);
-        var blob = new Blob([data], { type: 'application/json' });
-        var url = URL.createObjectURL(blob);
-        var a = document.createElement('a');
-        a.href = url;
-        a.download = '七环地狱_存档.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        st('<p style="color:#80c080;">✅ 已保存到浏览器（自动存档）并导出文件。</p>');
-    } catch(e) {
-        st('<p class="highlight">保存失败：' + e.message + '</p>');
-    }
-    cb();
-    ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
-}
+            try {
+                // 深拷贝并清理过期数据
+                var cleanData = JSON.parse(JSON.stringify(player));
+                if (cleanData.npcTalkDaily) {
+                    var today = cleanData.daysSurvived || 0;
+                    for (var key in cleanData.npcTalkDaily) {
+                        if (cleanData.npcTalkDaily[key].day !== today) {
+                            delete cleanData.npcTalkDaily[key];
+                        }
+                    }
+                }
+                LS.s(SAVE_KEY, JSON.stringify(cleanData));
+                var data = JSON.stringify(cleanData, null, 2);
+                var blob = new Blob([data], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = '七环地狱_存档.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                st('<p style="color:#80c080;">✅ 已保存并导出！过期对话数据已清理。</p>');
+            } catch(e) {
+                st('<p class="highlight">保存失败：' + e.message + '</p>');
+            }
+            cb();
+            ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+        }
 
         function loadGame(event) {
             var saved = LS.g(SAVE_KEY);
-            if (saved) {
-                try {
-                    var data = JSON.parse(saved);
-                    Object.assign(player, data);
-                    ua();
-                    st('<p style="color:#e8c060;">✅ 存档加载成功！</p>');
-                    cb();
-                    ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
-                    return;
-                } catch (e) {}
-            }
-            if (!event || !event.target.files.length) {
-                st('<p class="highlight">未找到存档。</p>');
+            var processData = function(data) {
+                // 合并数据，确保关键数组和对象存在
+                Object.assign(player, data);
+                if (!player.npcTalkDaily) player.npcTalkDaily = {};
+                if (!player.buffs) player.buffs = [];
+                if (!player.inventory) player.inventory = [];
+                if (!player.flags) player.flags = {};
+                if (!player.relationships) player.relationships = {};
+                if (!player.activeTasks) player.activeTasks = [];
+                ua();
+                st('<p style="color:#e8c060;">✅ 存档加载成功！</p>');
                 cb();
-                ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+                ab('继续步入地狱', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+            };
+
+            if (event && event.target && event.target.files && event.target.files.length) {
+                var file = event.target.files[0];
+                var reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        processData(JSON.parse(e.target.result));
+                    } catch (err) {
+                        st('<p class="highlight">文件解析失败。</p>');
+                        cb();
+                        ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+                    }
+                };
+                reader.readAsText(file);
                 return;
             }
-            var file = event.target.files[0];
-            if (!file) return;
-            var reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    var data = JSON.parse(e.target.result);
-                    Object.assign(player, data);
-                    ua();
-                    st('<p style="color:#e8c060;">✅ 存档加载成功！</p>');
-                    cb();
-                    ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
-                } catch (err) {
-                    st('<p class="highlight">存档加载失败：' + err.message + '</p>');
-                    cb();
-                    ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
-                }
-            };
-            reader.readAsText(file);
+
+            if (saved) {
+                try { processData(JSON.parse(saved)); } catch (e) { st('<p class="highlight">浏览器存档损坏。</p>'); cb(); ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); }); }
+            } else {
+                st('<p class="highlight">未找到存档文件或浏览器存档。</p>');
+                cb();
+                ab('返回', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+            }
         }
 
         function resetGame() {
-            if (confirm('确定要重置游戏吗？所有进度将丢失。')) { location.reload(); }
+            if (confirm('确定要重置游戏吗？所有进度将彻底丢失。')) { 
+                LS.r(SAVE_KEY);
+                location.reload(); 
+            }
         }
 
         // ==================== 角色创建 ====================
@@ -3706,38 +3728,43 @@ function renderMiddleRing(ring) {
 
 // ==================== 文件1独有的睡眠和随机事件系统 ====================
 function doSleep(place, hours) {
-            player.flags.isSleeping = true;
-            var fatigueRecovery = place.fatiguePerHour * hours;
-            var hpRecovery = place.hpPerHour * hours;
-            var sanityRecovery = place.sanityPerHour * hours;
-            var foodCost = Math.floor(hours * 2);
-            player.hp = Math.min(player.maxHp, player.hp + hpRecovery);
-            player.sanity = Math.min(player.maxSanity, player.sanity + sanityRecovery);
-            player.fatigue = Math.max(0, player.fatigue - fatigueRecovery);
-            player.food = Math.max(0, player.food - foodCost);
-            if (player.alarmTime !== null) {
-                var currentMin = player.gameTime % 1440;
-                var alarmMin = player.alarmTime % 1440;
-                if (alarmMin > currentMin) player.gameTime += (alarmMin - currentMin);
-                else if (alarmMin < currentMin) player.gameTime += (1440 - currentMin + alarmMin);
-                player.alarmTime = null;
-            } else {
-                addTime(Math.floor(hours * 60));
-            }
-            player.flags.isSleeping = false;
-            removeBuff('exhausted');
-            for (var key in player.flags) {
-                if (key.indexOf('npcLeft_') === 0) delete player.flags[key];
-            }
-            player.npcTalkCounts = {};
-            player.statusMood = '你好好休息了一觉，感到精力充沛。';
-            ua();
-            st('<div class="scene-title">睡 眠</div><p>你在' + place.name + '睡了 ' + hours +
-                ' 小时，精力得到了恢复。</p>');
-            cb();
-            ab('继续（耗时5分钟）', function() { addTime(5);
-                sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
-        }
+    player.flags.isSleeping = true;
+    var fatigueRecovery = place.fatiguePerHour * hours;
+    var hpRecovery = place.hpPerHour * hours;
+    var sanityRecovery = place.sanityPerHour * hours;
+    var foodCost = Math.floor(hours * 2);
+
+    player.hp = Math.min(player.maxHp, player.hp + hpRecovery);
+    player.sanity = Math.min(player.maxSanity, player.sanity + sanityRecovery);
+    player.fatigue = 0; // 彻底清除疲劳
+    player.food = Math.max(0, player.food - foodCost);
+
+    // 清除所有疲劳层debuff
+    for (var i = 1; i <= 8; i++) {
+        removeBuff('fatigue_layer_' + i);
+    }
+    removeBuff('exhausted');
+
+    if (player.alarmTime !== null) {
+        var currentMin = player.gameTime % 1440;
+        var alarmMin = player.alarmTime % 1440;
+        if (alarmMin > currentMin) player.gameTime += (alarmMin - currentMin);
+        else if (alarmMin < currentMin) player.gameTime += (1440 - currentMin + alarmMin);
+        player.alarmTime = null;
+    } else {
+        addTime(Math.floor(hours * 60));
+    }
+    player.flags.isSleeping = false;
+    for (var key in player.flags) {
+        if (key.indexOf('npcLeft_') === 0) delete player.flags[key];
+    }
+    player.npcTalkCounts = {};
+    player.statusMood = '你好好休息了一觉，感到精力充沛。';
+    ua();
+    st('<div class="scene-title">睡 眠</div><p>你在' + place.name + '睡了 ' + hours + ' 小时，精力得到了恢复。</p>');
+    cb();
+    ab('继续（耗时5分钟）', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+}
 
 function doSleepWithHours(hours, placeName) {
     var ring = player.currentRing || '傲慢之环';
@@ -4130,9 +4157,9 @@ function generateNpcRandomEvent() {
             var metNpcs = Object.keys(player.relationships);
             if (metNpcs.length === 0) return null;
 
-            // 只选择已遇到过初遇剧情的NPC（即已经有关系记录的）
+            // 只选择已建立关系记录的NPC
             var candidateNpcs = metNpcs.filter(function(nid) {
-                return player.relationships[nid] && player.relationships[nid].firstMet !== false;
+                return player.relationships[nid] !== undefined;
             });
             if (candidateNpcs.length === 0) return null;
 
