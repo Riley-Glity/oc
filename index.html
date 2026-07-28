@@ -99,17 +99,593 @@
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #3a1020; border-radius: 2px; }
-        @media (max-width: 500px) { :root { --sidebar-w: 290px; } #topbar { padding: 8px 12px; } #topbar .title { font-size: 1em; } #quick-stats { padding: 6px 12px; font-size: 0.7em; gap: 4px 8px; } #text-area { padding: 14px 12px; } #text-content { font-size: 0.86em; } .race-select .clickable { padding: 5px 10px; } }
-        .map-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0; }
-        .map-node { background: #14040a; border: 1px solid #2a0a14; border-radius: 4px; padding: 6px 8px; font-size: 0.78em; cursor: pointer; text-align: center; transition: 0.2s; }
-        .map-node:hover { border-color: #c04050; background: #1e0812; }
-        .map-node.current { border-color: #e8c060; background: #1a1008; }
-        .map-node.locked { opacity: 0.4; cursor: not-allowed; }
-        .task-card { background: #14040a; border: 1px solid #2a0a14; border-radius: 6px; padding: 8px 10px; margin: 4px 0; font-size: 0.8em; }
-        .task-card .task-title { color: #e8c060; font-weight: bold; }
-        .task-card .task-deadline { color: #e85060; font-size: 0.8em; }
-        .task-card .task-reward { color: #d4a040; }
-        .black-market-badge { color: #ff6080; text-shadow: 0 0 10px rgba(255,60,80,0.3); font-weight: bold; }
+        @media (max-width: 500px) {
+            :root {
+                --sidebar-w: 85vw;
+            }
+
+            #topbar {
+                padding: 6px 10px;
+            }
+
+            #topbar .title {
+                font-size: 0.9em;
+            }
+
+            #topbar .subtitle {
+                font-size: 0.6em;
+            }
+
+            #menuBtn {
+                padding: 6px 12px;
+                font-size: 0.75em;
+            }
+
+            #quick-stats {
+                padding: 4px 8px;
+                font-size: 0.6em;
+                gap: 3px 6px;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+            }
+
+            #quick-stats span {
+                white-space: nowrap;
+                flex-shrink: 0;
+            }
+
+            #text-area {
+                padding: 10px 10px;
+            }
+
+            #text-content {
+                font-size: 0.82em;
+                line-height: 1.8;
+            }
+
+            #text-content .clickable {
+                padding: 6px 10px;
+                display: inline-block;
+                min-height: 36px;
+                line-height: 1.6;
+                margin: 2px 0;
+            }
+
+            .race-select .clickable {
+                padding: 8px 14px;
+                font-size: 0.85em;
+            }
+
+            /* 侧边栏优化 */
+            #sidebar {
+                padding: 14px 12px;
+                width: 85vw;
+                right: calc(-1 * 85vw);
+            }
+
+            #sidebar.open {
+                right: 0;
+            }
+
+            #sidebar h3 {
+                font-size: 0.78em;
+                margin-bottom: 10px;
+            }
+
+            #sidebar .stat-row {
+                padding: 6px 0;
+                font-size: 0.75em;
+                min-height: 32px;
+            }
+
+            #sidebar .status-box {
+                padding: 8px;
+                margin-bottom: 6px;
+            }
+
+            #sidebar .buff-tag {
+                font-size: 0.6em;
+                padding: 3px 8px;
+                margin: 2px 3px 2px 0;
+            }
+
+            #sidebar .close-btn {
+                padding: 12px;
+                font-size: 0.8em;
+                border-radius: 10px;
+            }
+
+            #sidebar .social-card {
+                padding: 8px;
+            }
+
+            #sidebar .social-card .npc-name {
+                font-size: 0.78em;
+            }
+
+            #sidebar .social-card .npc-bars {
+                font-size: 0.65em;
+            }
+
+            #sidebar .status-mood {
+                font-size: 0.72em;
+            }
+
+            /* 侧边栏标签页 - 2列（手机端） */
+            #sidebar-tabs {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+                padding: 4px 0 10px 0;
+                margin-bottom: 8px;
+            }
+
+            #sidebar-tabs button {
+                padding: 14px 4px;
+                font-size: 0.78em;
+                min-height: 56px;
+                border-radius: 10px;
+                border: 1px solid rgba(42, 10, 22, 0.5);
+                background: rgba(24, 6, 16, 0.5);
+                color: #8a5a62;
+                font-family: inherit;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                touch-action: manipulation;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 2px;
+                text-align: center;
+                line-height: 1.2;
+            }
+
+            #sidebar-tabs button.active {
+                border-color: #c04050;
+                color: #ff8090;
+                background: rgba(30, 8, 18, 0.8);
+                box-shadow: 0 0 20px rgba(200, 40, 60, 0.08);
+            }
+
+            #sidebar-tabs button:active {
+                transform: scale(0.94);
+                background: rgba(200, 80, 40, 0.08);
+            }
+
+            @media (max-width: 380px) {
+                #sidebar-tabs {
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 4px;
+                }
+                #sidebar-tabs button {
+                    font-size: 0.6em;
+                    padding: 8px 2px;
+                    min-height: 42px;
+                }
+            }
+
+            /* 背包物品操作按钮 */
+            #sidebar .status-box button {
+                padding: 6px 12px;
+                font-size: 0.7em;
+                min-height: 36px;
+                min-width: 44px;
+                border-radius: 6px;
+            }
+
+            /* 地图节点 */
+            .map-grid {
+                grid-template-columns: 1fr 1fr;
+                gap: 4px;
+            }
+
+            .map-node {
+                padding: 8px 4px;
+                font-size: 0.7em;
+                min-height: 44px;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+                align-items: center;
+            }
+
+            /* 任务卡片 */
+            .task-card {
+                padding: 8px;
+                font-size: 0.75em;
+            }
+
+            .task-card button {
+                padding: 6px 12px;
+                min-height: 36px;
+                font-size: 0.7em;
+            }
+
+            /* 合成界面 */
+            .craft-item {
+                padding: 10px 8px;
+                font-size: 0.72em;
+                min-height: 52px;
+            }
+
+            /* 成就徽章 */
+            .achievement-badge {
+                padding: 6px 10px;
+                font-size: 0.68em;
+                display: inline-block;
+                margin: 3px 4px 3px 0;
+            }
+
+            /* 快速操作栏 */
+            .quick-actions {
+                display: flex;
+                padding: 4px 8px;
+                gap: 4px;
+                overflow-x: auto;
+                flex-wrap: nowrap;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                background: #0a0106;
+                border-bottom: 1px solid #200a10;
+            }
+
+            .quick-actions::-webkit-scrollbar {
+                display: none;
+            }
+
+            .quick-actions button {
+                flex: 0 0 auto;
+                padding: 6px 12px;
+                font-size: 0.65em;
+                min-height: 34px;
+                border-radius: 16px;
+                white-space: nowrap;
+                touch-action: manipulation;
+                background: #180610;
+                border: 1px solid #2a0a16;
+                color: #d0c0c4;
+                font-family: inherit;
+            }
+
+            .quick-actions button:active {
+                transform: scale(0.95);
+            }
+
+            /* 场景选项中的点击区域 */
+            #text-content .clickable {
+                padding: 8px 12px;
+                min-height: 40px;
+                display: inline-block;
+                line-height: 1.5;
+                margin: 3px 0;
+                border-radius: 6px;
+                text-decoration: none;
+                background: rgba(200, 80, 40, 0.05);
+                border: 1px solid transparent;
+            }
+
+            #text-content .clickable:active {
+                background: rgba(200, 80, 40, 0.15);
+                border-color: #3a1020;
+                transform: scale(0.97);
+            }
+
+            /* 关闭按钮优化 */
+            .close-btn {
+                padding: 14px !important;
+                font-size: 0.85em !important;
+                border-radius: 10px !important;
+                margin-top: 12px !important;
+            }
+
+        /* ==================== 新底部操作栏（暗黑哥特风格） ==================== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            background: rgba(10, 0, 5, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(180, 60, 80, 0.3);
+            padding: 6px 4px 10px 4px;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.8), 0 0 20px rgba(180, 40, 60, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .bottom-nav.hidden {
+            transform: translateY(100%);
+        }
+
+        .bottom-nav .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4px 6px;
+            min-width: 48px;
+            min-height: 48px;
+            border: none;
+            background: transparent;
+            color: #7a5a62;
+            font-family: inherit;
+            font-size: 0.6em;
+            cursor: pointer;
+            border-radius: 12px;
+            transition: all 0.25s ease;
+            position: relative;
+            gap: 1px;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        .bottom-nav .nav-item .nav-icon {
+            font-size: 1.5em;
+            line-height: 1.2;
+            transition: transform 0.2s ease;
+        }
+
+        .bottom-nav .nav-item .nav-label {
+            font-size: 0.65em;
+            letter-spacing: 0.04em;
+            opacity: 0.7;
+            transition: opacity 0.2s ease;
+        }
+
+        .bottom-nav .nav-item:active .nav-icon {
+            transform: scale(0.88);
+        }
+
+        .bottom-nav .nav-item.active {
+            color: #e8c060;
+        }
+
+        .bottom-nav .nav-item.active .nav-label {
+            opacity: 1;
+            color: #e8c060;
+        }
+
+        .bottom-nav .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: 20%;
+            right: 20%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #e8c060, transparent);
+            border-radius: 2px;
+            box-shadow: 0 0 12px rgba(200, 180, 60, 0.3);
+        }
+
+        .bottom-nav .nav-item:active {
+            background: rgba(200, 80, 40, 0.12);
+            box-shadow: 0 0 20px rgba(200, 80, 40, 0.05);
+        }
+
+        /* 底部操作栏在桌面端隐藏，手机端显示 */
+        @media (min-width: 501px) {
+            .bottom-nav {
+                display: none;
+            }
+            #text-area {
+                padding-bottom: 18px !important;
+            }
+        }
+
+        @media (max-width: 500px) {
+            .bottom-nav {
+                display: flex;
+            }
+            /* 为底部操作栏留出空间 */
+            #text-area {
+                padding-bottom: 72px !important;
+            }
+            #app {
+                padding-bottom: 0;
+            }
+        }
+
+        /* 新增：顶部标题栏优化 */
+        #topbar {
+            position: relative;
+            z-index: 10;
+        }
+
+        #topbar .title {
+            font-size: 1.15em;
+            letter-spacing: 0.12em;
+            background: linear-gradient(180deg, #e8c060 20%, #b08040 80%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: none;
+            filter: drop-shadow(0 0 20px rgba(200, 180, 60, 0.15));
+        }
+
+        #topbar .subtitle {
+            -webkit-text-fill-color: #9a6a6a;
+        }
+
+        /* 菜单按钮更精致 */
+        #menuBtn {
+            background: rgba(180, 30, 50, 0.12);
+            border: 1px solid rgba(180, 60, 80, 0.25);
+            color: #d0b0b0;
+            padding: 8px 16px;
+            border-radius: 24px;
+            font-size: 0.78em;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            letter-spacing: 0.06em;
+        }
+
+        #menuBtn:hover, #menuBtn:active {
+            border-color: #c04050;
+            color: #ffc0c0;
+            background: rgba(200, 40, 60, 0.2);
+            box-shadow: 0 0 24px rgba(200, 40, 60, 0.2), inset 0 0 24px rgba(200, 40, 60, 0.05);
+        }
+
+        /* 快捷状态栏优化 */
+        #quick-stats {
+            background: rgba(10, 1, 6, 0.85);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border-bottom: 1px solid rgba(40, 10, 20, 0.5);
+            padding: 6px 12px;
+            gap: 4px 10px;
+            font-size: 0.7em;
+            overflow-x: auto;
+            flex-wrap: nowrap;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+        }
+
+        #quick-stats::-webkit-scrollbar {
+            display: none;
+        }
+
+        #quick-stats span {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(20, 4, 10, 0.4);
+            padding: 2px 8px;
+            border-radius: 12px;
+            border: 1px solid rgba(40, 10, 20, 0.3);
+            white-space: nowrap;
+            flex-shrink: 0;
+            font-size: 0.7em;
+        }
+
+        #quick-stats .qs-label {
+            color: #6a4a4a;
+            font-size: 0.85em;
+        }
+
+        #quick-stats .qs-val,
+        #quick-stats .qs-gold,
+        #quick-stats .qs-red,
+        #quick-stats .qs-special,
+        #quick-stats .qs-time {
+            font-size: 0.95em;
+        }
+
+        /* 侧边栏微调 */
+        #sidebar {
+            background: rgba(14, 1, 8, 0.96);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-left: 1px solid rgba(60, 10, 30, 0.5);
+        }
+
+        #sidebar h3 {
+            font-size: 0.82em;
+            letter-spacing: 0.15em;
+            color: #d4a040;
+            text-shadow: 0 0 30px rgba(200, 160, 60, 0.1);
+        }
+
+        #sidebar-tabs button {
+            font-size: 0.65em;
+            padding: 6px 4px;
+            min-height: 32px;
+            border-radius: 6px;
+            background: rgba(24, 6, 16, 0.6);
+            border-color: rgba(40, 10, 20, 0.4);
+        }
+
+        #sidebar-tabs button.active {
+            border-color: #c04050;
+            color: #ff8090;
+            background: rgba(30, 8, 18, 0.8);
+            box-shadow: 0 0 20px rgba(200, 40, 60, 0.05);
+        }
+
+        /* 内容区点击选项优化 */
+        #text-content .clickable {
+            padding: 10px 16px;
+            min-height: 44px;
+            display: inline-block;
+            line-height: 1.5;
+            margin: 4px 0;
+            border-radius: 8px;
+            background: rgba(20, 4, 10, 0.4);
+            border: 1px solid rgba(40, 10, 20, 0.2);
+            transition: all 0.25s ease;
+            text-decoration: none;
+            color: #d4a040;
+            font-weight: normal;
+            width: 100%;
+            text-align: left;
+        }
+
+        #text-content .clickable:active {
+            background: rgba(200, 80, 40, 0.12);
+            border-color: rgba(200, 80, 40, 0.3);
+            transform: scale(0.98);
+            box-shadow: 0 0 24px rgba(200, 80, 40, 0.05);
+        }
+
+        #text-content .clickable.danger {
+            color: #e85060;
+            border-color: rgba(200, 40, 60, 0.2);
+        }
+
+        #text-content .clickable.danger:active {
+            background: rgba(200, 40, 60, 0.12);
+            border-color: rgba(200, 40, 60, 0.3);
+        }
+
+        #text-content .clickable.gold {
+            color: #e8c060;
+            border-color: rgba(200, 180, 60, 0.15);
+        }
+
+        #text-content .clickable.gold:active {
+            background: rgba(200, 180, 60, 0.08);
+            border-color: rgba(200, 180, 60, 0.25);
+        }
+
+        /* 场景标题优化 */
+        .scene-title {
+            font-size: 1.1em;
+            letter-spacing: 0.15em;
+            color: #e8c060;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(200, 180, 60, 0.1);
+            text-shadow: 0 0 30px rgba(200, 180, 60, 0.05);
+        }
+        /* 成就弹出通知样式 */
+        .achievement-popup {
+            position: fixed; top: -100px; left: 50%; transform: translateX(-50%);
+            width: 280px; background: rgba(18, 1, 8, 0.95); border: 1px solid #d4a040;
+            border-radius: 12px; padding: 12px 16px; z-index: 2000;
+            display: flex; align-items: center; gap: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(212,160,64,0.2);
+            transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            cursor: pointer; pointer-events: auto;
+        }
+        .achievement-popup.show { top: 30px; }
+        .achievement-popup .popup-icon { font-size: 24px; filter: drop-shadow(0 0 5px rgba(212,160,64,0.5)); }
+        .achievement-popup .popup-content { flex: 1; }
+        .achievement-popup .popup-title { font-size: 0.85em; color: #e8c060; font-weight: bold; margin-bottom: 2px; }
+        .achievement-popup .popup-desc { font-size: 0.7em; color: #9a6a6a; line-height: 1.3; }
+        .achievement-popup .popup-badge { font-size: 0.55em; color: #5a2a30; text-transform: uppercase; margin-top: 4px; letter-spacing: 1px; }
+        
+        .achievement-flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, rgba(212,160,64,0.15) 0%, transparent 70%);
+            z-index: 1999; pointer-events: none; opacity: 0; transition: opacity 0.4s;
+        }
+        .achievement-flash.show { opacity: 1; }
     </style>
 </head>
 <body>
@@ -118,15 +694,42 @@
         <div id="topbar">
             <div>
                 <div class="title">七环地狱</div>
-                <div class="subtitle">傲慢之醒 <span style="font-size:0.65em;color:#6a5a5a;margin-left:6px;">v0.6.4</span></div>
+                <div class="subtitle">傲慢之醒 <span style="font-size:0.65em;color:#6a5a5a;margin-left:6px;">v0.7.0</span></div>
             </div>
             <button id="menuBtn" onclick="toggleSidebar()">⚙️ 属性</button>
         </div>
         <div id="quick-stats"><span><span class="qs-label">🕐</span> <span class="qs-time" id="qs-time">08:00</span></span><span><span class="qs-label">📅</span> <span class="qs-val" id="qs-date">第1天</span></span><span><span class="qs-label">姓名</span> <span class="qs-special" id="qs-name">???</span></span><span><span class="qs-label">HP</span> <span class="qs-red" id="qs-hp">100/100</span></span><span><span class="qs-label">🍖</span> <span class="qs-gold" id="qs-food">100</span></span><span><span class="qs-label">😫</span> <span class="qs-red" id="qs-fatigue">0</span></span><span><span class="qs-label">EXP</span> <span class="qs-gold" id="qs-exp">0/20</span></span><span><span class="qs-label">环</span> <span class="qs-gold" id="qs-ring">-</span></span><span><span class="qs-label">金币</span> <span class="qs-gold" id="qs-gold">0</span></span></div>
         <div id="text-area"><div id="text-content"></div></div>
+        <!-- 底部导航栏（手机端显示） -->
+        <div class="bottom-nav" id="bottomNav">
+            <button class="nav-item active" data-tab="status" onclick="quickAction('status')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-label">状态</span>
+            </button>
+            <button class="nav-item" data-tab="map" onclick="quickAction('map')">
+                <span class="nav-icon">🗺️</span>
+                <span class="nav-label">地图</span>
+            </button>
+            <button class="nav-item" data-tab="inventory" onclick="quickAction('inventory')">
+                <span class="nav-icon">🎒</span>
+                <span class="nav-label">背包</span>
+            </button>
+            <button class="nav-item" data-tab="tasks" onclick="quickAction('tasks')">
+                <span class="nav-icon">📜</span>
+                <span class="nav-label">任务</span>
+            </button>
+            <button class="nav-item" data-tab="save" onclick="quickAction('save')">
+                <span class="nav-icon">💾</span>
+                <span class="nav-label">存档</span>
+            </button>
+            <button class="nav-item" data-tab="social" onclick="quickAction('social')">
+                <span class="nav-icon">👥</span>
+                <span class="nav-label">社交</span>
+            </button>
+        </div>
     </div>
     <div id="sidebar-overlay" onclick="toggleSidebar()"></div>
-    <div id="sidebar"><h3>◆ 属 性 面 板 ◆</h3><div id="sidebar-tabs"><button id="tab-status" class="active" onclick="switchTab('status')">状态</button><button id="tab-social" onclick="switchTab('social')">社交</button><button id="tab-inventory" onclick="switchTab('inventory')">背包</button><button id="tab-save" onclick="switchTab('save')">存档</button><button id="tab-map" onclick="switchTab('map')">地图</button><button id="tab-tasks" onclick="switchTab('tasks')">任务</button></div><div id="sidebar-content"></div><button class="close-btn" onclick="toggleSidebar()">关闭面板</button></div>
+    <div id="sidebar"><h3>◆ 属 性 面 板 ◆</h3><div id="sidebar-tabs"><button id="tab-status" class="active" onclick="switchTab('status')">📊 状态</button><button id="tab-social" onclick="switchTab('social')">👥 社交</button><button id="tab-inventory" onclick="switchTab('inventory')">🎒 背包</button><button id="tab-tasks" onclick="switchTab('tasks')">📜 任务</button></div><div id="sidebar-content"></div></div>
 </div>
 
 <script>
@@ -154,18 +757,46 @@ var player = {
     equippedWeaponData: null,
     sinTrait: '',
     randomEventCooldown: 0, 
-    // 新增：NPC对话追踪
+    faction: null,
+    factionJoinDay: null,
+    achievements: [],
+    exploredAreas: [],
+    worldEventsTriggered: [],
+    sinLevel: 0,
+    sinLevelLabel: '清白',
+    totalSinEarned: 0,
+    totalGoodDeeds: 0,
+    daysWithoutSin: 0,
+    lastSinDay: 0,
+    lastGoodDeedDay: 0,
+    craftRecipes: [],
+    discoveredRecipes: [],
     npcTalkDaily: {},
-    // 新增：任务系统
     activeTasks: [],
     completedTasks: [],
     failedTasks: [],
-    // 新增：黑市刷新
     blackMarketItems: [],
     blackMarketLastRefresh: -1,
-    // 新增：饱食状态
     satietyTimer: 0,
-    satietyBuff: null
+    satietyBuff: null,
+    factionReputation: {
+        '傲慢之环': 0,
+        '贪婪之环': 0,
+        '暴怒之环': 0,
+        '色欲之环': 0,
+        '嫉妒之环': 0,
+        '暴食之环': 0,
+        '懒惰之环': 0
+    },
+    stats: {
+        battlesWon: 0,
+        battlesLost: 0,
+        npcsMet: 0,
+        ringsVisited: [],
+        tasksCompleted: 0,
+        itemsCrafted: 0,
+        monstersSlain: 0
+    }
 };
 
 // ==================== 区域数据 ====================
@@ -340,6 +971,8 @@ var RD = {
 var SAVE_KEY = 'qclaw_hell_ring_save';
 var sidebarTab = 'status';
 var stage = 'title', sidebarOpen = false, selectedRace = '', selectedGender = '';
+var touchStartX = 0;
+var touchEndX = 0;
 var tc = document.getElementById('text-content');
 var sb = document.getElementById('sidebar');
 var ov = document.getElementById('sidebar-overlay');
@@ -360,6 +993,22 @@ var LS = {
 };
 
 function roll() { return Math.floor(Math.random() * 20) + 1; }
+function playSound(freq = 600, duration = 0.1, vol = 0.15) {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(vol, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + duration);
+    } catch(e) {}
+}
+
 function st(html) { tc.innerHTML = html; document.getElementById('text-area').scrollTop = 0; }
 function ab(label, fn, cls, timeCost) { var span = document.createElement('span'); var c = 'clickable'; if (cls === 'danger-btn') c += ' danger'; else if (cls === 'gold-btn' || cls === 'primary-btn') c += ' gold'; if (timeCost && label.indexOf('（' + timeCost) === -1 && label.indexOf('分钟') === -1) { label = label + '（耗时' + timeCost + '分钟）'; } span.className = c; span.innerHTML = label; var p = document.createElement('p'); p.appendChild(span); tc.appendChild(p); span.addEventListener('click', fn); }
 function cb() { /* 选项由 st() 整体重渲染，此处为空操作 */ }
@@ -375,7 +1024,14 @@ function uqs() {
     document.getElementById('qs-food').textContent = Math.floor(player.food);
     document.getElementById('qs-fatigue').textContent = Math.floor(player.fatigue);
 }
-function ua() { uqs(); usb(); }
+function ua() { 
+    uqs(); 
+    var sl = getSinLevel();
+    player.sinLevel = sl.level;
+    player.sinLevelLabel = sl.label;
+    usb(); 
+    setTimeout(function() { if (player.gold >= 100) checkAchievement('wealthy'); }, 150);
+}
 function applyBuffEffects(id, add) {
     var mappings = {
         'weapon_attack': 'strength',
@@ -792,14 +1448,21 @@ var shopData = {
 // ==================== NPC好感审视系统 ====================
 function getNpcAttitude(npcId) {
     var rel = player.relationships[npcId];
-    if (!rel) return { text: '你们尚未相识。', level: 'unknown' };
+    if (!rel) return { text: '你们尚未相识。', level: 'unknown', color: '#5a5a6a' };
     var love = rel.love || 0;
-    if (love <= -20) return { text: '他眼中满是敌意，仿佛随时会对你拔刀相向。', level: 'hostile' };
-    if (love <= 0) return { text: '他明显不想和你浪费时间，语气冷淡疏离。', level: 'cold' };
-    if (love <= 30) return { text: '他只是简单地回应你的问题，保持着基本的礼貌。', level: 'neutral' };
-    if (love <= 60) return { text: '他的态度比之前缓和了许多，愿意多说几句话。', level: 'friendly' };
-    if (love <= 80) return { text: '他把你当作可以信任的人，语气中带着难得的温和。', level: 'trusted' };
-    return { text: '他愿意向你敞开心扉，甚至分享一些不为人知的秘密。', level: 'intimate' };
+    var des = rel.desire || 0;
+    if (love <= -50) return { text: '【死敌】他视你为必除之物，空气中凝结着纯粹的杀意。', level: 'nemesis', color: '#ff0000' };
+    if (love <= -20) return { text: '【敌视】极度的厌恶，他甚至不屑于掩饰对你的反感。', level: 'hostile', color: '#e85060' };
+    if (love <= 0) return { text: '【冷淡】视若空气，那种刻骨的疏离感令你如坐针毡。', level: 'cold', color: '#9a6a6a' };
+    if (love <= 20) return { text: '【陌路】维持着最基本的社交礼仪，礼貌而空洞。', level: 'neutral', color: '#c0c0c0' };
+    if (love <= 40) return { text: '【熟识】偶尔会露出放松的表情，愿意分享些许琐事。', level: 'friendly', color: '#80c080' };
+    if (love <= 60) return { text: '【信任】你在他心中占据了一席之地，眼神多了一丝温度。', level: 'trusted', color: '#8ab4d4' };
+    if (love <= 80) return { text: '【羁绊】无需多言的默契，他是你在地狱最坚实的依靠。', level: 'bond', color: '#c090ff' };
+    if (love <= 100) {
+        if (des > 50) return { text: '【渴求】那份情感已近乎偏执，瞳孔中闪烁着危险的火花。', level: 'obsession', color: '#ff6080' };
+        return { text: '【至爱】灵魂的共鸣，在这永恒的黑暗中，你是他唯一的锚点。', level: 'soulmate', color: '#ffb3ba' };
+    }
+    return { text: '未知的情感状态', level: 'unknown', color: '#5a5a6a' };
 }
 
 // ==================== NPC对话次数限制 ====================
@@ -920,8 +1583,6 @@ function equipWeaponData(item) {
         var oldWeapon = findItemById(player.equippedWeaponId);
         if (oldWeapon) {
             oldWeapon.equipped = false;
-            var oldData = player.equippedWeaponData || {};
-            if (oldData.attack) player.strength -= oldData.attack;
             removeBuff('weapon_attack');
         }
     }
@@ -929,7 +1590,6 @@ function equipWeaponData(item) {
     player.equippedWeaponId = item.id;
     player.equippedWeaponData = item.effects || {};
     if (player.equippedWeaponData.attack) {
-        player.strength += player.equippedWeaponData.attack;
         addBuff('weapon_attack', item.name, '武器攻击力 +' + player.equippedWeaponData.attack, 'positive', 9999);
     }
     // 武器特殊buff
@@ -947,7 +1607,6 @@ function unequipWeapon() {
     if (item) {
         item.equipped = false;
         var oldData = player.equippedWeaponData || {};
-        if (oldData.attack) player.strength -= oldData.attack;
         removeBuff('weapon_attack');
         if (oldData.buffs) {
             for (var i = 0; i < oldData.buffs.length; i++) {
@@ -983,33 +1642,54 @@ function useConsumable(itemId) {
     var item = findItemById(itemId);
     if (!item || item.type !== 'consumable' || item.quantity <= 0) return;
     var e = item.effects || {};
+
     player.hp = Math.min(player.maxHp, player.hp + (e.hp || 0));
-    if (e.strength) player.strength += e.strength;
-    if (e.magic) player.magic += e.magic;
-    if (e.charisma) player.charisma += e.charisma;
     if (e.sanity) player.sanity = Math.min(player.maxSanity, player.sanity + e.sanity);
     if (e.desire) player.desire = Math.min(player.maxDesire, player.desire + e.desire);
     if (e.fatigue !== undefined) {
         player.fatigue = Math.max(0, Math.min(player.maxFatigue, player.fatigue + e.fatigue));
     }
-    // 修复：增加饱食度
     if (e.food) {
         player.food = Math.min(player.maxFood, player.food + e.food);
-        // 饱食buff
         if (e.satietyBuff) {
             addBuff('satiety', e.satietyBuff.name, e.satietyBuff.desc, 'positive', e.satietyBuff.duration || 1440);
             player.satietyTimer = e.satietyBuff.duration || 1440;
         }
     }
-    // 食物道具的额外buff
+
+    var attrMap = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' };
+    var attrBuffs = [];
+    if (e.strength) attrBuffs.push({ stat: 'strength', value: e.strength });
+    if (e.agility) attrBuffs.push({ stat: 'agility', value: e.agility });
+    if (e.magic) attrBuffs.push({ stat: 'magic', value: e.magic });
+    if (e.charisma) attrBuffs.push({ stat: 'charisma', value: e.charisma });
+
+    if (attrBuffs.length > 0) {
+        var buffId = 'food_temp_' + Date.now();
+        var buffName = item.name + ' 效果';
+        var buffDesc = attrBuffs.map(function(a) {
+            return attrMap[a.stat] + (a.value > 0 ? '+' : '') + a.value;
+        }).join('、') + '（持续60分钟）';
+        attrBuffs.forEach(function(a) {
+            player[a.stat] += a.value;
+        });
+        addBuff(buffId, buffName, buffDesc, 'positive', 60);
+        var buffObj = player.buffs.find(function(b) { return b.id === buffId; });
+        if (buffObj) {
+            buffObj.extra = { restore: attrBuffs };
+        }
+    }
+
     if (e.buffs) {
         for (var i = 0; i < e.buffs.length; i++) {
             var b = e.buffs[i];
             addBuff('food_' + b.id, b.name, b.desc, b.type || 'positive', b.duration || 60);
         }
     }
+
     removeItem(itemId, 1);
-    ua(); usb();
+    ua();
+    usb();
     st('<p>你使用了 ' + item.name + '。</p>');
     cb();
     ab('继续', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
@@ -1025,11 +1705,15 @@ function checkSatiety() {
             player.agility = Math.max(1, player.agility - 2);
         }
     } else {
-        removeBuff('starvation');
+        if (player.buffs.find(function(b){ return b.id === 'starvation'; })) {
+            removeBuff('starvation');
+            player.strength = Math.max(1, player.strength + 2);
+            player.agility = Math.max(1, player.agility + 2);
+        }
     }
     // 饱食buff过期检查
     if (player.satietyTimer > 0) {
-        player.satietyTimer--;
+        player.satietyTimer = Math.max(0, player.satietyTimer - 1440);
         if (player.satietyTimer <= 0) {
             removeBuff('satiety');
         }
@@ -1082,6 +1766,8 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
             }
             ua();
             st('<div class="scene-title">🏆 战 斗 胜 利</div><p>你击败了 <span class="gold-text">' + enemy.name + '</span>！</p><p style="color:#e8c060;">获得 ' + gold + ' 金币，' + exp + ' 经验。' + (enemy.sinReward ? ' 罪业值 +' + enemy.sinReward : '') + '</p>');
+            player.stats.battlesWon++;
+            setTimeout(function() { checkAchievement('first_battle'); }, 150);
             cb();
             ab('继续', function() {
                 player.fatigue = Math.min(player.maxFatigue, player.fatigue + 10);
@@ -1112,22 +1798,25 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
         }
     }
 
-    function playerTurn(action) {
+        function playerTurn(action) {
         if (enemy.hp <= 0) { endCombat(true); return; }
         if (player.hp <= 0) { endCombat(false); return; }
 
         if (action === 'attack') {
+            playSound(900, 0.1);
             var dmg = Math.max(1, playerAtk - enemy.defense + Math.floor(Math.random() * 4) - 1);
             enemy.hp = Math.max(0, enemy.hp - dmg);
             renderCombat('你攻击了 ' + enemy.name + '，造成 ' + dmg + ' 点伤害！');
             if (enemy.hp <= 0) { endCombat(true); return; }
             enemyTurn();
         } else if (action === 'defend') {
+            playSound(400, 0.15);
             var recovered = Math.floor(player.maxHp * 0.05) + 2;
             player.hp = Math.min(player.maxHp, player.hp + recovered);
             renderCombat('你采取了防御姿态，恢复了 ' + recovered + ' 点生命。');
             enemyTurn();
         } else if (action === 'flee') {
+            playSound(200, 0.2);
             var fleeChance = 0.4 + (player.agility * 0.02);
             if (Math.random() < fleeChance) {
                 st('<div class="scene-title">🏃 逃 跑</div><p>你成功脱离了战斗！</p>');
@@ -1235,6 +1924,26 @@ function addTime(minutes) {
         player.flags.desireOverflowThisDay = false;
         // 检查饱食度
         checkSatiety();
+        // 疲劳过度惩罚
+        if (player.fatigue >= 100) {
+            triggerFaint();
+        }
+        // 时间触发事件
+        if (player.daysSurvived === 3 && !player.flags.event_star_fissure) {
+            player.flags.event_star_fissure = true;
+            st('<div class="scene-title">🌌 星光裂隙</div><p>傲慢之环的废弃矿场深处出现了一道星光裂隙，据说那里埋藏着远古的秘密。</p>');
+            player.flags.pending_event = 'star_fissure';
+        }
+        if (player.daysSurvived === 7 && !player.flags.event_stock_crash) {
+            player.flags.event_stock_crash = true;
+            player.flags.market_discount = 0.8; 
+            st('<div class="scene-title">📉 股市暴跌</div><p>贪婪之环的恶魔股市暴跌，物价暂时下降！所有商店价格打八折。</p>');
+        }
+        if (player.daysSurvived === 10 && !player.flags.event_arena) {
+            player.flags.event_arena = true;
+            player.flags.pending_event = 'arena';
+            st('<div class="scene-title">⚔️ 血焰角斗大赛</div><p>暴怒之环的血焰角斗场今日举办大赛，报名费减半，胜者奖金翻倍！</p>');
+        }
         // 黑市刷新
         refreshBlackMarket();
         // 任务过期检查
@@ -1251,6 +1960,12 @@ function addTime(minutes) {
 }
 
 function updateFatigue() {
+    // 先清除所有疲劳层，避免累积错误
+    for (var i = 1; i <= 8; i++) {
+        removeBuff('fatigue_layer_' + i);
+    }
+    removeBuff('exhausted');
+
     var period = getTimePeriod();
     if (period === 'night' && !player.flags.isSleeping) {
         player.fatigue = Math.min(player.maxFatigue, player.fatigue + 1);
@@ -1276,7 +1991,8 @@ function updateFatigue() {
             }
         }
         if (newLayers >= 8) {
-            triggerFaintDeep();
+            player.fatigue = 50;
+            triggerFaint();
             return;
         }
     }
@@ -1298,66 +2014,6 @@ function checkHp() {
     }
 }
 
-function triggerFaint() {
-    var outcomes = [
-        { 
-            name: '被洗劫', 
-            text: '你眼前一黑倒在了地上。当你醒来时，发现身上值钱的东西都被搜走了。', 
-            effect: function() { 
-                var loss = Math.floor(player.gold * 0.3);
-                player.gold -= loss;
-                st('<p style="color:#e85060;">丢失了 ' + loss + ' 金币。</p>');
-            } 
-        },
-        { 
-            name: '路过的恶魔', 
-            text: '你倒在了街头。幸运的是，一个路过的老恶魔将你拖到了路边，并给你灌了一些苦涩的药水。', 
-            effect: function() { 
-                player.hp = 10;
-                st('<p style="color:#80c080;">HP 恢复至 10。</p>');
-            } 
-        },
-        { 
-            name: '遭到侵犯', 
-            text: '你醒来时发现自己躺在暗巷的垃圾堆里，衣服凌乱，身体各处传来异样的疼痛和酸软……', 
-            effect: function() { 
-                player.sanity = Math.max(0, player.sanity - 5);
-                player.desire = 0;
-                st('<p style="color:#e85060;">理智-5，欲望已清零。</p>');
-            } 
-        }
-    ];
-    
-    var outcome = outcomes[Math.floor(Math.random() * outcomes.length)];
-    player.gameTime += 240; // 昏迷4小时
-    player.fatigue = Math.max(0, player.fatigue - 30);
-    
-    st('<div class="scene-title">昏 迷</div><p>' + outcome.text + '</p>');
-    outcome.effect();
-    cb();
-    ab('挣扎着站起来', function() { 
-        if (player.hp <= 0) player.hp = 5;
-        ua(); 
-        sceneExploreDistrict(player.currentRing, getCurrentLevel()); 
-    });
-}
-
-function triggerFaintDeep() {
-    player.hp = Math.max(1, player.hp - 10);
-    player.sanity = Math.max(0, player.sanity - 3);
-    for (var i = 1; i <= 8; i++) {
-        removeBuff('fatigue_layer_' + i);
-    }
-    removeBuff('exhausted');
-    player.gameTime += 360;
-    player.fatigue = 0;
-    player.flags.isSleeping = false;
-    var eventText = '你因极度疲劳而晕倒了整整六个小时。当你再次醒来时，身体仍然虚弱，但至少不再处于崩溃边缘。';
-    player.statusMood = '你刚从昏迷中醒来，身体极度虚弱。';
-    st('<div class="scene-title">晕 倒（极度疲劳）</div><p>' + eventText + '</p><p style="color:#e85060;">HP-10，理智-3。疲劳已清除，疲劳层debuff已消失。</p>');
-    cb();
-    ab('继续', function() { addTime(5); sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
-}
 
 function triggerDesireOverflow() {
     player.flags.desireOverflowThisDay = true;
@@ -1399,6 +2055,12 @@ function tickBuffs() {
         if (b.duration && b.duration < 9999 && b.startTime !== undefined) {
             var elapsed = Math.floor((player.gameTime - b.startTime) / 60);
             if (elapsed >= b.duration) {
+                // 如果有额外恢复数据，先恢复属性
+                if (b.extra && b.extra.restore) {
+                    b.extra.restore.forEach(function(a) {
+                        player[a.stat] = Math.max(1, player[a.stat] - a.value);
+                    });
+                }
                 removeBuff(b.id);
             }
         }
@@ -1418,6 +2080,10 @@ function updateFood() {
 }
 
 function triggerFaint() {
+    if (!player.flags.firstDeath) {
+        player.flags.firstDeath = true;
+        setTimeout(function() { checkAchievement('first_death'); }, 150);
+    }
     player.hp = Math.max(1, player.hp - 20);
     player.sanity = Math.max(0, player.sanity - 5);
     player.fatigue = 50;
@@ -1480,6 +2146,181 @@ function sleepRest(quality, hours, fatiguePerHour, hpPerHour, sanityPerHour) {
     ua();
 }
 
+function getSinLevel() {
+    var val = player.sinValue;
+    if (val <= 0) return { level: 0, label: '清白' };
+    if (val <= 50) return { level: 1, label: '初坠者' };
+    if (val <= 150) return { level: 2, label: '沉沦之魂' };
+    if (val <= 300) return { level: 3, label: '罪孽深重' };
+    if (val <= 600) return { level: 4, label: '邪恶之徒' };
+    if (val <= 1000) return { level: 5, label: '深渊共鸣者' };
+    return { level: 6, label: '深渊弃子' };
+}
+
+function checkAchievement(id) {
+    var achievementData = {
+        'first_battle': { name: '初露锋芒', desc: '赢得第一场战斗胜利。' },
+        'first_death': { name: '死而复生', desc: '第一次从昏迷中醒来。' },
+        'wealthy': { name: '小有资产', desc: '持有金币超过 100。' },
+        'first_ring': { name: '环游地狱', desc: '跨越边境，前往另一个环层。' },
+        'npc_5': { name: '地狱交际花', desc: '结识了 5 位以上的地狱住民。' },
+        'join_faction': { name: '阵营成员', desc: '首次加入任一环层派系。' }
+    };
+    if (achievementData[id] && !player.achievements.includes(id)) {
+        player.achievements.push(id);
+        showAchievementPopup(id, achievementData[id].name, achievementData[id].desc);
+    }
+}
+
+// ==================== 成就弹出通知（右上角直现版） ====================
+function showAchievementPopup(id, name, desc) {
+    // 播放音效
+    try {
+        var ctx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 880;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+        setTimeout(function() {
+            var osc2 = ctx.createOscillator();
+            var gain2 = ctx.createGain();
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.frequency.value = 1100;
+            osc2.type = 'sine';
+            gain2.gain.setValueAtTime(0.12, ctx.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+            osc2.start(ctx.currentTime);
+            osc2.stop(ctx.currentTime + 0.25);
+        }, 150);
+    } catch(e) {}
+
+    var popup = document.createElement('div');
+    popup.className = 'achievement-popup';
+    // 直接内联样式覆盖，确保位置，放在 body 下避免任何容器干扰
+    popup.style.cssText = 'position:fixed; top:30px; right:20px; left:auto; transform:none; opacity:1; z-index:9999; max-width:320px; width:auto; min-width:200px; background:rgba(18,1,8,0.95); border:1px solid #d4a040; border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(212,160,64,0.2); cursor:pointer; pointer-events:auto; transition: opacity 0.4s;';
+    popup.innerHTML =
+        '<span class="popup-icon" style="font-size:24px;filter:drop-shadow(0 0 5px rgba(212,160,64,0.5));">🏆</span>' +
+        '<span class="popup-content" style="flex:1;">' +
+        '<div class="popup-title" style="font-size:0.85em;color:#e8c060;font-weight:bold;margin-bottom:2px;">成就解锁：' + name + '</div>' +
+        '<div class="popup-desc" style="font-size:0.7em;color:#9a6a6a;line-height:1.3;">' + desc + '</div>' +
+        '<div class="popup-badge" style="font-size:0.55em;color:#5a2a30;text-transform:uppercase;margin-top:4px;letter-spacing:1px;">✦ 七环地狱 ✦</div>' +
+        '</span>';
+
+    document.body.appendChild(popup);
+
+    // 点击关闭
+    popup.addEventListener('click', function(e) {
+        e.stopPropagation();
+        popup.style.opacity = '0';
+        setTimeout(function() { if (popup.parentNode) popup.remove(); }, 400);
+    });
+
+    // 4秒后自动关闭
+    setTimeout(function() {
+        if (popup.parentNode) {
+            popup.style.opacity = '0';
+            setTimeout(function() { if (popup.parentNode) popup.remove(); }, 400);
+        }
+    }, 4000);
+}
+
+function renderAchievementHtml() {
+    var achievementData = {
+        'first_battle': { name: '初露锋芒', desc: '赢得第一场战斗胜利。' },
+        'first_death': { name: '死而复生', desc: '第一次从昏迷中醒来。' },
+        'wealthy': { name: '小有资产', desc: '持有金币超过 100。' },
+        'first_ring': { name: '环游地狱', desc: '跨越边境，前往另一个环层。' },
+        'npc_5': { name: '地狱交际花', desc: '结识了 5 位以上的地狱住民。' },
+        'join_faction': { name: '阵营成员', desc: '加入任意派系。' }
+    };
+    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">🏆 成就系统</div>';
+    for (var id in achievementData) {
+        var a = achievementData[id];
+        var unlocked = player.achievements.includes(id);
+        html += '<div style="padding:6px;border-bottom:1px solid #1a0a1a;opacity:' + (unlocked ? 1 : 0.4) + ';">';
+        html += '<div style="font-size:0.85em;color:' + (unlocked ? '#e8c060' : '#8a6a6a') + ';">' + (unlocked ? '🏆 ' : '🔒 ') + a.name + '</div>';
+        html += '<div style="font-size:0.7em;color:#8a5a62;">' + a.desc + '</div>';
+        html += '</div>';
+    }
+    html += '</div>';
+    return html;
+}
+
+function renderCraft() {
+    var recipes = [
+        { name: '能量水晶', ingredients: [{ id: 'crystal_frag', qty: 2 }, { id: 'residue_sample', qty: 1 }], result: { id: 'energy_crystal', name: '能量水晶', type: 'consumable', desc: '战斗中恢复魔力+15。', effects: { magic: 2, hp: 10 } } },
+        { name: '强效饱食药剂', ingredients: [{ id: 'digestive_enzyme', qty: 3 }], result: { id: 'strong_food', name: '强效饱食药剂', type: 'consumable', desc: '大幅恢复饱食度。', effects: { food: 50, hp: 20 } } },
+        { name: '熔岩匕首', ingredients: [{ id: 'hellhound_fang', qty: 1 }, { id: 'wrath_crystal', qty: 1 }], result: { id: 'lava_dagger', name: '熔岩匕首', type: 'weapon', desc: '攻击附带火焰伤害。', effects: { attack: 5, buffs: [{ id: 'lava_burn', name: '熔岩灼烧', desc: '攻击时概率灼烧敌人。', type: 'positive', duration: 9999 }] } } }
+    ];
+    var html = '<div class="status-box"><p style="color:#e8c060;font-weight:bold;text-align:center;">🔧 合成台</p>';
+    for (var i = 0; i < recipes.length; i++) {
+        var r = recipes[i];
+        var avail = true;
+        for (var j = 0; j < r.ingredients.length; j++) {
+            if (getItemCount(r.ingredients[j].id) < r.ingredients[j].qty) avail = false;
+        }
+        html += '<div class="craft-item ' + (avail ? 'available' : 'unavailable') + '" onclick="if(' + avail + ') doCraft(' + i + ')" style="padding:12px 10px;margin:6px 0;background:#14040a;border:1px solid ' + (avail ? '#3a2810' : '#2a0a14') + ';border-radius:6px;cursor:' + (avail ? 'pointer' : 'not-allowed') + ';opacity:' + (avail ? 1 : 0.4) + ';">';
+        html += '<strong style="color:#e8c060;">' + r.name + '</strong><br>';
+        html += '<span style="font-size:0.7em;color:#8a5a62;">材料：';
+        var parts = [];
+        for (var j = 0; j < r.ingredients.length; j++) {
+            var ing = r.ingredients[j];
+            var have = getItemCount(ing.id);
+            parts.push(ing.id + ' x' + ing.qty + ' (拥有' + have + ')');
+        }
+        html += parts.join(' + ');
+        html += '</span><br>';
+        html += '<span style="color:#e8c060;">→ ' + r.result.name + '</span>';
+        html += '</div>';
+    }
+    html += '</div>';
+    sc.innerHTML = html;
+}
+
+function doCraft(index) {
+    var recipes = [
+        { name: '能量水晶', ingredients: [{ id: 'crystal_frag', qty: 2 }, { id: 'residue_sample', qty: 1 }], result: { id: 'energy_crystal', name: '能量水晶', type: 'consumable', desc: '战斗中恢复魔力+15。', effects: { magic: 2, hp: 10 } } },
+        { name: '强效饱食药剂', ingredients: [{ id: 'digestive_enzyme', qty: 3 }], result: { id: 'strong_food', name: '强效饱食药剂', type: 'consumable', desc: '大幅恢复饱食度。', effects: { food: 50, hp: 20 } } },
+        { name: '熔岩匕首', ingredients: [{ id: 'hellhound_fang', qty: 1 }, { id: 'wrath_crystal', qty: 1 }], result: { id: 'lava_dagger', name: '熔岩匕首', type: 'weapon', desc: '攻击附带火焰伤害。', effects: { attack: 5, buffs: [{ id: 'lava_burn', name: '熔岩灼烧', desc: '攻击时概率灼烧敌人。', type: 'positive', duration: 9999 }] } } }
+    ];
+    var r = recipes[index];
+    for (var j = 0; j < r.ingredients.length; j++) {
+        removeItem(r.ingredients[j].id, r.ingredients[j].qty);
+    }
+    addItem(r.result.id, r.result.name, r.result.type, r.result.desc, 1, r.result.effects);
+    st('<p style="color:#80c080;">✅ 成功合成 ' + r.result.name + '！</p>');
+    cb();
+    ab('继续', function() { switchTab('craft'); });
+    ua();
+}
+
+function renderFactionHtml() {
+    var factions = {
+        '傲慢之环': { name: '晨星会', desc: '由傲慢之环的高阶恶魔组成，追求极致的秩序与完美。', buff: '理智恢复+10%，购物折扣95%' },
+        '贪婪之环': { name: '万宝盟', desc: '地狱最大的商业联合体，信奉金钱万能。', buff: '金币收益+15%，黑市手续费减免' }
+    };
+    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">派系阵营</div>';
+    if (!player.faction) {
+        html += '<p style="font-size:0.78em;color:#8a5a62;">你尚未加入任何派系。达到特定条件后可申请加入。</p>';
+    } else {
+        var f = factions[player.faction];
+        html += '<div style="padding:8px;border:1px solid #e8c060;border-radius:4px;margin-bottom:10px;">';
+        html += '<div style="font-size:0.9em;color:#e8c060;font-weight:bold;">' + f.name + '</div>';
+        html += '<div style="font-size:0.75em;color:#d0c0c4;margin:4px 0;">' + f.desc + '</div>';
+        html += '<div style="font-size:0.7em;color:#80c080;">当前特权：' + f.buff + '</div>';
+        html += '</div>';
+    }
+    html += '</div>';
+    return html;
+}
+
 function getMoodText() {
     var moods = [];
     if (player.sanity <= 3) moods.push('你感到精神濒临崩溃，现实与幻觉的界限变得模糊。');
@@ -1504,11 +2345,20 @@ function usb() {
         var satietyStatus = player.food <= 0 ? '<span style="color:#e85060;">饥饿</span>' : (player.food < 30 ? '<span style="color:#d4a040;">半饱</span>' : '<span style="color:#80c080;">饱足</span>');
         sc.innerHTML = '<div class="status-box"><div class="stat-row"><span class="s-label">🕐 时间</span><span class="s-val" style="color:#8ab4d4;">' + getTimeString() + '</span></div><div class="stat-row"><span class="s-label">📅 日期</span><span class="s-val">' + getDateString() + ' (存活' + player.daysSurvived + '天)</span></div><div class="stat-row"><span class="s-label">姓名</span><span class="s-val s-highlight">' + player.name + '</span></div><div class="stat-row"><span class="s-label">种族</span><span class="s-val">' + rl + '</span></div><div class="stat-row"><span class="s-label">性别</span><span class="s-val">' + gen + '</span></div><div class="stat-row"><span class="s-label">等级</span><span class="s-val">' + player.level + '</span></div><div class="stat-row"><span class="s-label">EXP</span><span class="s-val">' + (player.exp||0) + ' / ' + (player.level*20) + '</span></div><div class="stat-row"><span class="s-label">职业</span><span class="s-val">' + player.job + '</span></div></div>' +
         '<div class="status-box"><div class="stat-row"><span class="s-label">❤️ HP</span><span class="s-val s-highlight">' + player.hp + ' / ' + player.maxHp + '</span></div><div class="stat-row"><span class="s-label">🧠 理智</span><span class="s-val">' + player.sanity + ' / ' + player.maxSanity + '</span></div><div class="stat-row"><span class="s-label">🔥 欲望</span><span class="s-val" style="color:#d4a040;">' + player.desire + ' / ' + player.maxDesire + '</span></div><div class="stat-row"><span class="s-label">🍖 饱食度</span><span class="s-val">' + Math.floor(player.food) + ' / ' + player.maxFood + ' (' + satietyStatus + ')</span></div><div class="stat-row"><span class="s-label">😫 疲劳度</span><span class="s-val">' + Math.floor(player.fatigue) + ' / ' + player.maxFatigue + '</span></div><div class="stat-row"><span class="s-label">⚔️ 物攻</span><span class="s-val">' + Math.floor(player.strength * 1.5) + '</span></div><div class="stat-row"><span class="s-label">✨ 法攻</span><span class="s-val">' + Math.floor(player.magic * 1.5) + '</span></div></div>' +
-        '<div class="status-box"><div class="stat-row"><span class="s-label">金币</span><span class="s-val s-gold">' + player.gold + '</span></div><div class="stat-row"><span class="s-label">罪孽/本质</span><span class="s-val s-gold">' + (player.sin || '-') + '</span></div><div class="stat-row"><span class="s-label">罪业值</span><span class="s-val">' + player.sinValue + '</span></div><div class="stat-row"><span class="s-label">所在环</span><span class="s-val">' + (player.currentRing || '-') + '</span></div><div class="stat-row"><span class="s-label">当前区域</span><span class="s-val">' + (player.currentDistrict || '-') + '</span></div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">金币</span><span class="s-val s-gold">' + player.gold + '</span></div><div class="stat-row"><span class="s-label">罪孽/本质</span><span class="s-val s-gold">' + (player.sin || '-') + '</span></div><div class="stat-row"><span class="s-label">罪业等级</span><span class="s-val" style="color:#ff6080;">' + player.sinLevelLabel + ' (Lv.' + player.sinLevel + ')</span></div><div class="stat-row"><span class="s-label">罪业值</span><span class="s-val">' + player.sinValue + '</span></div><div class="stat-row"><span class="s-label">所在环</span><span class="s-val">' + (player.currentRing || '-') + '</span></div><div class="stat-row"><span class="s-label">当前区域</span><span class="s-val">' + (player.currentDistrict || '-') + '</span></div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">所属派系</span><span class="s-val">' + (player.faction || '无') + '</span></div></div>' +
         '<div class="status-box"><div class="stat-row"><span class="s-label">衣着</span><span class="s-val">' + player.outfit + '</span></div><p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + player.outfitDesc + '</p></div>' +
         '<div class="status-box"><div class="status-label">BUFF / DEBUFF</div><div style="margin-top:4px;">' + buffHtml + '</div><div class="status-mood">' + getMoodText() + '</div></div>' +
         '<div class="status-box"><div class="stat-row"><span class="s-label">💪 力量</span><span class="s-val">' + player.strength + '</span></div><div class="stat-row"><span class="s-label">🏃 敏捷</span><span class="s-val">' + player.agility + '</span></div><div class="stat-row"><span class="s-label">✨ 魔力</span><span class="s-val">' + player.magic + '</span></div><div class="stat-row"><span class="s-label">💋 魅力</span><span class="s-val">' + player.charisma + '</span></div></div>' +
-        (isBlackMarketOpen() ? '<div class="status-box" style="border-color:#ff4060;"><p style="color:#ff6080;text-align:center;font-weight:bold;">🌙 黑市开放中 (22:00-02:00)</p></div>' : '');
+        (isBlackMarketOpen() ? '<div class="status-box" style="border-color:#ff4060;"><p style="color:#ff6080;text-align:center;font-weight:bold;">🌙 黑市开放中 (22:00-02:00)</p></div>' : '') +
+        '<div class="status-box" style="border-top: 1px solid #1a0812; margin-top: 6px; padding-top: 8px;">' +
+        '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' +
+        '<button onclick="switchTab(\'faction\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">⚔️ 派系</button>' +
+        '<button onclick="switchTab(\'achievement\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">🏆 成就</button>' +
+        '<button onclick="switchTab(\'map\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">🗺️ 地图</button>' +
+        '<button onclick="switchTab(\'craft\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#80c080;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">🔧 合成</button>' +
+        '<button onclick="switchTab(\'save\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d4a040;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">💾 存档</button>' +
+        '</div></div>';
     } else if (sidebarTab === 'inventory') {
         var invHtml = '';
         if (player.inventory.length === 0) {
@@ -1600,6 +2450,10 @@ function usb() {
             }
         }
         sc.innerHTML = socialHtml;
+    } else if (sidebarTab === 'faction') {
+        sc.innerHTML = renderFactionHtml();
+    } else if (sidebarTab === 'achievement') {
+        sc.innerHTML = renderAchievementHtml();
     } else if (sidebarTab === 'save') {
         var slotsHtml = '<div class="save-section"><p style="font-size:0.78em;color:#8a5a62;margin-bottom:8px;">保存或加载游戏进度。</p>';
 var slots = JSON.parse(LS.g(SAVE_KEY + '_slots') || '[]');
@@ -1661,16 +2515,55 @@ var taskPool = [];
 
 function generateTask() {
     var templates = [
-        { title: '收集暗影结晶', desc: '灰烬区矿场深处出现了罕见的暗影结晶，有人愿意出高价收购。', deadline: 2, rewardGold: 15, rewardExp: 12, type: 'collect', target: 'shadow_crystal', quantity: 3 },
-        { title: '清除废弃矿道', desc: '废弃矿道里盘踞了一群低阶地狱虫，它们阻碍了通行。', deadline: 1, rewardGold: 20, rewardExp: 18, type: 'combat', target: 'hell_worm', quantity: 1 },
-        { title: '护送商队', desc: '一位商人需要人护送穿过铜板巷的危险区域。', deadline: 1, rewardGold: 25, rewardExp: 15, type: 'escort', target: 'merchant', quantity: 1 },
-        { title: '找回失窃的信物', desc: '一位老恶魔的传家宝被偷走了，据说藏在暗巷的某处。', deadline: 2, rewardGold: 18, rewardExp: 14, type: 'collect', target: 'stolen_heirloom', quantity: 1 },
-        { title: '清理黑水污染', desc: '水沟区的黑水出现了异常污染，需要找到污染源。', deadline: 2, rewardGold: 12, rewardExp: 10, type: 'explore', target: 'pollution_source', quantity: 1 },
-        { title: '散播谣言', desc: '有人付钱让你在镜面街区散播关于某位贵族的丑闻。', deadline: 1, rewardGold: 22, rewardExp: 8, type: 'social', target: 'rumor', quantity: 3, sinReward: 5 },
-        { title: '偷取配方', desc: '美食大道的一家高档餐厅有一份秘密配方，有人愿意出高价收购。', deadline: 2, rewardGold: 30, rewardExp: 16, type: 'steal', target: 'secret_recipe', quantity: 1, sinReward: 4 },
-        { title: '安抚暴怒的角斗士', desc: '血焰角斗场的一位角斗士在战败后暴走，需要人去安抚他。', deadline: 1, rewardGold: 16, rewardExp: 20, type: 'social', target: 'angry_gladiator', quantity: 1 },
-        { title: '收集欲望残渣', desc: '色欲之环的某位魅魔需要收集"被拒绝的欲望"残渣来炼制香水。', deadline: 2, rewardGold: 14, rewardExp: 11, type: 'collect', target: 'desire_residue', quantity: 5, desireReward: 3 },
-        { title: '拆除惰性陷阱', desc: '懒惰之环的某个区域被惰性陷阱覆盖，需要有人去拆除它们。', deadline: 2, rewardGold: 18, rewardExp: 13, type: 'explore', target: 'lazy_trap', quantity: 3 }
+        { 
+            title: '🔗 收集暗影结晶', 
+            desc: '在傲慢之环灰烬区那些被诅咒的矿场最深处，岩壁渗出的不仅是冰冷的黑水，还有这种被凝固的负面情绪——暗影结晶。传言那是自杀者的遗言被地狱高压挤碎后的产物。某位躲在星尘区高塔里的炼金术士需要这些东西来熬制违禁的理智药剂。你必须忍受那种刺骨的低语，从满是腐肉臭味的矿道里把它们抠出来。', 
+            deadline: 2, rewardGold: 18, rewardExp: 15, type: 'collect', target: 'shadow_crystal', quantity: 3 
+        },
+        { 
+            title: '🐛 清除寄生尸虫', 
+            desc: '一群贪婪的地狱虫正寄生在通往铜板巷的运尸道里。它们不仅吞噬腐肉，甚至开始啃食那些路过的、还没完全断气的罪人。为了保证"原材料"的准时送达，贪婪之环的屠宰场监工开出了价码。你得踩着那些滑腻的、半腐烂的内脏，把这些满嘴毒液的爬行怪物一个个踩成浆糊。', 
+            deadline: 1, rewardGold: 22, rewardExp: 20, type: 'combat', target: 'hell_worm', quantity: 1 
+        },
+        { 
+            title: '💀 搬运"损耗品"', 
+            desc: '一队从暴怒之环退役的重伤奴隶被当作廉价材料卖给了暴食之环的加工厂。由于他们伤势过重，无法自己行走，你需要负责监督并护送这些不断哀嚎的"损耗品"穿过混乱的贫民窟。别管他们的求饶，更别管那些试图分一杯羹的掠夺者，你的任务是保证他们活着——或者至少在抵达时还有利用价值。', 
+            deadline: 1, rewardGold: 28, rewardExp: 18, type: 'escort', target: 'merchant', quantity: 1 
+        },
+        { 
+            title: '💍 寻找剥落的眼球', 
+            desc: '一位在色欲之环玩得太过火的贵族在暗巷里丢了他的"义眼"——那是一枚用纯净理智凝结成的昂贵饰品。它现在可能正握在某个乞丐的手里，或者掉在哪个满是污秽的排水沟里。那地方充斥着廉价的欲望和腐烂的气息，如果你不想被那种甜腻的毒气弄疯，就快去快回。', 
+            deadline: 2, rewardGold: 20, rewardExp: 15, type: 'collect', target: 'stolen_heirloom', quantity: 1 
+        },
+        { 
+            title: '🕳️ 封堵绝望渗漏', 
+            desc: '水沟区的一处下水道管网发生了严重的绝望溢出，浓稠的灰色雾气正从裂缝中喷涌而出，将周围的恶魔转化为毫无理智的行尸走肉。你需要带着特制的封堵工具，潜入那片被黑水淹没的迷宫。那里的每一寸空气都沉重得让人想自我了断，千万别在黑暗中待太久。', 
+            deadline: 2, rewardGold: 15, rewardExp: 12, type: 'explore', target: 'pollution_source', quantity: 1 
+        },
+        { 
+            title: '📢 散布毁灭福音', 
+            desc: '嫉妒之环的阴谋家需要一个扩音器。你去镜面街区，在那群内心扭曲的观察者中间散布关于某位上级恶魔已经失去君主宠信的流言。看着那些因为嫉妒而发亮的眼睛，看着他们如何亲手毁掉曾经仰望的对象。这种背德的愉悦会滋养你的罪业。', 
+            deadline: 1, rewardGold: 25, rewardExp: 10, type: 'social', target: 'rumor', quantity: 3, sinReward: 6 
+        },
+        { 
+            title: '🧪 窃取"纯度"配方', 
+            desc: '美食大道的一家餐厅开发出了一种能让人短暂产生"升天"错觉的调料。它的成分里据说包含某种被禁断的、跨越位面的灵魂碎片。另一家竞争对手想要这份配方，哪怕它是用鲜血写成的。潜入那间充满油腻和尖叫的后厨，把那份罪恶的秘密带出来。', 
+            deadline: 2, rewardGold: 35, rewardExp: 20, type: 'steal', target: 'secret_recipe', quantity: 1, sinReward: 5 
+        },
+        { 
+            title: '🩸 镇压失控的肉块', 
+            desc: '一个在血焰角斗场被过载注射了兴奋剂的角斗士炸成了漫天血雾——字面意义上的。但他的肉块依然保持着活性，正在训练室里疯狂增殖并攻击一切活物。那是纯粹的、被暴怒扭曲的肉质本能。去，用你的武器把它彻底切碎，直到它不再动弹。', 
+            deadline: 1, rewardGold: 20, rewardExp: 25, type: 'combat', target: 'angry_gladiator', quantity: 1 
+        },
+        { 
+            title: '🍷 收集干涸的精气', 
+            desc: '在色欲之环那些最廉价、最肮脏的隔间里，地板上残留着无数被榨干的罪人留下的液体。一位堕落的调香师需要这些"绝望的残渣"作为基底，来调制那种能让人在幻觉中看到天堂的迷药。带上刮刀，去那些充满呻吟和腐败气味的地方，收集这些黏糊糊的战利品。', 
+            deadline: 2, rewardGold: 16, rewardExp: 13, type: 'collect', target: 'desire_residue', quantity: 5, desireReward: 5 
+        },
+        { 
+            title: '🕸️ 清理惰性蛛网', 
+            desc: '懒惰之环的停滞区生出了一些透明的、像果冻一样的蛛网。它们会吸附路人的意志，让他们在沉睡中逐渐融化成一摊灰色的粘液。这些陷阱已经阻碍了重要物资的"慢速"运输。你去把它们撕开，小心别被那种致命的倦意包裹。', 
+            deadline: 2, rewardGold: 20, rewardExp: 15, type: 'explore', target: 'lazy_trap', quantity: 3 }
     ];
     var tpl = templates[Math.floor(Math.random() * templates.length)];
     var task = {
@@ -1699,6 +2592,7 @@ function acceptTask(task) {
         return;
     }
     player.activeTasks.push(task);
+    playSound(820, 0.08);
     st('<p>你承接了任务：<span class="gold-text">' + task.title + '</span></p><p style="color:#9a6a6a;font-size:0.82em;">' + task.desc + '</p><p style="color:#e85060;">截止日期：第' + task.deadline + '天</p>');
     cb();
     ab('继续', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
@@ -2302,7 +3196,22 @@ function getNpcFirstMeetText(npcId) {
     }
     if (npcId === '泽洛斯') {
         if (race === 'sinner') return '你正穿行在地狱的街巷之间，周围的空间突然产生了一阵诡异的扭曲。伴随着一团凭空涌现的浓重黑雾，泽洛斯直接跨出阴影，毫无预兆地出现在你的面前。他那一头蓬松凌乱的紫色短发在暗光下泛着微光，发间几支漆黑的尖角显得极具攻击性。锯齿状的披风下摆随着他出现的动作轻轻扬起又落下。\n\n昏暗的空气中，一丝若有若无的黑雾在他周身悄然凝聚。泽洛斯站在阴影边缘，身上那件黑色的露脐短上衣和锯齿下摆短披风几乎与周围的黑暗融为一体。看到你走近，他微微低下头。那双浓郁的暗红色眼瞳透过鼻梁上的细框眼镜，毫不掩饰地上下审视着你。瞳孔边缘泛起一圈暗红色的微光，同时，萦绕在他周身的黑雾随着他情绪的波动，迅速凝结成暗紫色的幻光。<em>啊~一个罪人。</em>他双手随意地插在黑色短裤的口袋里，嘴角向两边拉扯出一个诡异且充满兴味的弧度。他的语气慵懒而漫不经心，尾音带着一丝轻笑。<em>我喜欢罪人。你们的故事……往往比那些无聊的原生恶魔复杂得多。让我看看——你今天会做出怎样的选择？</em>';
-        return '你正穿行在地狱的街巷之间，周围的空间突然产生了一阵诡异的扭曲。伴随着一团凭空涌现的浓重黑雾，泽洛斯直接跨出阴影，毫无预兆地出现在你的面前。他那一头蓬松凌乱的紫色短发在暗光下泛着微光，发间几支漆黑的尖角显得极具攻击性。锯齿状的披风下摆随着他出现的动作轻轻扬起又落下。身上那件黑色的露脐短上衣和短裤的链条装饰在暗光中泛着冷光。\n\n他稳稳地站在你面前，微微低下头。那双浓郁的暗红色眼瞳透过鼻梁上的细框眼镜，毫不掩饰地上下审视着你。瞳孔边缘泛起一圈暗红色的微光，同时，萦绕在他周身的黑雾随着他情绪的波动，迅速凝结成暗紫色的幻光。<em>又一个有趣的灵魂。</em>他发出一声极轻的笑，语调随意得仿佛只是在路边随手拨弄了一件玩具。他双手随意地插在黑色短裤的口袋里，嘴角向两边拉扯出一个诡异且充满兴味的弧度。<em>我最近正在研究不同存在的反应。你是罪人？还是……原生恶魔？不管怎样——你今天的每一个选择，都在为我提供宝贵的数据。</em>';
+        return '你正穿行在地狱的街巷之间，周围的空间突然产生了一阵诡异的扭曲。伴随着一团凭空涌现的浓重黑雾，泽洛斯直接跨出阴影，毫无预兆地出现在你的面前。他那一头蓬松凌乱的紫色短发在暗光下泛着微光，发间几支漆黑的尖角显得极具攻击性。锯齿状的披风下摆随着他出现的动作轻轻扬起又落下。身上那件黑色的露脐短上衣和短裤的链条装饰在暗光中泛着冷光。\n\n他稳稳地站在你面前，微微低下头。那双浓郁的暗红色眼瞳透过鼻梁上的细框眼镜，毫不掩饰地上下审视着你。瞳孔边缘泛起一圈暗红色的微光，同时，萦绕在他周身的黑雾随着他情绪的波动，迅速凝结成暗紫色的幻光。<em>又一个有趣的灵魂。</em>他发出一声极轻的笑，语调随意得仿佛只是在路边随手拨弄了一件玩具。他双手随意地插在黑色短裤的口袋里，嘴角向两边拉扯出一个诡异且充满兴味的弧度。<em>我最近正在研究不同存在的反应。你是罪人？还是……原生恶魔？不管怎样——你今天的每一个选择，都在为我提供宝贵的数据高。</em>';
+    }
+    if (npcId === '萨麦尔') {
+        return '萨麦尔并没有坐在什么华丽的王座上，他此时正赤裸着精壮的上身，仅穿着一条暗红色的皮质战裤，大跨步地踩在角斗场最高处的石柱边缘。他的背影在漫天流淌的岩浆映照下显得异常魁梧，每一块肌肉都像是由黑铁与熔岩浇筑而成，随着他粗重的呼吸有力地律动着。当他察觉到你的存在时，他没有缓慢转身，而是以一种野兽般的爆发力瞬间回过头，墨绿色的短发在硫磺风中狂乱地飞扬。\n\n他额角那道狰狞的伤疤在岩浆的强光下呈现出令人不安的暗紫色，从眉骨一直斜插进浓密的鬓角，显得那双熔岩橙的眼眸更加凶戾。他直接从十米高的看台纵身跃下，重重地砸在你面前的焦土上，激起一圈灼热的尘浪。他没有拍打身上的灰尘，而是随手抓起旁边那柄几乎与他等高的暗金属巨斧，斧刃上还残留着某种巨兽的干涸血肉，散发出刺鼻的铁锈味。';
+    }
+    if (npcId === '阿斯蒙蒂斯') {
+        return '你走进这座没有墙壁的建筑，流动的欲望之光像半透明的丝织品在你周围缠绕。空气中甜腻的香气几乎让你感到眩晕，那种味道像是熟透的浆果混合着某种催情烟草的余味。阿斯蒙蒂斯正慵懒地斜卧在秀场中央那张由深红天鹅绒铺就的长榻上，他酒红色的短发凌乱地散开，几缕刘海半遮住他那双带有黄绿叠色的瑰丽瞳孔。\n\n他的上衣扣子随意地开了三颗，露出苍白却有着优美线条的锁骨，皮肤在霓虹光影下泛着珍珠般的冷光。看到你时，他微微张开那抹暗红色的嘴唇，分叉的舌尖轻触上唇的银色舌钉，发出一声极其微弱的叮当声。那种动作并非刻意诱惑，而是一种骨子里透出来的、理所当然的玩弄。两缕如活物般的红雾乖巧地盘旋在他肩头，其中一缕甚至大胆地向你飘来，试图嗅闻你灵魂的气息。';
+    }
+    if (npcId === '利维坦') {
+        return '利维坦并没有站在镜厅中央，他像是一缕被潮湿水汽凝结成的阴影，漂浮在那些不断闪烁的镜面之间。他那一头深海蓝色的长发湿漉漉地贴在苍白的青灰色脊背上，如同一丛腐烂的海藻在暗色的水面上蔓延，发丝间缠绕着几根闪烁着寒光的银色水草饰品。当他缓慢地转过身时，动作僵硬且迟缓，仿佛这具躯壳正承受着某种无形的、来自深海的巨大压力。\n\n他的眼距比常人略宽，这让他那双灰绿色的瞳孔显得异常浑浊且缺乏焦点，总是带着一种挥之不去的、近乎怯懦的卑微感。但当你试图直视他时，你会发现那种“怯懦”只是一层薄薄的冰壳，冰壳之下是足以冻结灵魂的阴冷与锋利。他伸出指尖同样生有半透明蹼膜的长手，在身侧的一面镜子上轻轻划过，留下一道暗色的水痕，那镜子里原本映照出的路西法的背影瞬间如瓷器般碎裂。';
+    }
+    if (npcId === '别力西卜') {
+        return '你踏入暴食之环那座号称“永恒盛宴”的巨型宫殿时，首先击中你的是一种近乎实质化的、由腐肉、名贵香料与陈年佳酿混合而成的浓郁气味。地板上铺着厚厚的、被油脂浸透的暗紫色地毯，每走一步都会发出令人不安的粘稠挤压声。别力西卜正坐在一张由无数巨兽颅骨堆砌而成的王座上，他那宽大的墨绿色长袍上点缀着细碎的、如苍蝇复眼般的复古宝石，在昏暗的烛光下闪烁着诡异的虹彩。\n\n他正在进食，动作却优雅得令人心惊。他那头浅绿色的卷发里点缀着几根黑色的短角，发丝间偶尔有细小的、泛着金属蓝光的苍蝇拍打着翅膀飞出又落下。当他停下手中那柄纯金的餐刀，缓缓抬起头看向你时，你才发现他的瞳孔呈现出一种极其深沉的暗绿色，眼底深处重叠着无数细小的复眼虚影。那目光并不饥渴，反而带着一种看透万物皆为“养分”的极度冷静。他随手将一块滴着血水的肉排抛向半空，几只巨大的毒蝇瞬间从阴影中窜出将其撕碎，他却只是用洁白的丝绸餐巾轻轻擦拭了一下唇角。\n\n<em>“新来的食客吗？”</em>他的声音低沉且富有磁性，却带着一种震颤灵魂的嗡鸣感，<em>“希望你的灵魂，比那些无聊的残渣更有嚼劲。”</em>';
+    }
+    if (npcId === '贝尔芬格') {
+        return '懒惰之环的“沉眠之塔”顶端，空气呈现出一种如梦境般迷离的淡紫色，无数巨大的齿轮在半空中缓慢且无声地咬合着。你感到双腿像是灌了铅一样沉重，强烈的睡意如潮水般一波波袭来。贝尔芬格就那样半瘫坐在一张悬浮的、由无数精密机械零件与云朵般柔软的织物构成的软榻上。他那一头如雪般苍白的乱发长到垂落在地，发丝中缠绕着几根带有黄黑色警戒纹路的机械触须，正随着他的呼吸有节奏地律动着。\n\n他闭着眼，半透明的眼罩滑落到鼻梁一侧，露出那张精致到近乎无暇、却透着病态倦怠的脸庞。听到动静，他连眼皮都懒得抬一下，只是发出一声极其慵懒的鼻音。一根机械触须像蛇一样游到你面前，末端的感应器发出微弱的红光。<em>“啊……又一个试图叫醒梦境的蠢货。”</em>他终于撑开了一道眼缝，那是一双如冰晶般剔透的淡蓝色瞳孔，其中没有丝毫温度，只有对永恒寂静的向往。他微微动了下手指，周围的时钟同步发出了一声低沉的咔哒声，仿佛整个世界都因为他的一个念头而变慢了。';
     }
     return npcData[npcId] ? npcData[npcId].firstMeetText : '';
 }
@@ -2317,12 +3226,45 @@ var npcData = {
 };
 
 var npcInteractionData = {
+    '萨麦尔': [
+        { text: '（Stage 10）赞美他那柄巨斧的破坏力', loveChange: 8, response: '你盯着那柄靠在石柱旁的暗金属巨斧，由衷地感叹它那种野蛮且纯粹的破坏感。萨麦尔原本正有些不耐烦地抓挠着额角的伤疤，听到你的话，他的动作僵住了。他那双熔岩橙色的瞳孔微微一亮，像是两团被吹旺的炭火。他大步走过去，单手拎起那柄足以劈开城门的重器，随手挽了一个极其凶猛的斧花，沉重的破空声震得你耳膜生疼。\n\n<em>“哈！算你有眼光，崽子！”</em>他发出一声豪爽的长笑，露出一口整齐却锐利的白牙。他走回你面前，将那带有余温的滚烫斧面贴在你的侧脸上——那不是威胁，更像是一种粗鲁的“授勋”。<em>“这老伙计饮过三位君主亲卫的血。如果你能活到下次老子心情好，老子准许你摸摸它的符文。”</em>他重新坐回石柱边缘，原本紧绷的肩背线条似乎稍微放松了一些，空气中的硫磺味也不再那么刺鼻。' },
+        { text: '（Stage 30）递上一瓶你在傲慢环得到的熔岩烈酒', loveChange: 15, response: '你从背包里摸出一瓶用厚重铅瓶封存的熔岩烈酒递了过去。萨麦尔挑了挑眉，那道贯穿眉骨的伤疤随之扭动了一下。他没有用开瓶器，而是直接用那尖锐的虎牙咬碎了瓶塞，一口气灌下了半瓶。暗红色的酒液顺着他那肌肉虬结的下颌流淌到胸口，散发出一种辛辣且带有铁锈味的芬芳。\n\n<em>“爽！那种淡出鸟的血浆酒老子早就喝腻了。”</em>他随手抹了一把嘴，眼神中那种由于常年战斗积累的戾气被一种由于酒精带来的亢奋所取代。他将剩下的半瓶酒递还给你，示意你也喝一口。当你的指尖触碰到他布满老茧和细小烫伤的手掌时，他并没有像往常那样迅速抽开，而是维持了几秒那种灼热的接触。<em>“下次别买这种劣质货，崽子。等老子打下贪婪环的酒窖，老子请你喝最好的。”</em>' },
+        { text: '（Stage 50）直视他眼中的熔岩橙火焰，不退缩', loveChange: 25, response: '面对萨麦尔那具有压迫感的注视，你没有像其他恶魔那样低头避让，而是直直地望进他那双如熔岩般燃烧的橙红瞳孔深处。他脸上的笑容逐渐消失，取而代之的是一种极致的、如临战前的沉静。他缓缓倾身靠近你，鼻尖几乎贴到你的鼻尖，你能清晰地感受到他鼻息间喷薄出的、足以灼伤皮肤的热度。\n\n<em>“在地狱，没人敢这样看老子超过十秒。”</em>他的声音压得很低，带着一种沙哑的颗粒感，像是一头正在磨爪的猛兽。就在你以为他要发怒时，他却突然发出一声短促且古怪的闷笑，伸出那只布满战斗痕迹的宽大手掌，重重地按在了你的后脑勺上，迫使你更加贴近他那灼热的胸膛。<em>“很有种。既然你不怕死，那老子的背后……以后分你一半位置。”</em>你听到他胸腔里发出的心跳声，沉重、有力，且快得不正常。' }
+    ],
+    '阿斯蒙蒂斯': [
+        { text: '（Stage 10）评论他秀场光影中蕴含的艺术感', loveChange: 8, response: '当你提到这里的霓虹光影并非随机，而是某种对欲望轨迹的精准临摹时，阿斯蒙蒂斯原本慵懒的神色骤然一扫而空。他坐直了身体，那头酒红色的乱发下，黄绿相间的瞳孔闪烁起一种近乎孩子气的、得遇知音的兴奋。他打了个响指，周围原本暧昧的红光瞬间化为了一种清冷的、如同月光下水波粼粼的质感。\n\n<em>“噢~有趣极了。你竟然能看穿这些‘诱饵’下面的构图。”</em>他伸出白皙的手指，指尖上跳跃着一缕极其细微的、像丝线般的红雾。他勾起嘴角，舌尖轻触上唇的银钉，发出一声极其微弱的轻笑。<em>“他们只看到肉体和酒精，而你看到了……灵魂。过来坐得近一些，小东西。我开始觉得，你也许比这些昂贵的陈设更具观赏性了。”</em>他拍了拍身旁那块空出来的红丝绒长榻，眼神中那种职业化的诱惑褪去了几分，多了一丝真诚的探究。' },
+        { text: '（Stage 30）尝试帮他梳理那头凌乱的酒红色短发', loveChange: 18, response: '这是一次极其冒险的行为。当你的手越过那两缕护卫般的红雾，触碰到他那头酒红色发丝时，阿斯蒙蒂斯的身体明显僵硬了一瞬。那两缕红雾瞬间凝结成尖锐的刺状，悬停在你的咽喉处。然而，他并没有下令驱逐。他只是垂下眼帘，长长的睫毛遮住了那双瑰丽的瞳孔，任由你的指尖在那略带凉意的发丝间穿梭。\n\n<em>“你知道……这意味着什么吗？”</em>他的声音变得异常轻柔，甚至带着一丝不易察觉的颤栗。他伸出舌尖，缓慢地舔舐了一下自己冰冷的指尖。当你成功拨开他额前的乱发，露出他那双完全没有遮挡的、闪烁着迷离光芒的眼眸时，他突然伸手抓住了你的手腕。<em>“在地狱，交出后脑的人离被切断脖子只有一步之遥。但如果是你的话……这份危险，似乎也变得甜美起来了。”</em>红雾散去，重新化为温顺的缎带缠绕在你们指尖。' },
+        { text: '（Stage 50）在众目睽睽下亲吻他锁骨处的霓虹纹身', loveChange: 30, response: '在秀场最嘈杂的时刻，你并没有理会周围恶魔的起哄，而是低下头，虔诚且克制地在那道泛着冷光的霓虹纹身上印下一吻。阿斯蒙蒂斯发出一声低沉的、近乎破碎的喘息，他那双黄绿色的瞳孔瞬间收缩成了细窄的缝隙。周围原本喧闹的音乐和低语在一瞬间被某种无形的力量强制静默。他猛地用力揽住你的腰，将你整个人扣进他的怀里，动作粗鲁得完全不像他平时的优雅。\n\n<em>“你这疯子……竟然真的敢在我的主场，夺走我的呼吸。”</em>他的声音沙哑得厉害，带着一种失控的、近乎野蛮的渴望。他低下头，将脸埋在你的颈窝里，急促的呼吸喷在你的皮肤上，激起阵阵颤栗。他没有继续接吻，而是用那种近乎自毁的力度收紧了手臂，仿佛要把你揉进他的骨血里。<em>“以后，不准对除了我以外的任何存在……露出这种眼神。这是我的专属契约，明白吗？”</em>他锁骨处的纹身由于剧烈的情绪波动，此刻正散发出几乎灼人的赤红色光芒。' }
+    ],
+    '利维坦': [
+        { text: '（Stage 10）指着镜子里破碎的路西法影迹微笑', loveChange: 10, response: '当你指着那面被利维坦划破的镜子，露出一个心领神会的微笑时，他那头湿淋漉的深海蓝长发猛地颤动了一下。他原本游离的灰绿色瞳孔骤然聚焦在你脸上，带着一种被撞破秘密的惊恐，以及……一种极其隐秘的、发现同类的狂喜。他缓慢地向你漂移过来，半透明的蹼膜指尖轻轻触碰了一下你的手背，冰冷、湿润，带着一种深海特有的咸腥味。\n\n<em>“你……你也觉得、觉得那很丑陋吗？那种……那种自以为是的、闪闪发光的东西。”</em>他说话时的口吃稍微好了一些，声音里透着一股阴冷的粘稠感。他绕着你转了一圈，长发如海藻般拂过你的肩膀。<em>“别走……这里的镜子很多。我们可以……我们可以一起把它们都、都弄碎。只要你……只要你留在阴影里看我就好。”</em>他低下头，露出一截布满青灰色鳞片的后颈，眼神中那种卑微的怯懦感淡去了几分，取而代之的是一种扭曲的、共犯般的信赖。' },
+        { text: '（Stage 30）送他一块你在暴食环收集的“无名尸骸之鳞”', loveChange: 18, response: '你递上一块暗淡无光却异常锋利的漆黑鳞片。利维坦瞪大了那双浑浊的眼球，由于过度激动，他喉咙里发出了一声古怪的、类似气泡破碎的咯咯声。他伸出颤抖的双手接过鳞片，像是捧着某种神圣的圣餐。他张开嘴，用分叉的青紫色舌尖舔舐了一下鳞片的边缘，脸上露出一种极其满足且扭曲的沉醉表情。\n\n<em>“好、好苦的味道……这种被、被抛弃的痛苦……真好。”</em>他缓慢地抬起头，看向你的眼神中第一次没有了防御性的阴翳。他抓过你的手，将那块带有他唾液温度的鳞片塞回你手里，动作笨拙且急切。<em>“这是……这是我们的。别让……别让路西法看到。它是、它是黑色的……像我们的心一样。你拿着它……我、我就会在水底看到你。”</em>他那双灰绿色的瞳孔里，第一次映照出了你清晰的缩影，而不是那些虚幻的镜面。' },
+        { text: '（Stage 50）从背后抱住他冰冷潮湿的脊背', loveChange: 35, response: '你踩着齐踝深的黑水走过去，从背后紧紧环抱住利维坦那具如冰冷礁石般的躯体。他发出一声尖细且短促的惊叫，身体剧烈地挣扎了一下，原本平静的水面瞬间掀起了暗色的波涛。但随着你手臂的收紧，他那布满青灰色鳞片的脊背逐渐软化了下来。他像是一只被捕获的软体动物，彻底瘫软在你的怀抱中，湿冷的蓝发缠绕在你的手臂上，散发出一种深渊特有的、绝望而深沉的气味。\n\n<em>“不要看……不要看镜子里的我……看现实里的。”</em>他的声音在镜厅中回荡，带起一连串镜面碎裂的清脆响声。他转过头，将那张苍白得近乎透明的脸贴在你的肩膀上，灰绿色的瞳孔里溢出了几滴暗紫色的透明液体，在黑水中消散。<em>“你抱住了、抱住了最底层的烂泥……所以……你、你再也离不开了。你是我的……我们要在、要在最深、最黑的地方……永远腐烂在一起。”</em>他抓紧了你环在他腰间的手，指甲陷入你的皮肤，留下几道浅浅的月牙印。' }
+    ],
     '莱利': [
-        { text: '问他关于水晶矿场的事', loveChange: 2, response: '你问他关于水晶矿场的事，莱利停下了手中的刀。那把自制小刀的刀尖还抵在金属片上，但他没有再往下削。他沉默了几秒，那双左金右银的异色瞳孔扫了你一眼——那目光很短，像是确认你不是在开玩笑。他用拇指指腹擦了擦刀刃上沾着的金属碎屑，然后偏过头，用下巴指了指矿场东边的方向。<em>……矿场东边有个废弃的坑道。里面有残留的水晶碎片。</em>他的声音比刚才多了一丝不易察觉的犹豫，像是在权衡要不要把后半句话说完。他的长尾巴在碎石地面上缓慢地扫了一下，卷起一小撮粉尘。<em>不过那里偶尔会塌方。我不建议你进去。</em>说完，他重新低下头继续削金属片。但你注意到，他削的速度比之前慢了许多——也许他在等你再问点什么。' },
-        { text: '问他关于眼睛的事', loveChange: -3, response: '你问他关于眼睛的事，话音未落，莱利的猫耳瞬间向后折起，几乎贴紧了灰色的头发。他的手指猛地攥住了小刀，指关节因为过度用力而泛白。周围的空气骤然绷紧——那些散落在地上的金属碎屑和废弃铁器开始发出细微的震颤，如同被无形的力量唤醒。那双左金右银的异色瞳孔死死地锁定了你，眼底翻涌着不加掩饰的愤怒和某种更深的、被触及禁忌的痛苦。<em>……你问了不该问的问题。</em>他的声音骤然变得极冷——比矿坑最深处的寒风还要冷。他站起身，背对着你，那条长尾巴僵硬地卷在腿边，尾尖微微发颤。<em>如果你再提一次，我会让你后悔走进这个矿场。</em>对话已经结束了。他全身的每一个线条都在告诉你：再靠近一步，你会后悔。' },
-        { text: '安静地陪他坐一会儿', loveChange: 4, response: '你安静地陪他坐一会儿，你没有说话。只是在离他几步远的一块碎石堆上坐了下来。碎石硌得你有些不适，但你忍住了。莱利一开始没有理你——他继续削着那块金属片，刀刃刮擦金属的声音在空旷的矿场中单调地回荡。削了整整五分钟。然后那声音停了。他仍然没有看你，但手指在刀柄上握紧又松开，反复了两次。<em>……你不觉得无聊吗？</em>他的声音里带着一丝难以察觉的困惑，像是遇到了一个超出他理解范围的现象。<em>大多数人连一分钟都待不住。他们觉得我太阴沉了。</em>他又沉默了一会儿。矿场深处有微弱的暗紫色光点在闪烁，映在他的异色瞳孔中。<em>……你可以再坐一会儿。但别太久。</em>' },
-        { text: '问他为什么独自一人', loveChange: -1, response: '你问他为什么独自一人，莱利的猫耳瞬间竖了起来——不是警觉，而是那种被人猝不及防戳中软肋的应激反应。他手上的动作顿了一下，刀刃在金属片上留下一道歪斜的划痕。他没有立刻回答。矿场里死寂了几秒，只有远处暗紫色水晶发出的嗡嗡低鸣。<em>……这和你无关。</em>他冷冷地说，声音里带着一丝不易察觉的颤抖。他转过身去，背对着你，那条长尾巴僵硬地卷在腿边。但他转身的瞬间，你捕捉到了——在他那双异色瞳孔的深处，闪过一丝极其短暂的、被刻意压制的落寞。他没有再说话。但他也没有离开。也许他不是真的不想回答。只是不知道该怎么开口。' },
-        { text: '递给他一块捡到的水晶', loveChange: 5, response: '你递给他一块捡到的水晶，莱利看着你递来的水晶碎片，沉默了好一会儿——比之前任何一次沉默都要长。矿场深处暗紫色的微光穿过你手中的水晶碎片，在他的手指上投下细碎的光斑。他没有立刻伸手接。他的异色瞳孔在你和水晶之间来回看了两次，像是在确认这不是一个恶意的玩笑。然后他伸出手。他的指尖触碰到水晶时的动作很轻——轻到你几乎感觉不到。他把水晶举到眼前端详了几秒，喉结微微滚动了一下。<em>……谢谢。很少有人会给我东西。</em>他的声音比刚才轻了许多。然后你看到了——他的尾巴尖微微弯曲，那是猫类表示愉悦的姿态。他把水晶小心翼翼地放进腰间的小袋子里，然后低声说：<em>如果你以后在矿场遇到麻烦……可以来找我。</em>' }
+        { text: '（Stage 10）询问他关于金属操控的技巧', loveChange: 10, response: '莱利原本正低头摆弄着一截废弃的钢筋，听到你的询问，他那双异色瞳孔中闪过一丝复杂的情绪——不是被打扰的烦躁，而是一种混杂着惊讶与羞涩的不知所措。他沉默了片刻，并没有直接回答，而是缓缓伸出苍白的手掌，指尖轻触那截钢筋。在你的注视下，原本坚硬的钢铁如同融化的蜡一般流淌、延展，最终幻化成一条细密而灵活的锁链，像是有生命的小蛇般在他指尖缠绕、跳跃。\n\n<em>“……这不需要技巧。”</em>他的声音很低，带着一丝由于太久没说话而产生的沙哑，<em>“这只是……一种诅咒的延伸。”</em>他控制着锁链末端，轻轻勾了勾你的指尖。那冰冷的金属触感在皮肤上划过，带起一阵细微的痒意。他似乎被自己这个大胆的举动吓到了，猫耳猛地抖动了一下，快速地收回了锁链，重新低下头，发丝遮住了他略显局促的神情。但你注意到，他那条长长的灰色尾巴在地上轻轻扫了扫——那是猫类感到舒适的表现。' },
+        { text: '（Stage 30）分享你在地狱收集的旧时代CD（关于母亲）', loveChange: 18, response: '你递给他一张封面已经泛黄、隐约能看出是2000年代流行曲风的旧CD。莱利在看清封面的那一刻，整个人仿佛被按下了静止键。他那双金银异色的瞳孔剧烈收缩，原本时刻处于戒备状态的猫耳也软塌塌地贴向脑后。他颤抖着手接过那枚塑料壳，指尖反复摩挲着边缘的裂纹，眼眶逐渐染上了一层由于极度怀念而产生的湿意。\n\n<em>“这是……她最喜欢的曲子。”</em>他的声音由于哽咽而变得破碎不堪。在那一刻，他不再地狱里那个阴沉的锁链操控者，而回到了那个在普韦布洛的破旧公寓里，只有母亲相伴的内向少年。他蹲下身子，将头深深地埋进膝盖里，肩膀微微发颤。你坐到他身边，轻轻地把手放在他的背上。他没有推开你，反而像是溺水者抓住了最后的浮木，猛地转身紧紧抱住了你的腰，将脸埋在你的腹部放声大哭。<em>“为什么……为什么只有我还记得这些……为什么只有我被丢到了这里……”</em>他的泪水打湿了你的衣襟，那滚烫的温度仿佛要灼穿你的灵魂。' },
+        { text: '（Stage 50）在暗巷的阴影中，亲吻他那些被虐待留下的伤疤', loveChange: 35, response: '（NSFW警告：极度亲密接触描写）在矿场深处最幽暗的角落，你缓缓掀开了莱利那件宽大的黑色卫衣。在暗紫色水晶的微光映照下，他那苍白的躯干上布满了令人心碎的痕迹——陈旧的鞭痕、烟头烫伤的圆孔，以及生前由于自虐留下的凌乱刀印。莱利发出一声由于极度羞耻而产生的呜咽，他拼命想要拉下衣服遮挡这些丑陋的印记，甚至连那条长尾巴都焦急地卷住了你的腿。<em>“别看……求你……太脏了……”</em>他绝望地闭上眼，异色的睫毛不停颤动。\n\n你没有说话，而是温柔但坚定地压住了他的双手，低头吻上了他胸口那道最深的伤痕。莱利的身体猛地弓起，发出一声破碎的叫声，原本幻化出的几条锁链在一瞬间失控地撞击着周围的岩石，火星四溅。当你的舌尖扫过那些凸起的疤痕组织时，他原本紧绷的肌肉逐渐变得瘫软，取而代之的是一种被极致的温柔彻底摧毁后的战栗。他发了疯似的咬住自己的嘴唇，试图压抑喉咙里溢出的、带着哭腔的欢愉呻吟。<em>“……哈啊……为什么要对我……这么温柔……”</em>他终于放弃了挣扎，那双原本充满防御性的异色瞳孔此刻完全涣散，盛满了迷离的雾气。他伸出手指死死扣进你的发丝里，引导着你向更深处探索，在那潮湿且灼热的亲昵中，他第一次彻底放下了所有的尖刺。' }
+    ],
+    '路西法': [
+        { text: '（Stage 10）评价他指尖流淌的星辰之力是“寂寞的完美”', loveChange: 12, response: '路西法原本正漫不经心地玩弄着指尖几颗跳跃的暗紫色光点，听到你的话，他的动作微不可察地顿了一下。他缓缓抬起那双赤金色的眼眸，第一次不再是那种看蝼蚁的俯视，而是一种混杂着审视与意外的平视。他发出一声清冷的轻笑，周身萦绕的星尘粒子随着他的情绪波动而闪烁出更加冷冽的光芒。\n\n<em>“‘寂寞’吗？哼，凡人总喜欢用这种平庸的情感来揣度神灵的境界。”</em>他站起身，260cm的身高带起压倒性的阴影将你笼罩。他伸出一根微凉的长指，挑起你的下巴，迫使你注视他那双仿佛能吞噬恒星的赤金之眼。<em>“但你很有胆量。在这污浊的地狱，很少有灵魂能看透吾这‘完美’的底色。记住这份感觉，卑微的生灵，因为这是吾给你的、独一无二的赏赐。”</em>他松开手，衣摆飘动间，一缕带有月光香气的暗星能量悄悄缠绕在了你的指缝间。' },
+        { text: '（Stage 30）在私下里请求他演示那被封印的“天界厨艺”', loveChange: 22, response: '这是一个绝对的禁忌话题。路西法的眼神在一瞬间变得极度危险，周围的空气瞬间被暗星能量冻结成细碎的晶体，赤金瞳孔中翻涌着被触及堕天伤痕的狂怒。然而，就在你以为要被碎尸万段时，他眼中的怒火却奇迹般地平息了，取而代之的是一种深不见底的、跨越纪元的念旧与落寞。\n\n<em>“那是米迦勒才会提起的蠢事。”</em>他虽然嘴上刻薄，却随手一挥，在那水晶宫殿的露台上幻化出了一套流转着圣光的古老炊具。他慢条斯理地挽起那绣满堕天使暗纹的长袖，露出了如大理石般精美的双臂。你站在一旁，看着这位地狱之主竟然真的在为你处理食材——那动作优雅到极致，每一个切配的弧度都符合某种黄金比例。当那份闪烁着柔和微光、散发出诱人香气的料理呈现在你面前时，他有些别扭地偏过头，赤金色眼眸中闪过一丝极难捕捉的局促。<em>“仅此一次。若你敢传出去……吾会让你的灵魂在星辰裂隙中哀嚎万年。”</em>当你品尝时，他一直紧盯着你的表情，连呼吸都比平时轻了许多。' },
+        { text: '（Stage 50）在星辰祭坛上，试图揭开他额间那枚破碎冠冕的烙印', loveChange: 40, response: '（NSFW警告：高位控制与精神交融描写）在傲慢之巅最隐秘的星辰祭坛，路西法背对着你，银色长发如月光般铺散在赤裸的脊背上。当你颤抖的手触碰到他额间那枚代表昔日荣光烙印的暗纹时，整个地狱的星辰之力都在瞬间发出了共鸣的尖啸。他发出一声极其低沉的闷哼，猛地转过身将你压制在冰冷的水晶祭坛上。他那双赤金色的瞳孔此时已经完全变成了炽热的白金色，额间的暗纹散发出几乎灼盲双眼的圣洁光芒。\n\n<em>“你在试图触碰吾最深处的‘傲慢’……以及吾最耻辱的过去。”</em>他俯下身，牙齿轻咬住你的耳垂，灼热的呼吸带起一阵阵战栗。他并没有停下，而是将你的一只手按在他那不断跳动、充满暗星能量的胸口，另一只手则粗鲁地扣住你的腰肢，强迫你的身体与他那具充满威压的躯体严丝合缝地贴合。随着他情绪的彻底失控，周围的星尘粒子化为了无数细小的触感，像是有生命般游走在你的每一寸敏感点。<em>“既然你如此渴望这被诅咒的‘完美’……那就把你的灵魂也献祭给吾吧。在这一刻，吾允许你……与吾平齐。”</em>在那近乎神圣的狂乱交融中，这位孤高的君主第一次发出了低沉的、不再完美的声音，他在你耳边的喘息，比任何禁咒都要沉重。' }
+    ],
+    '玛门': [
+        { text: '（Stage 10）看穿他“贱兮兮”伪装下的利润核算逻辑', loveChange: 12, response: '玛门正忙着拨弄手中那把纯金的算盘，听到你精准地说出他在这场交易所获取的“隐形成本”后，他那双流动金光的瞳孔瞬间停滞了。他推了推那副单边金丝眼镜，嘴角勾起一个不再是职业伪装的、带着几分痞气的坏笑。他停下拨弄算盘的手，慢悠悠地转过身，用一种审视大客户般的目光打量着你。\n\n<em>“啧，咱本以为这地狱里全是些被欲望冲昏头的蠢猪，没想到还藏着你这么个精明的宝贝儿。”</em>他大步跨到你面前，长衫下那双长腿极具侵略性地别开，他用那只戴满了契约戒指的左手轻佻地托起你的下颌，宝石在昏暗中闪烁着狡黠的光。<em>“能算清咱的账，可得付出不小的代价哟~不过，咱中意这种聪明劲儿。下次交易，咱给你留个内幕席位。”</em>他说话时故意凑近你的耳边，那种混合了古董烟草与浓郁金钱味道的气息扑面而来，暧昧极了。' },
+        { text: '（Stage 30）送他一卷伪造得几乎乱真的“路西法私密账簿”', loveChange: 25, response: '当你把这卷精心制作的“伪物”推到玛门面前时，他脸上的表情精彩得足以载入地狱编年史。他先是惊恐地确认了四周没有路西法的气息，然后贪婪地扑到桌面上，那双流动金光的瞳孔几乎要射出实体化的射线。他那双灵巧的手指飞快地翻阅着，鼻尖都快贴到那伪造的印章上了。\n\n<em>“好家伙……咱的宝贝儿，你这真是提着脑袋在给咱送礼啊！”</em>他猛地合上账簿，呼吸变得急促，脸颊上透出一抹激动的古铜色潮红。他兴奋地抓起你的手，在那堆满了宝石戒指的手背上印下一个极其夸张且灼热的吻。<em>“这要是真的，咱能把傲慢环的地基都给盘下来！虽然咱知道这多半是你编的‘艺术品’，但这份胆识和眼光……啧啧，咱这辈子见过最诱人的交易，莫过于此了。”</em>他突然从袖口滑出一枚精致的暗金戒指强行套在你的中指上。<em>“这是咱万宝商行的至尊密令。拿着它，咱的一半金山，以后你随便进出。”</em>' },
+        { text: '（Stage 50）在金币堆成的“金山”上，要求他兑现那份“灵魂契约”', loveChange: 45, response: '（NSFW警告：金钱与肉体交易的极致描写）玛门将你带到了他万宝楼最深处的私人金库，这里堆满了数以亿计的纯金币和稀世宝石。你坐在那座冰冷但辉煌的金山上，故意当着他的面，缓慢地撕毁了那份价值连城的债务减免契约，要求他用“自身”来抵债。玛门发出一声由于极度兴奋而产生的低吼，他那身黑色的中式长衫瞬间被他随手扯开，露出那身精干且充满力量感的古铜色肌肉。\n\n<em>“咱的一世英名，竟然要折在你这个不要命的小混蛋手里了……啧，真是亏本到了极点。”</em>他欺身而上，金色的汗水顺着他瘦削但紧致的腹肌流淌，滴落在那些闪烁的宝石上。他摘下那副单边眼镜，那双完全变成炽金色的瞳孔里倒映着你此时疯狂的神情。他用那只戴满戒指的手死死按住你的肩膀，另一只手则在你的每一寸肌肤上游走，像是在评估这世间最珍贵的货品。<em>“既然你想要咱这个人……那就准备好付出代价吧。咱的每一声喘息，可都是要按金币计费的，你——还清了吗？”</em>在那极度奢靡且放荡的交融中，金币碰撞的清脆响声掩盖了那黏腻且粗重的呼吸，他一边疯狂地索求，一边在你耳边念叨着那些从未对人提过的利润核心，那是他将整个灵魂都抵押给你的证明。' }
+    ],
+    '别力西卜': [
+        { text: '（Stage 10）赞美他那道以“绝望”为基底的虚无浓汤', loveChange: 10, response: '别力西卜正用银匙搅动着碗里那种呈暗紫色、散发着混合了腐烂花朵与陈年旧梦气味的液体。听到你对其中“绝望风味”的精准评述，他搅拌的动作停住了。他那头浅绿色长卷发如凝固的剧毒蔓藤，发间没有一丝颤动。他缓缓抬起那双墨黑色的复眼，深邃的瞳仁中第一次浮现出了一种类似于“食客”对“珍馐”的赞赏。\n\n<em>“凡人只知甘甜，却不知……痛苦才是最长久的余韵。”</em>他的声音极其缓慢，每个字都像是经过了反复的咀嚼。他将银匙递到你唇边，脖颈处一张细小的黑色缝隙悄然张开，散发出一种让人眩晕的冷香。<em>“喝下去。告诉吾……你的灵魂里，是否也藏着同等级的苦涩。”</em>当你咽下那口冰冷液体时，他纤细修长的指尖轻轻划过你的咽喉，仿佛在测量食管的宽度。' },
+        { text: '（Stage 30）尝试喂食他肩膀上那些不断索求的“饥饿之口”', loveChange: 20, response: '这是一个挑战禁忌的行为。当别力西卜因为极度饥饿而导致肩头那两张隐藏的嘴不由自主地撕咬空气时，你并没有躲避，而是将一块蕴含高纯度罪业的灵魂结晶递了过去。别力西卜的身体微微紧绷，绿色的发丝间逸出丝丝缕缕的毒蝇虚影。那两张嘴以迅雷不及掩耳之势咬住了结晶，利齿擦过你的指尖，带起一阵细微的战栗感。\n\n<em>“贪婪的……小东西。”</em>别力西卜发出一声低沉的、近乎满意的叹息。他并没有收回那些利口，反而任由它们在你指尖轻轻磨蹭，像是寻求宠溺的家畜。他伸手按住你的手背，将你的手掌完全按在他那冰冷的肩膀上。<em>“它们记住了你的味道。这意味着……即使是吾，也很难再把你从餐单上抹去。如果你想被吾彻底吞噬……就继续这种危险的供奉。”</em>他眼底的绿火星剧烈闪烁，显示出他此时并不平静的食欲。' },
+        { text: '（Stage 50）在永恒盛宴的尽头，将自己的指尖血作为“甜点”喂予他', loveChange: 35, response: '（NSFW警告：极度病态的吞噬感与肉体交融）在虚无盛宴的最终席位，你划破指尖，将那滴蕴含着强烈求生欲望与爱意的血液，抵在了别力西卜正中央那张优雅的薄唇上。他发出一声足以令灵魂战栗的破碎呻吟，那双墨黑的复眼瞬间被一种极度的、近乎疯狂的饥饿所填满。他猛地拽住你的衣领，将你整个人拖过铺满珍馐的长桌，碎瓷片划破皮肤的声音被他沉重的呼吸所掩盖。\n\n<em>“吾一直试图弄清楚……你到底是吾的食粮，还是吾的……宿命。”</em>他粗暴地吻上你指尖的伤口，舌尖缠绕吮吸，那种力度仿佛要将你的骨髓也一并抽干。他周身那数个额外的嘴同时张开，发出贪婪的吸吮声，但它们并没有攻击你，而是发疯般地撕咬着周围的空间，试图创造出一个只属于你们两人的、绝对的黑洞。他将头埋在你的胸口，尖利的犬齿在你的心口处游移，每一次呼吸都带着要把你彻底揉碎并咽下的疯狂感。<em>“你是这千万年来……吾尝过的，最让吾想彻底毁灭的‘美味’。别离开吾的胃袋……永远别离开。”</em>他在你耳边的低语，伴随着唾液交换的黏腻声，彻底粉碎了你最后的理智。' }
+    ],
+    '贝尔芬格': [
+        { text: '（Stage 10）在沉眠之塔中，陪他安静地“虚度”掉三个小时', loveChange: 10, response: '贝尔芬格陷在那堆柔软得像云朵的惰性能量中，白发如瀑布般在灰雾里蜿蜒。你没有试图叫醒他，也没有询问任何问题，只是静静地躺在离他不远处的雾气中，任由时间像温吞的糖浆一样流过。大约三个小时后，他那双淡蓝冰晶色的瞳孔在浓雾中闪烁了一下，那是他在这一百年里极少数的主动苏醒。\n\n<em>“……你还没走。”</em>他的声音带着一种刚睡醒的沙哑，以及一种被理解后的极度放松。他那些如白发般的机械触须缓慢地向你延展过来，在空中无力地晃动了一下，最终垂落在你的手边。<em>“大多数人……都太急了。他们总想从我这里得到‘答案’。但你……你懂得如何‘消失’。”</em>他发出一声极其微弱的、带着困意的笑声，空气中的惰性力场瞬间变得柔和，将你和他的身体紧紧地包裹在一起，那是一种让人彻底放弃挣扎的、绝对的安宁。' },
+        { text: '（Stage 30）尝试帮他理顺那头长达数米、如冰冷丝绸的白发', loveChange: 20, response: '贝尔芬格那头及地的白发缠绕在无数细小的机械触须和灰雾中，显得凌乱而沉重。当你坐到他身后，用手指温柔地梳理那些冰冷且带点磨砂质感的发丝时，这位懒惰之主发出一声长长的、充满倦意的喟叹。他原本若隐若现的躯体在雾中变得凝实了几分，那是他彻底交出防备的信号。\n\n<em>“……太沉了。连存在本身……都太沉了。”</em>他翻过身，将头枕在你的膝盖上，那些原本带有攻击性的机械触须此刻像温顺的幼蛇般盘绕在你的脚踝。他仰起头，淡蓝色的瞳孔里倒映着你专心的神情，嘴角勾起一个极其微小、近乎虚无的弧度。<em>“别停下。如果这头头发能把你绊住……我就再也不必担心……清晨的到来了。”</em>他抓起你的一缕头发，与他那冰冷的白发缠绕在一起，在那一刻，时间仿佛在你们周围彻底凝固。' },
+        { text: '（Stage 50）在沉眠之塔顶端，与他一同坠入那场能稀释灵魂的“永恒懒惰”', loveChange: 40, response: '（NSFW警告：极度松弛的肉体缠绕与灵魂消解）沉眠之塔的最顶端，灰雾浓稠得几乎化为液体。贝尔芬格完全褪去了那层若有若无的雾气外壳，那具苍白、精致却透着腐朽美感的躯体完全暴露在你的视线中。他无力地向你张开双臂，任由那些冰冷的机械触须将你们两人的身体紧紧地捆绑在一起，没有任何空隙。\n\n<em>“……就这样。别动。连心跳……都慢下来。”</em>他的呼吸轻得像一阵烟，当你吻上他那冰冷如石的额头时，他发出一声仿佛在灵魂深处回响的喘息。他那双淡蓝色的瞳孔彻底涣散，盛满了不再挣扎的虚无。他引导着你的身体与他一同下沉，在那堆由于惰性能量过载而变得滚烫的床榻上，他第一次发出了不再压抑的、沙哑的求欢声。那并不是为了欲望，而是为了在那极致的、不再存在“自我”的缠绕中彻底消散。<em>“如果这就是……终结……那太完美了。就这样……死在我的懒惰里吧……”</em>在那场极度缓慢且黏腻的交融中，你感觉到自己的理智和身体都在随着他的节奏一点点融化，最终化为这塔顶无尽灰雾的一部分。' }
     ],
     '弗雷迪': [
         { text: '询问店里的商品', loveChange: 2, response: '你询问店里的商品，弗雷迪微微点头，他用那只正常的左手将单片眼镜向上推了半分，暗红色的瞳孔扫过身后那排整齐的货架。他的动作很慢，但每一个手势都带着一种精确的、经过无数次练习的优雅。<em>我们有来自各界的珍品。东方的翡翠、西方的油画、甚至一些天使的残片——</em>他顿了顿，右侧那只巨大的乌鸦羽翼轻轻展开又收拢，羽毛边缘在室内灯光下泛着幽蓝的微光。<em>当然，价格不菲。</em>他从柜台下取出一个暗紫色天鹅绒托盘，上面整齐排列着几件闪烁着微光的物品。<em>如果你手头紧，那边角落有一些轻微损坏的魔法物品，价格从5金币起。诚信交易——这是本店的规矩。</em>' },
@@ -2399,6 +3341,8 @@ function tryEncounterNPC(ring, level) {
 function sceneNpcFirstMeet(npcId, returnRing, returnLevel) {
     ensureNpcInSocial(npcId);
     addTime(10);
+    player.stats.npcsMet = Object.keys(player.relationships).length;
+    if (player.stats.npcsMet >= 5) setTimeout(function() { checkAchievement('npc_5'); }, 150);
     ua();
     var customText = getNpcFirstMeetText(npcId);
     var attitude = getNpcAttitude(npcId);
@@ -2445,8 +3389,11 @@ function sceneNpcInteraction(npcId, returnRing, returnLevel) {
     var newLove = Math.min(100, Math.max(0, (rel.love || 5) + interaction.loveChange));
     rel.love = newLove;
     var attitude = getNpcAttitude(npcId);
+    var loveBarHtml = '<div style="width:100%;height:4px;background:#1a0a1a;margin-top:10px;border-radius:2px;overflow:hidden;">' +
+        '<div style="width:' + newLove + '%;height:100%;background:linear-gradient(90deg, #8a5a62, #e85060);transition:width 0.5s;"></div>' +
+        '</div>';
 
-    st('<div class="scene-title">' + npcId + '</div><p>' + interaction.response + '</p><p style="color:#9a6a6a;font-size:0.78em;">好感度变化：' + (interaction.loveChange >= 0 ? '+' : '') + interaction.loveChange + ' | 当前好感：' + newLove + '</p><p style="color:#c09080;font-size:0.75em;">' + attitude.text + '</p>');
+    st('<div class="scene-title">交 谈 · ' + npcId + '</div><p>' + interaction.response + '</p>' + loveBarHtml + '<p style="color:' + attitude.color + ';font-size:0.78em;margin-top:6px;">' + attitude.text + ' <span style="float:right;color:#e8c060;">好感度 ' + newLove + (interaction.loveChange >= 0 ? ' ↑' : ' ↓') + '</span></p>');
     cb();
     if (count < 4) {
         ab('继续交谈（耗时10分钟）', function() { addTime(10); sceneNpcInteraction(npcId, returnRing, returnLevel); });
@@ -2568,6 +3515,11 @@ function enterShop(type) {
 function travelToRing(ring) {
     if (ring === player.currentRing) { sceneExploreDistrict(ring, getCurrentLevel()); return; }
     
+    if (player.stats.ringsVisited.indexOf(ring) === -1) {
+        player.stats.ringsVisited.push(ring);
+        setTimeout(function() { checkAchievement('first_ring'); }, 150);
+    }
+
     var hasPass = player.inventory.some(function(it) { return it.name === '跨环通行证（永久）'; });
     var cost = hasPass ? 0 : 5;
     var time = 60 + Math.floor(Math.random() * 30);
@@ -3098,11 +4050,27 @@ function renderMiddleRing(ring) {
             ab('🍽️ 食品店', function() { enterShop('food'); });
             ab('📦 道具店', function() { enterShop('item'); });
             ab('🌙 黑市（22:00-02:00）', function() { enterBlackMarket(); });
-            ab('🔨 寻找工作（耗时30分钟）', function() { addTime(30);
-                findJob(); });
+            ab('🔨 寻找工作（耗时30分钟）', function() { findJob(); });
             ab('😴 睡觉（选择住处）', function() { chooseSleepPlace(); });
             ab('返回贫民区（耗时10分钟）', function() { addTime(10);
                 sceneExploreDistrict(ring, 'poor'); });
+            ab('🏛️ 加入派系（需对应属性≥12）', function() {
+                var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环'];
+                var html = '<div class="scene-title">加入派系</div><p>选择你想效忠的阵营：</p>';
+                for (var i = 0; i < rings.length; i++) {
+                    var r = rings[i];
+                    var req = { '傲慢之环':'magic', '贪婪之环':'charisma', '暴怒之环':'strength', '色欲之环':'charisma', '嫉妒之环':'agility', '暴食之环':'strength', '懒惰之环':'sanity' }[r];
+                    var statName = { magic:'魔力', charisma:'魅力', strength:'力量', agility:'敏捷', sanity:'理智' }[req];
+                    var reqVal = 12;
+                    var curVal = player[req] || 0;
+                    var canJoin = curVal >= reqVal;
+                    html += '<p>· ' + r + '（需要 ' + statName + ' ≥ ' + reqVal + '，当前' + curVal + '）<span class="clickable" onclick="if(' + canJoin + ') joinFaction(\'' + r + '\')" style="' + (canJoin ? '' : 'color:#5a5a6a;cursor:not-allowed;') + '">' + (canJoin ? '加入' : '条件不足') + '</span></p>';
+                }
+                html += '<p style="color:#9a6a6a;font-size:0.8em;">加入后获得对应属性加成，但会影响其他阵营好感度。</p>';
+                st(html);
+                cb();
+                ab('返回', function() { renderMiddleRing(ring); });
+            });
             ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
             ab('📋 打开属性面板', function() { toggleSidebar(); });
             // 贵族区入口
@@ -3306,8 +4274,6 @@ function renderMiddleRing(ring) {
             addTime(5);
             ua();
 
-            // [已删除自动NPC触发代码]
-
             // 尝试触发随机事件
             var eventTriggered = triggerRandomEvent();
             if (eventTriggered) return;
@@ -3355,8 +4321,7 @@ function renderMiddleRing(ring) {
             ab('🍽️ 食品店', function() { enterShop('food'); });
             ab('📦 道具店', function() { enterShop('item'); });
             ab('🌙 黑市（22:00-02:00）', function() { enterBlackMarket(); });
-            ab('🔨 寻找工作（耗时30分钟）', function() { addTime(30);
-                findJob(); });
+            ab('🔨 寻找工作（耗时30分钟）', function() { findJob(); });
             ab('😴 睡觉（选择住处）', function() { chooseSleepPlace(); });
             if (ring === '傲慢之环' && level === 'poor' && !player.hasClock) { ab('🕐 购买时钟（10金币）', function() {
                     buyClock(); }); }
@@ -3397,26 +4362,161 @@ function renderMiddleRing(ring) {
                     }
                 }, 'gold-btn');
             }
-            ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
+            ab('🏛️ 加入派系（需对应属性≥12）', function() {
+                var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环'];
+                var html = '<div class="scene-title">加入派系</div><p>选择你想效忠的阵营：</p>';
+                for (var i = 0; i < rings.length; i++) {
+                    var r = rings[i];
+                    var req = { '傲慢之环':'magic', '贪婪之环':'charisma', '暴怒之环':'strength', '色欲之环':'charisma', '嫉妒之环':'agility', '暴食之环':'strength', '懒惰之环':'sanity' }[r];
+                    var statName = { magic:'魔力', charisma:'魅力', strength:'力量', agility:'敏捷', sanity:'理智' }[req];
+                    var reqVal = 12;
+                    var curVal = player[req] || 0;
+                    var canJoin = curVal >= reqVal;
+                    html += '<p>· ' + r + '（需要 ' + statName + ' ≥ ' + reqVal + '，当前' + curVal + '）<span class="clickable" onclick="if(' + canJoin + ') joinFaction(\'' + r + '\')" style="' + (canJoin ? '' : 'color:#5a5a6a;cursor:not-allowed;') + '">' + (canJoin ? '加入' : '条件不足') + '</span></p>';
+                }
+                html += '<p style="color:#9a6a6a;font-size:0.8em;">加入后获得对应属性加成，但会影响其他阵营好感度。</p>';
+                st(html);
+                cb();
+                ab('返回', function() { sceneExploreDistrict(ring, level); });
+            });
             ab('📋 打开属性面板', function() { toggleSidebar(); });
         }
 
         // ==================== 侧边栏 ====================
         function toggleSidebar() {
             sidebarOpen = !sidebarOpen;
+            playSound(500, 0.1);
             sb.classList.toggle('open');
             ov.classList.toggle('open');
             mp.classList.toggle('sidebar-open');
             if (sidebarOpen) usb();
+
+            // 更新底部导航显示状态
+            var bottomNav = document.getElementById('bottomNav');
+            if (bottomNav) {
+                if (sidebarOpen) {
+                    bottomNav.classList.add('hidden');
+                } else {
+                    bottomNav.classList.remove('hidden');
+                }
+            }
         }
 
-        function switchTab(tab) {
+        function quickAction(tab) {
+            playSound(650, 0.07);
+            // 更新底部导航高亮
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(function(btn) {
+                btn.classList.toggle('active', btn.dataset.tab === tab);
+            });
+
+            if (!sidebarOpen) toggleSidebar();
+            switchTab(tab);
+        }
+
+        // 移动端手势
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+        }, false);
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            if (sidebarOpen && touchEndX - touchStartX > 60) {
+                toggleSidebar();
+            }
+        }, false);
+
+function switchTab(tab) {
+            playSound(700, 0.06);
             sidebarTab = tab;
             document.querySelectorAll('#sidebar-tabs button').forEach(function(b) { b.classList.remove('active'); });
             var btn = document.getElementById('tab-' + tab);
             if (btn) btn.classList.add('active');
+            
+            // 同步底部导航高亮
+            document.querySelectorAll('.bottom-nav .nav-item').forEach(function(nav) {
+                nav.classList.toggle('active', nav.dataset.tab === tab);
+            });
+
+            if (tab === 'craft') {
+                renderCraft();
+                return;
+            }
             usb();
         }
+
+
+function joinFaction(ring) {
+    if (player.faction) {
+        st('<p>你已经加入了 ' + player.faction + '，不能同时加入多个阵营。</p>');
+        cb();
+        ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+        return;
+    }
+    var reqs = { '傲慢之环':'magic', '贪婪之环':'charisma', '暴怒之环':'strength', '色欲之环':'charisma', '嫉妒之环':'agility', '暴食之环':'strength', '懒惰之环':'sanity' };
+    var stat = reqs[ring];
+    if (player[stat] < 12) {
+        var statNames = {magic:'魔力',charisma:'魅力',strength:'力量',agility:'敏捷',sanity:'理智'};
+        st('<p class="highlight">你的' + statNames[stat] + '不足12，无法加入。</p>');
+        cb();
+        ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+        return;
+    }
+    player.faction = ring;
+    player.factionJoinDay = player.daysSurvived;
+    var bonus = { '傲慢之环':2, '贪婪之环':2, '暴怒之环':3, '色欲之环':3, '嫉妒之环':2, '暴食之环':2, '懒惰之环':3 };
+    var statBonus = bonus[ring];
+    if (stat === 'sanity') {
+        player.sanity = Math.min(player.maxSanity, player.sanity + statBonus);
+    } else {
+        player[stat] += statBonus;
+    }
+    for (var r in player.factionReputation) {
+        if (r === ring) player.factionReputation[r] += 10;
+        else player.factionReputation[r] -= 5;
+    }
+    setTimeout(function() { checkAchievement('join_faction'); }, 150);
+    ua();
+    st('<p>✅ 你加入了 <span class="gold-text">' + ring + '</span> 阵营！获得' + ({magic:'魔力',charisma:'魅力',strength:'力量',agility:'敏捷',sanity:'理智'}[stat]) + '+' + statBonus + '。</p>');
+    cb();
+    ab('继续', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+}
+
+        function sceneSellHand() {
+    var goldEarned = Math.floor(Math.random() * 5) + 8;
+    player.gold += goldEarned;
+    player.desire = Math.min(player.maxDesire, player.desire + 10);
+    player.fatigue += 5;
+    player.sanity -= 2;
+    ua();
+    st('<div class="scene-title">手 部 侍 奉</div><p>你深吸了一口气，选择了第一种方式。扎里克没有说话，只是身体微微向后靠去，双手随意地搭在大腿上，那双蛇瞳居高临下地注视着你，等待你的动作。角落里的光线昏暗，空气中弥漫着廉价酒精和劣质烟草的刺鼻气味。你蹲下身，隔着粗糙的布料，你感受到他体温的炽热。那是一种粗野而危险的温度。</p><p>你伸出双手，解开他沾满灰尘和污渍的皮带扣。他没有帮忙，只是冷冷地看着，像是在欣赏你被迫屈从的姿态。你咽了口唾沫，手掌包裹住那滚烫的坚硬。粗糙的指腹摩擦着你的手心，带来一丝轻微的刺痛。你开始上下套弄，动作起初有些生疏和僵硬，但随着他沉重的呼吸声在狭小的空间里渐渐粗重，你的手也逐渐找到了节奏。</p><p><em>唔……还算凑合。</em>他低沉的声音在你头顶响起，带着一丝不易察觉的戏谑，<em>不过，比起那些专业的魅魔，你的手还是太粗糙了点。别停。</em></p><p>他的手不知何时抓住了你的头发，虽然没有用力，但那是一种绝对的掌控姿态。你只能被迫仰起头，看着那双在昏暗中闪烁着原始欲望的蛇瞳。随着你的动作加快，他的呼吸越来越重，最终伴随着一声低吼，黏腻的浊液喷洒在你的手背和手腕上。那气味刺鼻而强烈，让你感到一阵轻微的恶心，但你强忍住了。</p><p>他松开了你的头发，从口袋里摸出几枚金币，随意地扔在桌上。金币发出清脆的撞击声。</p><p><em>这是你的报酬。</em>他一边整理衣物，一边冷淡地说，<em>记住，在地狱，你的双手不仅能用来拿武器，也能用来换命。</em></p><p style="color:#e85060;">完成交易。获得 ' + goldEarned + ' 金币。欲望+10，疲劳+5，理智-2。</p>');
+    cb();
+    ab('拿走金币，离开酒馆', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+}
+
+function sceneSellOral() {
+    var goldEarned = Math.floor(Math.random() * 8) + 15;
+    player.gold += goldEarned;
+    player.desire = Math.min(player.maxDesire, player.desire + 15);
+    player.fatigue += 10;
+    player.sanity -= 5;
+    ua();
+    st('<div class="scene-title">口 部 侍 奉</div><p>你咬了咬嘴唇，选择了第二种。这需要更多的屈服，但也意味着更多的筹码。扎里克那双蛇瞳中闪过一丝意外，随即被浓烈的兴味所取代。他微微拉开双腿，身体前倾，将那令人窒息的压迫感完全释放出来。</p><p><em>胆子不小，新来的。</em>他低哑地说着，粗糙的手指抚上你的脸颊，带着浓重的硫磺味，<em>那就让我看看，你这双嘴除了说那些愚蠢的废话，还能做点什么有用的事。</em></p><p>你跪在冰冷脏污的木地板上，木刺几乎要扎进你的膝盖。你颤抖着解开他的衣物，将那滚烫而粗硕的欲望释放出来。浓烈的雄性气息扑面而来，混合着地狱底层特有的血腥与汗水味。你张开嘴，试探性地含住前端。</p><p><em>嘶——张大点。</em>他一把扣住你的后脑勺，强硬地将自己往你喉咙深处推进。你瞬间感到一阵窒息，眼泪不受控制地溢出眼角。粗暴的摩擦让你的口腔内壁感到火辣辣的刺痛。他的动作越来越猛烈，每一次抽插都带着毫不留情的野蛮，仿佛要把你整个人钉死在这肮脏的角落里。</p><p><em>对，就是这样……把它全部吞下去。</em>他的声音因情欲而变得沙哑嘶吼。你只能发出含糊的呜咽声，努力适应这粗暴的侵犯。黏液顺着你的嘴角流下，滴落在肮脏的地板上。终于，在一阵剧烈的抽搐后，浓稠的白浊射入了你的喉咙深处。那股腥甜而刺鼻的味道让你几欲作呕，但你只能被迫咽下。</p><p>他松开手，看着你狼狈地咳嗽和干呕，眼中闪过一丝满意的残忍。他将一把金币扔在你面前的地上，金币沾上了地上的污迹。</p><p><em>你做得比我想象的好。拿着吧，这是你应得的。</em>他整理好衣物，居高临下地看着你，<em>记住这种味道。在地狱，生存的滋味往往比这更恶心。</em></p><p style="color:#e85060;">完成交易。获得 ' + goldEarned + ' 金币。欲望+15，疲劳+10，理智-5。</p>');
+    cb();
+    ab('捡起金币，踉跄离开', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+}
+
+function sceneSellFull() {
+    var goldEarned = Math.floor(Math.random() * 12) + 25;
+    player.gold += goldEarned;
+    player.desire = Math.min(player.maxDesire, player.desire + 25);
+    player.fatigue += 20;
+    player.sanity -= 10;
+    player.flags.hadSex = true; // 记录发生过深度关系
+    ua();
+    st('<div class="scene-title">全 程 侍 奉</div><p>你深吸一口气，闭上眼睛，做出了最屈辱也最彻底的选择。在这个连呼吸都透着绝望的灰烬区，自尊是最不值钱的消耗品。扎里克的蛇瞳猛地收缩了一下，随即爆发出毫不掩饰的狂热与贪婪。他猛地站起身，一把抓住你的手腕，力道大得仿佛要捏碎你的骨头。他粗暴地将你拖向酒馆深处一个更加昏暗、几乎无人问津的隔间。</p><p><em>这可是你自找的。</em>他一脚踹开那扇摇摇欲坠的木门，将你重重地甩在一张散发着霉味和可疑斑渍的破旧床垫上。你还没来得及起身，他已经压了上来，沉重的身躯如同一座山般将你死死禁锢。他粗暴地撕扯你的衣物，布料破裂的声音在狭小的隔间里显得格外刺耳。</p><p>没有任何前戏，没有丝毫怜惜。他直接分开了你的双腿，强悍而粗硕的欲望带着粗糙的摩擦力，狠狠地贯穿了你。剧烈的撕裂痛感让你忍不住尖叫出声，但声音很快被他粗鲁的吻堵在喉咙里。他的舌头带着浓烈的酒精和血腥味，强行侵入你的口腔，疯狂地扫荡着每一寸柔软。</p><p><em>叫出来，让我听听你的声音。</em>他一边在你的耳边喘息着，一边发了疯似地抽插。木床在剧烈的撞击下发出濒临散架的惨叫。你感觉自己的身体仿佛要在这种野蛮的挞伐中被撕成碎片，内脏随着他每一次深入的撞击而颤抖。痛楚逐渐被一种扭曲的、难以启齿的快感所取代。在这个暗无天日的角落里，你被强行拉入了他那狂热而粗暴的情欲漩涡。</p><p>汗水混合着泪水模糊了你的视线。你只能看到他那双在黑暗中如野兽般闪烁的蛇瞳。他不断变换着姿势，将你翻转、折叠，强迫你承受他全部的重量和欲望。每一次撞击都伴随着沉闷的肉体拍打声，淫靡的汁液顺着大腿根部肆意流淌，将那张肮脏的床垫弄得更加泥泞不堪。</p><p>漫长而煎熬的折磨不知持续了多久。终于，伴随着他一声震耳欲聋的低吼，滚烫而浓稠的精液如熔岩般射入了你的体内最深处。你感到一阵痉挛，意识几乎要被这极致的快感和疲惫彻底吞没。</p><p>他从你身上翻下来，大口喘息着。他没有多看你一眼，只是从怀里掏出一个沉甸甸的钱袋，扔在你赤裸而布满红痕的身体上。</p><p><em>你是个极品，我得承认。</em>他穿好衣服，声音中带着餍足后的慵懒和冷酷，<em>但别以为这样就能在这儿横着走。这袋钱够你活上几天了。滚吧。</em></p><p style="color:#e85060;">完成交易。获得 ' + goldEarned + ' 金币。欲望大幅增加（+25），疲劳骤增（+20），理智严重受损（-10）。</p>');
+    cb();
+    ab('穿好破损的衣服，带着屈辱离开', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+}
 
         // ==================== 侧边栏渲染 ====================
         
@@ -3434,7 +4534,18 @@ function renderMiddleRing(ring) {
                         }
                     }
                 }
+                
+                // 本地槽位保存逻辑
+                var slots = JSON.parse(LS.g(SAVE_KEY + '_slots') || '[]');
+                slots.push({
+                    timestamp: Date.now(),
+                    player: cleanData
+                });
+                if (slots.length > 5) slots.shift(); // 最多保留5个槽位
+                LS.s(SAVE_KEY + '_slots', JSON.stringify(slots));
+                
                 LS.s(SAVE_KEY, JSON.stringify(cleanData));
+                playSound(880, 0.12);
                 var data = JSON.stringify(cleanData, null, 2);
                 var blob = new Blob([data], { type: 'application/json' });
                 var url = URL.createObjectURL(blob);
@@ -3497,9 +4608,34 @@ function renderMiddleRing(ring) {
 
         function resetGame() {
             if (confirm('确定要重置游戏吗？所有进度将彻底丢失。')) { 
+                playSound(300, 0.25);
                 LS.r(SAVE_KEY);
                 location.reload(); 
             }
+        }
+
+        function loadSlot(index) {
+            var slots = JSON.parse(LS.g(SAVE_KEY + '_slots') || '[]');
+            if (index < 0 || index >= slots.length) return;
+            var data = slots[index];
+            if (data && data.player) {
+                Object.assign(player, data.player);
+                playSound(1000, 0.1);
+                ua();
+                st('<p style="color:#e8c060;">✅ 存档 ' + (index+1) + ' 加载成功！</p>');
+                cb();
+                ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
+            }
+        }
+
+        function deleteSlot(index) {
+            var slots = JSON.parse(LS.g(SAVE_KEY + '_slots') || '[]');
+            if (index < 0 || index >= slots.length) return;
+            slots.splice(index, 1);
+            LS.s(SAVE_KEY + '_slots', JSON.stringify(slots));
+            st('<p>已删除存档 ' + (index+1) + '。</p>');
+            cb();
+            ab('返回', function() { switchTab('save'); });
         }
 
         // ==================== 角色创建 ====================
@@ -3595,6 +4731,29 @@ function renderMiddleRing(ring) {
             player.magic = roll();
             player.charisma = roll();
             player.sanity = Math.max(1, roll() - 3);
+            player.hp = 100;
+            player.maxHp = 100;
+            player.maxSanity = 20;
+            player.food = 100;
+            player.fatigue = 0;
+            player.daysSurvived = 1;
+            player.stats = {
+                ringsVisited: ['傲慢之环'],
+                npcsMet: 0,
+                monstersSlain: 0,
+                itemsCrafted: 0
+            };
+            player.achievements = [];
+            player.activeTasks = [];
+            player.inventory = [];
+            player.blackMarketItems = [];
+            player.relationships = {};
+            player.npcTalkDaily = {};
+            player.flags = {
+                firstDeath: false,
+                desireOverflowThisDay: false
+            };
+            
             var mods = { '暴怒': function() { player.strength += 3;
                     player.sanity -= 2; }, '贪婪': function() { player.charisma += 2;
                     player.magic += 1; }, '嫉妒': function() { player.agility += 2;
@@ -3642,6 +4801,29 @@ function renderMiddleRing(ring) {
             player.magic = roll();
             player.charisma = roll();
             player.sanity = roll() + 3;
+            player.hp = 100;
+            player.maxHp = 100;
+            player.maxSanity = 20;
+            player.food = 100;
+            player.fatigue = 0;
+            player.daysSurvived = 1;
+            player.stats = {
+                ringsVisited: [player.currentRing],
+                npcsMet: 0,
+                monstersSlain: 0,
+                itemsCrafted: 0
+            };
+            player.achievements = [];
+            player.activeTasks = [];
+            player.inventory = [];
+            player.blackMarketItems = [];
+            player.relationships = {};
+            player.npcTalkDaily = {};
+            player.flags = {
+                firstDeath: false,
+                desireOverflowThisDay: false
+            };
+            
             var bs = ['strength', 'agility', 'magic', 'charisma'];
             var bst = bs[Math.floor(Math.random() * 4)];
             var bn = { strength: '力量', agility: '敏捷', magic: '魔力', charisma: '魅力' };
@@ -3990,60 +5172,61 @@ function chooseSleepPlace() {
 
 function generateNegativeRandomEvent() {
             var events = [{
-                title: '💰 被偷窃',
-                text: '你走在街上时，一个身影从你身边擦过。你下意识摸了摸口袋——钱袋不见了！你回头望去，只看到一个模糊的背影消失在人群中。',
+                title: '💰 暗巷扒手',
+                text: '当你侧身穿过狭窄潮湿的巷道时，一个浑身散发着酸腐气息的身影与你猛地擦肩而过。那是个骨瘦如柴的剥皮魔，他的手指细长得近乎病态，指甲锋利如钩。你下意识摸了摸腰间，指尖只触碰到了被利刃划开的布料。钱袋已经不见了，那个身影正以一种扭曲的姿态在复杂的废墟间跳跃，消失在浓重的硫磺烟雾中。',
                 effect: function() {
-                    var loss = Math.min(player.gold, 3 + Math.floor(Math.random() * 6));
+                    var loss = Math.min(player.gold, 5 + Math.floor(Math.random() * 10));
                     player.gold = Math.max(0, player.gold - loss);
-                    st('<p style="color:#e85060;">你被偷了 ' + loss + ' 金币！</p><p>你咒骂了一声，但那个小偷早已不见了踪影。在贪婪之环，这种事情每天都在发生。</p>');
+                    st('<p style="color:#e85060;">你的钱袋被割走了，失去了 ' + loss + ' 金币。</p><p>你盯着那道消失的黑影，握紧了拳头。在这条街上，软弱和疏忽就是最好的催款单。</p>');
                     ua();
                 }
             }, {
-                title: '🍷 被下药',
-                text: '你在酒馆喝了一杯酒后，感到一阵眩晕。你意识到酒里被人动了手脚。你踉跄着走出酒馆，靠在墙边缓了好一会儿才恢复清醒。',
+                title: '🍷 迷幻毒酒',
+                text: '你在酒馆喝下的那杯暗紫色液体开始在胃里剧烈翻腾。那不是酒精的灼烧，而是一股如冰冷长针般的刺痛感。你的视线开始重叠，周围恶魔的脸孔扭曲成了一张张不断尖叫的嘴。你意识到有人在你的酒里混入了过量的欲望残渣和尸毒。你踉跄着推开人群，跪在呕吐物满地的后门，感觉灵魂都在被一寸寸剥离。',
                 effect: function() {
+                    player.hp = Math.max(1, player.hp - 15);
+                    player.sanity = Math.max(0, player.sanity - 5);
+                    player.desire = Math.min(player.maxDesire, player.desire + 10);
+                    st(
+                        '<p style="color:#e85060;">你遭遇了严重的毒素反应。HP-15，理智-5，欲望+10。</p><p>你扶着满是污垢的墙壁，耳边回荡着虚幻的呻吟声。这杯酒的代价比它的标价高得多。</p>'
+                        );
+                    ua();
+                }
+            }, {
+                title: '⚖️ 恶意勒索',
+                text: '一个眼球突出、浑身长满脓包的矮小恶魔突然撞在你的腿上，随即发出了一声夸张的、撕心裂肺的哀嚎。他指着自己本就断裂的肋骨，对着围拢过来的巡逻恶魔大喊你试图谋杀他。那些贪婪的执法者根本不在乎真相，他们那生锈的重锤已经抵住了你的后背，暗示着如果不付出"足够的诚意"，你的下半辈子就要在暴怒之环的角斗场里当沙包了。',
+                effect: function() {
+                    var loss = Math.min(player.gold, 15 + Math.floor(Math.random() * 15));
+                    player.gold = Math.max(0, player.gold - loss);
+                    player.sanity = Math.max(0, player.sanity - 3);
+                    st(
+                        '<p style="color:#e85060;">你被恶意勒索了，交出了 ' + loss +
+                        ' 金币作为"保命钱"。理智-3。</p><p>那些执法者数着金币大笑着离去。在地狱，正义从来都有个明码标价的标签，而你现在支付不起它。</p>'
+                        );
+                    ua();
+                }
+            }, {
+                title: '🗡️ 劫财取命',
+                text: '三个拿着锯齿长刀的掠夺者从阴影中缓缓逼近，他们裸露的胸膛上刻满了代表杀戮的符文，眼中只有对血肉和金钱的原始渴望。为首的壮汉伸出细长的舌头舔了舔刀刃上的缺口，发出令人毛骨悚然的笑声："看看这个细皮嫩肉的新人……你是想留下一条胳膊，还是留下所有的钱袋？或者，让我们直接把你切开看看里面有没有藏着宝石？"',
+                effect: function() {
+                    var loss = Math.min(player.gold, 10 + Math.floor(Math.random() * 15));
+                    player.gold = Math.max(0, player.gold - loss);
                     player.hp = Math.max(1, player.hp - 10);
-                    player.sanity = Math.max(0, player.sanity - 2);
                     st(
-                        '<p style="color:#e85060;">你被下药了！HP-10，理智-2。</p><p>你扶着墙壁，感觉整个世界都在旋转。你发誓以后在酒馆要更加小心。</p>'
-                        );
-                    ua();
-                }
-            }, {
-                title: '⚖️ 被诬陷',
-                text: '你路过一个摊位时，摊主突然抓住你的手腕大喊："抓小偷！就是他偷了我的东西！"几个路人围了过来，你百口莫辩。最后你不得不花钱私了。',
-                effect: function() {
-                    var loss = Math.min(player.gold, 5 + Math.floor(Math.random() * 5));
-                    player.gold = Math.max(0, player.gold - loss);
-                    player.sanity = Math.max(0, player.sanity - 1);
-                    st(
-                        '<p style="color:#e85060;">你被诬陷了！花了 ' + loss +
-                        ' 金币才摆平。</p><p>你感到一阵屈辱，但你知道在地狱里，跟不讲道理的人讲道理只会浪费更多时间。</p>'
-                        );
-                    ua();
-                }
-            }, {
-                title: '🗡️ 被抢劫',
-                text: '两个低阶恶魔从暗巷里冲出来，堵住了你的去路。他们手里拿着生锈的刀，脸上带着贪婪的笑容："交出你的金币，不然就割断你的喉咙。"',
-                effect: function() {
-                    var loss = Math.min(player.gold, 4 + Math.floor(Math.random() * 8));
-                    player.gold = Math.max(0, player.gold - loss);
-                    player.hp = Math.max(1, player.hp - 5);
-                    st(
-                        '<p style="color:#e85060;">你被抢劫了！失去了 ' + loss +
-                        ' 金币，HP-5。</p><p>你勉强保住了性命，但口袋里的金币已经进了别人的腰包。</p>'
+                        '<p style="color:#e85060;">你被毒打了一顿并抢走了所有的金币。失去了 ' + loss +
+                        ' 金币，HP-10。</p><p>你蜷缩在满是积水的巷口，看着他们提着你的钱袋大摇大摆地离去。伤口的剧痛时刻提醒着你这里的生存法则。</p>'
                         );
                     ua();
                 },
                 options: [
-                    { label: '⚔️ 反击！', effect: function() {
-                            startCombat({ name: '低阶劫匪（2人）', hp: 30, physicalAttack: 7, defense: 2,
-                                    goldReward: 10, sinReward: 2,
-                                    description: '两个不知天高地厚的低阶劫匪。' }, null, player
+                    { label: '⚔️ 拼死反击！', effect: function() {
+                            startCombat({ name: '掠夺者小队', hp: 50, physicalAttack: 12, defense: 4,
+                                    goldReward: 25, sinReward: 5,
+                                    description: '三个极度危险的底层掠夺者，他们习惯了在受害者的哀嚎中分赃。' }, null, player
                                 .currentRing, getCurrentLevel());
                         }, cls: 'danger-btn' },
-                    { label: '破财消灾', effect: function() {
-                            var loss2 = Math.min(player.gold, 3 + Math.floor(Math.random() * 5));
+                    { label: '跪地求饶（丢弃金币）', effect: function() {
+                            var loss2 = Math.min(player.gold, 8 + Math.floor(Math.random() * 10));
                             player.gold = Math.max(0, player.gold - loss2);
                             st('<p>你扔出' + loss2 +
                                 '枚金币，趁他们捡钱的时候快步离开。虽然损失了钱，但至少没受伤。</p>');
