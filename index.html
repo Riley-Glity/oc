@@ -51,6 +51,16 @@
         .input-group label { display: block; color: #c09090; font-size: 0.85em; margin-bottom: 4px; letter-spacing: 0.04em; }
         .input-group input { width: 100%; padding: 10px 14px; background: #14040a; border: 1px solid #3a1020; color: #e0c0c0; font-family: inherit; font-size: 0.95em; border-radius: 6px; outline: none; transition: 0.2s; }
         .input-group input:focus { border-color: #c04050; box-shadow: 0 0 10px rgba(200,40,60,0.3); }
+        /* 美化按钮 */
+        .clickable { border-radius: 4px; padding: 6px 12px; }
+        #menuBtn { border-radius: 4px; }
+        .primary-btn { box-shadow: inset 0 0 8px rgba(200,40,60,0.4); border-radius: 4px; font-weight: bold; }
+        /* 统一响应式布局 */
+        @media (max-width: 768px) {
+            #sidebar { width: 85vw; right: calc(-1 * 85vw - 10px); }
+            #main.sidebar-open { margin-right: 0; }
+            .status-box { padding: 10px; }
+        }
         .race-select { display: flex; gap: 8px; flex-wrap: wrap; }
         .race-select .clickable { padding: 6px 12px; }
         .race-select .clickable.active { color: #ff8090; text-shadow: 0 0 10px rgba(200,80,60,0.4); }
@@ -707,7 +717,7 @@
                 <span class="nav-label">状态</span>
             </button>
             <button class="nav-item" data-tab="map" onclick="quickAction('map')">
-                <span class="nav-icon">🗺️</span>
+                <span class="nav-icon"></span>
                 <span class="nav-label">地图</span>
             </button>
             <button class="nav-item" data-tab="inventory" onclick="quickAction('inventory')">
@@ -719,7 +729,7 @@
                 <span class="nav-label">任务</span>
             </button>
             <button class="nav-item" data-tab="save" onclick="quickAction('save')">
-                <span class="nav-icon">💾</span>
+                <span class="nav-icon"></span>
                 <span class="nav-label">存档</span>
             </button>
             <button class="nav-item" data-tab="social" onclick="quickAction('social')">
@@ -976,32 +986,71 @@ var RD = {
                 }
             }
         },
-        middle: { name: '星尘区', desc: '星尘区：这里是君主直属手下的居所。所有建筑均由暗色石材砌成，排列极其整齐、对称。街道被打扫得一尘不染，但空气中没有任何声响与温度，透着一股死寂的冰冷。', features: ['审判厅附属建筑', '执事宿舍', '档案库', '训练场'] },
-        rich: { name: '晨星高地', desc: '晨星高地：高地被一层肉眼可见的能量力场包裹。内部矗立着路西法巨大的水晶宫殿。只有最高阶的堕天使才能在此行走。任何未经许可的闯入者，在踏入边界的瞬间，身体就会被分解成细小的星尘粒子。', features: ['晨星殿', '天使纪念堂', '观星台', '禁入——需要君主许可'] }
+        middle: { name: '星尘区', desc: '星尘区：这里是君主直属手下的居所。所有建筑均由极其罕见的暗色星辰石砌成，每一块石砖的拼接都经过了极为严苛的计算，排列极其整齐、对称，不容许哪怕一毫米的误差。街道被高阶清洁魔打扫得一尘不染，甚至能倒映出天空惨淡的光芒。但这里的空气中没有任何声响与温度，连恶魔的呼吸声都被刻意压制，透着一股死寂的冰冷与令人窒息的压迫感，仿佛每一次心跳都是对这里完美秩序的亵渎。', features: ['审判厅附属建筑', '执事宿舍', '档案库', '训练场'] },
+        rich: { name: '晨星高地', desc: '晨星高地：这片高地是傲慢之环的权力顶点，被一层肉眼可见、散发着刺目冷光的半透明能量力场紧紧包裹。力场内部，矗立着路西法那座直插云霄的巨大水晶宫殿，散发着无法直视的神圣与堕落交织的光芒。只有拥有纯正血统的最高阶堕天使才能在此昂首行走，享受绝对的傲慢与尊荣。任何未经许可的低阶恶魔或罪人一旦试图闯入，在踏入边界的瞬间，身体连同灵魂都会被瞬间分解成极其细小的星尘粒子，连惨叫都来不及发出，便化为点缀高地夜空的粉尘。', features: ['晨星殿', '天使纪念堂', '观星台', '禁入——需要君主许可'] }
     },
     '贪婪之环': {
         poor: {
             name: '铜板巷',
             desc: '铜板巷：低矮破败的棚户区。这里挤满了破产商人和被彻底榨干的债务人。玛门商行的收债人每周会准时出现三次。空气中常年弥漫着刺鼻的铜锈味，以及无路可退的绝望气息。',
-            features: ['诚信典当行', '债奴工坊', '地下赌场', '收债人据点'],
+            features: ['诚信典当行', '债奴工坊', '地下赌场', '地下酒吧', '收债人据点'],
             featureScenes: {
-                '诚信典当行': function(ring, level) { sceneRingTutorial(ring, level); }
+                '诚信典当行': function(ring, level) { sceneRingTutorial(ring, level); },
+                '地下酒吧': function(ring, level) {
+                    st('<div class="scene-title">地下酒吧</div><p>推开这扇隐秘的防爆门，震耳欲聋的重金属音乐和浓烈的劣质酒精味混合在一起。这里是贪婪之环最混乱的三教九流聚集地。</p>');
+                    var reason = getNpcUnavailableReason('洛柯');
+                    if (reason === 'time') {
+                        st('<p style="color:#9a6a6a;font-style:italic;">吧台前的高脚凳空空如也，吧台上还留着被什么东西腐蚀出的坑洞。看来那位脾气火爆的军火头子现在不在店里，多半又去哪里火拼了。</p>');
+                    } else {
+                        st('<p>洛柯大马金刀地坐在吧台的高脚凳上。由于腿短，双脚只能悬空晃荡。他正用一把带血的匕首剔指甲，手臂的肘关节呈现出一种微微向外反向弯折的怪异弧度。脸上的三对眼睛同时看向你，六道冰冷的视线让人头皮发麻。</p>');
+                        addNpcButton('洛柯', ring, level);
+                    }
+                    addTime(5);
+                    cb();
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
+                }
             }
         },
-        middle: { name: '金丝街', desc: '金丝街：繁华的商业中心。街道两侧矗立着罪业银行分行、灵魂交易所和恶魔股市大厅。到处都是行色匆匆、西装革履的恶魔商人和契约公证人。', features: ['罪业银行分行', '灵魂交易所', '恶魔股市大厅', '万宝商行分店', '契约公证处'], npc: '弗雷迪' },
-        rich: { name: '万宝内城', desc: '万宝内城：玛门的私人领地。宽阔的道路完全由纯金币铺设而成，两侧高耸的墙壁上密密麻麻地镶嵌着各类稀有宝石，在光线下折射出令人目眩的奢华光芒。', features: ['万宝楼', '玛门私人金库', '顶级拍卖行', '禁入——需要玛门许可'] }
+        middle: { name: '金丝街', desc: '金丝街：贪婪之环最繁华、也最冷酷的商业心脏。这里的街道由打磨得极其光滑的大理石铺就，两侧矗立着高耸的罪业银行分行、灵魂交易所和恶魔股市大厅，奢华的建筑表面闪烁着诱人的金光。街头到处都是行色匆匆、西装革履的恶魔商人和手持地狱法典的契约公证人，他们用最优雅的辞藻和最恶毒的条约，无休止地进行着敲骨吸髓的剥削。在这里，空气中弥漫着高档雪茄的香气与隐秘的血腥味，只要你出得起价钱，哪怕是一个恶魔的未来也可以被挂牌出售。', features: ['罪业银行分行', '灵魂交易所', '恶魔股市大厅', '万宝商行分店', '契约公证处'], npc: '弗雷迪' },
+        rich: { name: '万宝内城', desc: '万宝内城：暴发户与无尽贪婪的终极体现，君主玛门不可侵犯的私人领地。这里宽阔的道路竟然完全由铸造精美的纯金币铺设而成，每走一步都能听到极其悦耳的金石碰撞声。两侧高耸得仿佛要隔绝一切的墙壁上，密密麻麻、甚至略显粗鄙地镶嵌着从各个位面搜刮来的各类稀有宝石。在人造光线的照耀下，整座内城折射出令人目眩神迷、甚至足以刺瞎双眼的极端奢华光芒。这里的一切都在尖叫着“金钱至上”，散发着令人既作呕又无法抗拒的致命吸引力。', features: ['万宝楼', '玛门私人金库', '顶级拍卖行', '禁入——需要玛门许可'] }
     },
     '暴怒之环': {
         poor: {
             name: '碎骨巷',
             desc: '碎骨巷：混乱不堪的贫民窟。失败的角斗士、逃兵和交不起保护费的小贩蜷缩在阴暗的角落里。街头随时会爆发致命的斗殴。空气中弥漫着浓重的铁锈味与新鲜的血腥味。',
-            features: ['碎骨铁匠铺', '废兵器回收铺', '廉价酒馆', '伤兵收容所'],
+            features: ['碎骨铁匠铺', '废兵器回收铺', '廉价酒馆', '伤兵收容所', '废弃禁闭室', '阴暗街角'],
             featureScenes: {
-                '碎骨铁匠铺': function(ring, level) { sceneRingTutorial(ring, level); }
+                '碎骨铁匠铺': function(ring, level) { sceneRingTutorial(ring, level); },
+                '废弃禁闭室': function(ring, level) {
+                    st('<div class="scene-title">废弃禁闭室</div><p>这间冰冷的牢房曾用来关押最暴躁的狂徒，墙壁上布满焦痕和抓挠出的血迹，空气中透着一股腐烂的绝望感。</p>');
+                    var reason = getNpcUnavailableReason('厄尔');
+                    if (reason === 'time') {
+                        st('<p style="color:#9a6a6a;font-style:italic;">角落里空无一人，只有地上残留的一滩未干的黑红污血。那个饱受折磨的畸变罪人或许又逃到哪里去躲藏了。</p>');
+                    } else {
+                        st('<p>厄尔正蜷缩在最黑暗的角落。他一半灰白一半暗红的头发极其突兀。右半边脸长着三只毫无高光的多重眼睛，眼角不受控制地流淌着黑红色的污血。他左手死死掐着自己的脖子，发出痛苦的喘息和疯狂的笑声交织的怪音。</p>');
+                        addNpcButton('厄尔', ring, level);
+                    }
+                    addTime(5);
+                    cb();
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
+                },
+                '阴暗街角': function(ring, level) {
+                    st('<div class="scene-title">阴暗街角</div><p>碎骨巷最混乱的街角，到处是碎裂的酒瓶、斗殴留下的牙齿和干涸的呕吐物。</p>');
+                    var reason = getNpcUnavailableReason('塞缪尔');
+                    if (reason === 'time') {
+                        st('<p style="color:#9a6a6a;font-style:italic;">此时这里只有几只野狗在啃食垃圾。那个疯狂的酒鬼神父现在不知道在哪个廉价酒馆里发酒疯。</p>');
+                    } else {
+                        st('<p>塞缪尔正摇摇晃晃地靠在墙边，手里拎着一个酒瓶，脚下踩着一个不知死活的倒霉蛋。巨大的生锈铁十字架被扔在一旁。听到脚步声，他打了个响亮的酒嗝，布满血丝的眼球凶狠地死盯着你。</p>');
+                        addNpcButton('塞缪尔', ring, level);
+                    }
+                    addTime(5);
+                    cb();
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
+                }
             }
         },
-        middle: { name: '铁砧大道', desc: '铁砧大道：宽阔的街道两侧排列着巨大的怒火熔炉工厂，黑烟滚滚。著名的血焰角斗场坐落在大道中央，沉重的打铁声与角斗士的嘶吼声交织在一起。', features: ['血焰角斗场', '怒火熔炉工厂', '武器商店', '角斗士训练营'] },
-        rich: { name: '熔岩堡垒', desc: '熔岩堡垒：一座完全由冷却凝固的黑红色岩浆和巨大骸骨堆砌而成的宏伟城堡。滚烫的岩浆在城堡底部的护城河里翻滚，这里是萨麦尔的王座所在。', features: ['萨麦尔王座厅', '战利品陈列室', '禁入——需要萨麦尔认可'] }
+        middle: { name: '铁砧大道', desc: '铁砧大道：暴怒之环的核心工业与娱乐区，脚下铺着因高温而龟裂发黑的焦岩。宽阔的街道两侧，整齐排列着如同钢铁巨兽般的怒火熔炉工厂，高耸的烟囱日夜不歇地喷吐着遮天蔽日的滚滚黑烟，将整个天空染成压抑的暗红色。这里没有哪怕一刻的安宁，著名的血焰角斗场就嚣张地坐落在大道正中央。沉重而震耳欲聋的打铁声、灼热气流的呼啸声，以及从角斗场里传出的角斗士们绝望又狂热的嘶吼声交织在一起，构成了一首永远在燃烧的暴力赞美诗。', features: ['血焰角斗场', '怒火熔炉工厂', '武器商店', '角斗士训练营'] },
+        rich: { name: '熔岩堡垒', desc: '熔岩堡垒：君主萨麦尔不可僭越的王权象征。这是一座完全由瞬间冷却凝固的黑红色岩浆、以及无数战败巨兽的森然骸骨堆砌而成的宏伟城堡。建筑的每一个尖角都犹如直指苍穹的利刃，散发着骇人的凶戾之气。城堡底部，一条宽阔的护城河里翻滚着暗红色、冒着刺鼻硫磺气泡的滚烫岩浆。偶尔有几具烧焦的残骸顺着岩浆漂流而过。这里是纯粹力量与绝对暴力的化身，只有最疯狂、最强大的嗜血战士，才有资格跪伏在这座堡垒的阴影之下。', features: ['萨麦尔王座厅', '战利品陈列室', '禁入——需要萨麦尔认可'] }
     },
     '色欲之环': {
         poor: {
@@ -1019,8 +1068,8 @@ var RD = {
                 }
             }
         },
-        middle: { name: '霓虹大道', desc: '霓虹大道：被刺眼霓虹灯光笼罩的繁华街道。欲焰秀场、魅骨时装店和灵魂契约所鳞次栉比。衣着暴露的恶魔在街头穿梭。', features: ['欲焰秀场', '魅骨时装旗舰店', '灵魂契约所', '欲望拍卖行', '霓虹大道酒吧'], npc: '卡恩' },
-        rich: { name: '红雾宫殿', desc: '红雾宫殿：阿斯蒙蒂斯的私人领地。整座宫殿没有实体的墙壁，完全由不断翻滚、流动的浓郁红色雾气凝聚而成，透着极度的危险与诱惑。', features: ['阿斯蒙蒂斯寝宫', '傀儡收藏室', '禁入——需要阿斯蒙蒂斯邀请'] }
+        middle: { name: '霓虹大道', desc: '霓虹大道：色欲之环最纸醉金迷、也最容易让人彻底堕落的繁华地带。整条街道被各种刺眼、暧昧且闪烁不定的全息霓虹灯光死死笼罩。两侧的建筑造型夸张而极具挑逗性，欲焰秀场、魅骨时装店和灵魂契约所鳞次栉比，每一扇透明的橱窗后都在上演着不可名状的诱惑。街头随处可见衣着极其暴露、散发着甜腻体香的魅魔和高阶交际花在穿梭游走。她们用勾魂夺魄的眼神和看似漫不经心的肢体接触，轻而易举地从那些神志不清的罪人手里骗走最后的灵魂碎片。', features: ['欲焰秀场', '魅骨时装旗舰店', '灵魂契约所', '欲望拍卖行', '霓虹大道酒吧'], npc: '卡恩' },
+        rich: { name: '红雾宫殿', desc: '红雾宫殿：君主阿斯蒙蒂斯那不可名状的极致私人领地。令人毛骨悚然的是，整座庞大的宫殿竟然没有任何实体的石砖或金属墙壁，完全是由不断翻滚、诡异流动的浓郁暗红色雾气强行凝聚而成。这些雾气仿佛拥有自己的生命，时而化作拥抱缠绕的肢体，时而发出令人面红耳赤的低沉喘息。它无声地散发着一种深入骨髓的致命诱惑，但所有的高阶恶魔都知道，一旦迷失在那片红雾中，连最纯粹的灵魂也会被彻底榨干，化作滋养这座宫殿的养料。', features: ['阿斯蒙蒂斯寝宫', '傀儡收藏室', '禁入——需要阿斯蒙蒂斯邀请'] }
     },
     '嫉妒之环': {
         poor: {
@@ -1031,14 +1080,14 @@ var RD = {
                 '栈桥下的阴影': function(ring, level) { sceneRingTutorial(ring, level); }
             }
         },
-        middle: { name: '镜面街区', desc: '镜面街区：这里的建筑表面覆盖着各种劣质的装饰材料，试图拙劣地模仿其他环层的繁华景象。著名的暗潮之眼总部和流言集市隐藏在这些虚假的华丽之下。', features: ['镜厅', '暗潮之眼总部', '深渊镜像工坊', '谣言集市'] },
-        rich: { name: '深水王座', desc: '深水王座：利维坦位于深海海底的幽暗巢穴。巨大的水下宫殿墙壁上，密密麻麻地挂满了从其他君主或恶魔那里偷窃、掠夺来的珍贵物品。', features: ['利维坦王座', '嫉妒收藏室', '禁入——需要利维坦默许'] }
+        middle: { name: '镜面街区', desc: '镜面街区：嫉妒之环最荒诞、也最虚伪的中心地带。这里的建筑表面全部贴满了反光的镜片和廉价夺目的劣质装饰材料，极其拙劣又偏执地试图模仿贪婪环的金碧辉煌与色欲环的灯红酒绿。但镜面后的墙体却早已腐朽发霉。在这片虚假的华丽外衣下，隐藏着深不可测的恶意——著名的暗潮之眼总部和流言集市就潜伏在那些扭曲的倒影深处。无数双泛着幽绿嫉妒光芒的眼睛在暗中窥视，用最恶毒的谎言和情报，随时准备将其他环的高高在上者狠狠拽入泥潭。', features: ['镜厅', '暗潮之眼总部', '深渊镜像工坊', '深海当铺', '谣言集市'] },
+        rich: { name: '深水王座', desc: '深水王座：君主利维坦藏匿于无尽深渊海底的幽暗巢穴。巨大的水下宫殿被冰冷、极其压抑的黑色海流所包围，水压大得足以瞬间将一只低阶恶魔碾成肉泥。令人侧目的是，这座宫殿那粗糙的黑石墙壁上，毫无章法、密密麻麻地悬挂着无数件散发着异彩的珍宝——那全是从其他君主和高阶恶魔的宝库中偷窃、骗取或暗中掠夺来的赃物。这不仅是利维坦财富的展示，更是一种病态的、永不满足的嫉妒宣言：别人拥有的，他必须抢夺过来，哪怕只是一堆废铜烂铁。', features: ['利维坦王座', '嫉妒收藏室', '禁入——需要利维坦默许'] }
     },
     '暴食之环': {
         poor: {
             name: '残渣区',
             desc: '残渣区：巨大的露天垃圾处理场。地面上堆积成山的食物残渣正在发酵，渗出浑浊的汁液。地面极其湿滑油腻，空气中充斥着令人作呕的腐烂酸臭味。',
-            features: ['铁锅旁的棚子', '永饥食品厂废弃物区', '拾荒者营地'],
+            features: ['铁锅旁的棚子', '永饥食品厂废弃物区', '拾荒者营地', '废弃化工厂'],
             featureScenes: {
                 '铁锅旁的棚子': function(ring, level) { sceneRingTutorial(ring, level); },
                 '拾荒者营地': function(ring, level) {
@@ -1047,11 +1096,24 @@ var RD = {
                     cb();
                     ab('返回', function() { sceneExploreDistrict(ring, level); });
                     addNpcButton('伊莱亚斯', ring, level);
+                },
+                '废弃化工厂': function(ring, level) {
+                    st('<div class="scene-title">废弃化工厂</div><p>推开废弃化工厂沉重的铁门，震耳欲聋的重金属音乐夹杂着诡异的笑声立刻扑面而来。这里的空气中弥漫着刺鼻的化学废料气味，地面的积水中泛着不自然的荧光色。</p>');
+                    var reason = getNpcUnavailableReason('康特·恩顿');
+                    if (reason === 'time') {
+                        st('<p style="color:#9a6a6a;font-style:italic;">生锈的管道上空空如也，只有地上散落着几个用过的注射器。康特似乎去别的地方找乐子了，或者正缩在哪个阴暗的角落里忍受戒断反应。</p>');
+                    } else {
+                        st('<p>在深处的生锈管道上，倒挂着一个紫红相间的身影。康特·恩顿正把玩着手里装满荧光绿色液体的注射器。听到你的脚步声，他猛地扭过头，那双布满血丝的半垂眼死死锁定了你，脸上扯出一个撕裂般夸张的笑容。</p>');
+                        addNpcButton('康特·恩顿', ring, level);
+                    }
+                    addTime(5);
+                    cb();
+                    ab('返回', function() { sceneExploreDistrict(ring, level); });
                 }
             }
         },
-        middle: { name: '美食大道', desc: '美食大道：各种规模的餐饮场所挤满街道。从街边廉价的深渊秽食自助，到极其奢华的虚无珍馐会所，到处都是吞咽食物的声响。', features: ['虚无珍馐会所', '永饥食品厂直营店', '深渊秽食自助', '食教传教站'] },
-        rich: { name: '永恒盛宴厅', desc: '永恒盛宴厅：别西卜的私人餐厅。大门紧闭，内部摆放着巨大的长条餐桌。只有被判定为具有极高食用或利用价值的存在，才能被允许踏入这里。', features: ['别力西卜私人餐桌', '珍稀食材储藏室', '禁入——需要别力西卜认可'] }
+        middle: { name: '美食大道', desc: '美食大道：暴食之环最疯狂、也最令人反胃的消化枢纽。宽阔的街道两侧，毫无间隙地挤满了各种规模、散发着混合怪味的餐饮加工场。从街边污水横流的廉价深渊秽食大棚，到门面奢华、专门烹饪珍稀异兽（甚至低阶恶魔）的虚无珍馐会所，这里永不打烊。空气中弥漫着过度油炸的焦糊味、新鲜血液的铁锈味以及甜到发腻的香精味。无论日夜，这里永远回荡着令人毛骨悚然的咀嚼声、骨头被咬碎的咔嚓声，以及食客们因进食过量而发出的痛苦又满足的诡异呻吟。', features: ['虚无珍馐会所', '永饥食品厂直营店', '深渊秽食自助', '食教传教站'] },
+        rich: { name: '永恒盛宴厅', desc: '永恒盛宴厅：君主别西卜那充斥着终极贪欲的私人餐厅。那扇用巨兽肋骨打造的沉重大门永远紧闭着，门缝里偶尔渗出带有强烈腐蚀性的腥甜粘液。厅内摆放着一张仿佛看不见尽头、铺着暗红天鹅绒桌布的巨大长条餐桌。餐桌上堆砌着常人根本无法想象的扭曲珍馐。在这里，食材与食客的界限极其模糊。只有那些被别西卜亲口判定为具有“极高食用价值”或是“无可替代的利用价值”的存在，才有资格作为座上宾——抑或是盘中餐，踏入这片永不餍足的恐怖盛宴。', features: ['别力西卜私人餐桌', '珍稀食材储藏室', '禁入——需要别力西卜认可'] }
     },
     '懒惰之环': {
         poor: {
@@ -1062,8 +1124,8 @@ var RD = {
                 '灰雾中的躺椅': function(ring, level) { sceneRingTutorial(ring, level); }
             }
         },
-        middle: { name: '慵懒大道', desc: '慵懒大道：一切事物的运转速度都极其缓慢。街边的懒鬼外包公司和惰性能量采集站以极低的效率勉强维持着运作。', features: ['虚无躺椅总店', '懒鬼外包公司', '惰性能量采集站'] },
-        rich: { name: '虚无之床', desc: '虚无之床：贝尔芬格的永恒休憩之所。这片区域被强大的惰性力场覆盖。任何靠近这里的生物，都会感受到一股无法抵抗的强烈困意，直接昏睡过去。', features: ['贝尔芬格沉睡处', '惰性力场核心', '禁入——靠近就会睡着'] }
+        middle: { name: '慵懒大道', desc: '慵懒大道：整个地狱效率最低下、气氛最沉闷的核心街区。这里的空气仿佛变成了半凝固的灰色糖浆，任何事物和个体的运转速度都被强行拉长放慢。街边那些挂着歪斜招牌的懒鬼外包公司和生锈的惰性能量采集站，仅仅依靠着最底层的自动化机械和几个半睡半醒的文员，以一种令人崩溃的极低效率勉强维持着不死不活的运作。就算有人倒在路中央呼呼大睡，路过的恶魔也绝不会费力气绕开，而是选择直接就地躺下，加入这场没有尽头的集体休眠。', features: ['虚无躺椅总店', '懒鬼外包公司', '惰性能量采集站'] },
+        rich: { name: '虚无之床', desc: '虚无之床：君主贝尔芬格的永恒休憩之所，也是地狱中最安静的绝对禁区。这片广袤的区域被一股极其浓稠、连光线和声音都能吞噬的灰色惰性力场死死覆盖。这里没有任何奢华的建筑，只有一张由纯粹的“倦意”具象化而成的庞大床榻悬浮在半空。任何试图靠近这里的生物，哪怕是意志极其坚定、满怀杀意的高阶恶魔，在踏入力场边缘的瞬间，都会被一股排山倒海般、根本无法抵抗的强烈困意瞬间击溃。他们会直接扑倒在地，陷入一场直到灵魂消亡也不会醒来的永恒沉睡。', features: ['贝尔芬格沉睡处', '惰性力场核心', '禁入——靠近就会睡着'] }
     }
 };
 var SAVE_KEY = 'qclaw_hell_ring_save';
@@ -1112,7 +1174,7 @@ function saveToSlot(index) {
         LS.s(SAVE_KEY + '_slots', JSON.stringify(slots));
         LS.s(SAVE_KEY, JSON.stringify(cleanData));
         playSound(880, 0.12);
-        st('<p style="color:#80c080;">✅ 存档 ' + (index + 1) + ' 保存成功！</p>');
+        st('<p style="color:#80c080;">存档 ' + (index + 1) + ' 保存成功！</p>');
         cb();
         ab('返回', function() { switchTab('save'); });
     } catch (e) {
@@ -1151,7 +1213,7 @@ function loadFromSlot(index) {
         checkHp();
         ua();
         playSound(1000, 0.1);
-        st('<p style="color:#e8c060;">✅ 存档 ' + (index + 1) + ' 加载成功！</p>');
+        st('<p style="color:#e8c060;">存档 ' + (index + 1) + ' 加载成功！</p>');
         cb();
         ab('继续', function() { sceneExploreDistrict(player.currentRing || "傲慢之环", getCurrentLevel()); });
     } catch (e) {
@@ -1173,7 +1235,7 @@ function exportSaveFile() {
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        st('<p style="color:#80c080;">✅ 存档已导出！</p>');
+        st('<p style="color:#80c080;">存档已导出！</p>');
         cb();
         ab('返回', function() { switchTab('save'); });
     } catch (e) {
@@ -1194,7 +1256,7 @@ function importSaveFile(event) {
             saveToSlot(0);
             checkHp();
             ua();
-            st('<p style="color:#e8c060;">✅ 导入成功！已自动保存到槽位1。</p>');
+            st('<p style="color:#e8c060;">导入成功！已自动保存到槽位1。</p>');
             cb();
             ab('继续', function() { sceneExploreDistrict(player.currentRing || "傲慢之环", getCurrentLevel()); });
         } catch (err) {
@@ -1797,8 +1859,17 @@ function unequipCurrentCloth() {
         player.magic -= (oldData.magic || 0);
         player.agility -= (oldData.agility || 0);
         player.sanity = Math.min(player.maxSanity, player.sanity - (oldData.sanity || 0));
+        
+        if (oldData.buffs) {
+            for (var i = 0; i < oldData.buffs.length; i++) {
+                removeBuff('armor_' + oldData.buffs[i].id);
+            }
+        }
+        
         var oldItem = findItemById(player.equippedClothId);
-        if (oldItem) oldItem.equipped = false;
+        if (oldItem) {
+            oldItem.equipped = false;
+        }
     }
     player.equippedClothId = null;
     player.equippedClothData = null;
@@ -1813,7 +1884,8 @@ function equipCloth(item) {
         strength: item.strength || 0,
         magic: item.magic || 0,
         agility: item.agility || 0,
-        sanity: item.sanity || 0
+        sanity: item.sanity || 0,
+        buffs: item.buffs || []
     };
     player.charisma += (item.charisma || 0);
     player.strength += (item.strength || 0);
@@ -1840,6 +1912,14 @@ function equipArmorFromBag(itemId) {
     checkHp();
     ua(); usb();
     st('<p>你穿上了 ' + item.name + '。</p>');
+    
+    if (item.effects && item.effects.buffs) {
+        for (var i = 0; i < item.effects.buffs.length; i++) {
+            var b = item.effects.buffs[i];
+            addBuff('armor_' + b.id, b.name, b.desc, b.type || 'positive', b.duration || 9999);
+        }
+    }
+    
     cb();
     ab('继续', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
 }
@@ -1969,6 +2049,14 @@ function useConsumable(itemId) {
     ua();
     usb();
     st('<p>你使用了 ' + item.name + '。</p>');
+    
+    if (item.name === '极乐致幻剂' || item.name === '高纯度恶魔脑髓液') {
+        player.flags.addicted = true;
+        player.flags.drugTakenToday = true;
+        player.flags.withdrawal = false;
+        st('<p style="color:#ff6080;font-weight:bold;text-shadow:0 0 8px #ff6080;">你感受到前所未有的极乐与力量，但深渊的毒素已深深扎根在你的灵魂中。你上瘾了。</p>');
+    }
+    
     cb();
     ab('继续', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
 }
@@ -2013,10 +2101,10 @@ function startCombat(enemyData, flagKey, returnRing, returnLevel) {
     function renderCombat(statusMsg) {
         var hpBar = '❤️ ' + player.hp + '/' + player.maxHp;
         var enemyHpBar = '💀 ' + enemy.hp + '/' + enemy.maxHp;
-        var html = '<div class="scene-title">⚔️ 战 斗 ⚔️</div>';
+        var html = '<div class="scene-title">战 斗 </div>';
         html += '<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a0a14;">';
-        html += '<div><span class="highlight">' + player.name + '</span><br>' + hpBar + '<br>⚔️ 攻击 ' + playerAtk + ' | 🛡️ 防御 ' + playerDef + '</div>';
-        html += '<div style="text-align:right;"><span class="gold-text">' + enemy.name + '</span><br>' + enemyHpBar + '<br>⚔️ 攻击 ' + enemy.attack + ' | 🛡️ 防御 ' + enemy.defense + '</div>';
+        html += '<div><span class="highlight">' + player.name + '</span><br>' + hpBar + '<br>攻击 ' + playerAtk + ' | 🛡️ 防御 ' + playerDef + '</div>';
+        html += '<div style="text-align:right;"><span class="gold-text">' + enemy.name + '</span><br>' + enemyHpBar + '<br>攻击 ' + enemy.attack + ' | 🛡️ 防御 ' + enemy.defense + '</div>';
         html += '</div>';
         if (statusMsg) html += '<p style="margin:8px 0;color:#c09080;">' + statusMsg + '</p>';
         html += '<p style="font-size:0.78em;color:#8a5a62;">' + enemy.desc + '</p>';
@@ -2047,7 +2135,7 @@ function endCombat(victory) {
             }
             checkHp();
     ua();
-            st('<div class="scene-title">🏆 战 斗 胜 利</div><p>你击败了 <span class="gold-text">' + enemy.name + '</span>！</p><p style="color:#e8c060;">获得 ' + gold + ' 金币，' + exp + ' 经验。' + (enemy.sinReward ? ' 罪业值 +' + enemy.sinReward : '') + '</p>');
+            st('<div class="scene-title">战 斗 胜 利</div><p>你击败了 <span class="gold-text">' + enemy.name + '</span>！</p><p style="color:#e8c060;">获得 ' + gold + ' 金币，' + exp + ' 经验。' + (enemy.sinReward ? ' 罪业值 +' + enemy.sinReward : '') + '</p>');
             player.stats.battlesWon++;
             setTimeout(function() { checkAchievement('first_battle'); }, 150);
             cb();
@@ -2120,7 +2208,7 @@ function playerTurn(action) {
             if (consumables.length === 0) {
                 renderCombat('没有可用的消耗品。');
                 cb();
-                ab('⚔️ 攻击', function() { playerTurn('attack'); });
+                ab('攻击', function() { playerTurn('attack'); });
                 ab('🛡️ 防御', function() { playerTurn('defend'); });
                 ab('🏃 逃跑', function() { playerTurn('flee'); });
                 return;
@@ -2158,7 +2246,7 @@ function playerTurn(action) {
             ab('取消', function() {
                 renderCombat('');
                 cb();
-                ab('⚔️ 攻击', function() { playerTurn('attack'); });
+                ab('攻击', function() { playerTurn('attack'); });
                 ab('🛡️ 防御', function() { playerTurn('defend'); });
                 ab('🧪 使用物品', function() { playerTurn('item'); });
                 ab('🏃 逃跑', function() { playerTurn('flee'); });
@@ -2174,7 +2262,7 @@ function enemyTurn() {
         renderCombat(enemy.name + ' 攻击了你，造成 ' + dmg + ' 点伤害！');
         if (player.hp <= 0) { endCombat(false); return; }
         cb();
-        ab('⚔️ 攻击', function() { playerTurn('attack'); });
+        ab('攻击', function() { playerTurn('attack'); });
         ab('🛡️ 防御', function() { playerTurn('defend'); });
         ab('🧪 使用物品', function() { playerTurn('item'); });
         ab('🏃 逃跑', function() { playerTurn('flee'); });
@@ -2182,7 +2270,7 @@ function enemyTurn() {
 
     renderCombat('战斗开始！');
     cb();
-    ab('⚔️ 攻击', function() { playerTurn('attack'); });
+    ab('攻击', function() { playerTurn('attack'); });
     ab('🛡️ 防御', function() { playerTurn('defend'); });
     ab('🧪 使用物品', function() { playerTurn('item'); });
     ab('🏃 逃跑', function() { playerTurn('flee'); });
@@ -2199,15 +2287,26 @@ function addTime(minutes) {
     while (player.gameTime >= 1440) {
         player.gameTime -= 1440;
         player.daysSurvived++;
+        // 成瘾戒断检测
+        if (player.flags.addicted) {
+            if (player.flags.drugTakenToday) {
+                player.flags.drugTakenToday = false;
+            } else {
+                player.hp = Math.max(1, player.hp - 15);
+                player.sanity = Math.max(0, player.sanity - 10);
+                player.flags.withdrawal = true;
+            }
+        }
+        
         // 通宵检测
-        if (!player.flags.isSleeping) {
+        if (player.flags.isSleeping) {
+            player.consecutiveSleeplessDays = 0;
+        } else {
             player.consecutiveSleeplessDays = (player.consecutiveSleeplessDays || 0) + 1;
             if (player.consecutiveSleeplessDays >= 7) {
                 triggerGameOver('sleepless');
                 return;
             }
-        } else {
-            player.consecutiveSleeplessDays = 0; // 休息重置
         }
         if (player.daysSurvived % 30 === 0) { player.month++; if (player.month > 12) { player.month = 1; player.year++; } }
         
@@ -2232,7 +2331,7 @@ function addTime(minutes) {
         if (!player.flags.event_arena && player.daysSurvived >= 10) {
             player.flags.event_arena = true;
             player.flags.pending_event = 'arena';
-            st('<div class="scene-title">⚔️ 血焰角斗大赛</div><p>暴怒之环的血焰角斗场外挂满了巨大的赤红色横幅，空气中翻滚着浓烈的血腥味与硝烟。今日举办的特殊角斗大赛吸引了无数狂热的暴徒。报名处的窗口前挤满了挥舞着武器的身影，原本高昂的报名费被直接砍掉了一半。而角斗场中央的高台上，堆积如山的金币、稀有矿石和战利品在火光下闪烁，作为翻倍的胜者奖金，极大地刺激着每一个参赛者的杀戮欲。</p>');
+            st('<div class="scene-title">血焰角斗大赛</div><p>暴怒之环的血焰角斗场外挂满了巨大的赤红色横幅，空气中翻滚着浓烈的血腥味与硝烟。今日举办的特殊角斗大赛吸引了无数狂热的暴徒。报名处的窗口前挤满了挥舞着武器的身影，原本高昂的报名费被直接砍掉了一半。而角斗场中央的高台上，堆积如山的金币、稀有矿石和战利品在火光下闪烁，作为翻倍的胜者奖金，极大地刺激着每一个参赛者的杀戮欲。</p>');
         }
         
         refreshBlackMarket();
@@ -2248,6 +2347,9 @@ function addTime(minutes) {
         updateFood();
     }
     tickBuffs();
+    if (player.flags.mutationGland && player.hp < player.maxHp) {
+        player.hp = Math.min(player.maxHp, player.hp + Math.ceil(minutes / 10));
+    }
     checkHp();
     ua();
 }
@@ -2374,7 +2476,7 @@ function triggerGameOver(reason) {
         '<p style="font-size:0.85em;color:#8a5a62;">死亡次数：' + (player.deathCount || 0) + ' / 3</p>' +
         '<p style="font-size:0.8em;color:#6a5a5a;">你已无力回天……</p>' +
         '<div style="margin-top:20px;">' +
-        '<span class="clickable gold" onclick="resetGame()">🔄 重新开始</span> &nbsp;|&nbsp; ' +
+        '<span class="clickable gold" onclick="resetGame()">重新开始</span> &nbsp;|&nbsp; ' +
         '<span class="clickable gold" onclick="location.reload()">📂 读取存档</span>' +
         '</div></div>'
     );
@@ -2517,7 +2619,7 @@ function showAchievementPopup(id, name, desc) {
     // 直接内联样式覆盖，确保位置，放在 body 下避免任何容器干扰
     popup.style.cssText = 'position:fixed; top:30px; right:20px; left:auto; transform:none; opacity:1; z-index:9999; max-width:320px; width:auto; min-width:200px; background:rgba(18,1,8,0.95); border:1px solid #d4a040; border-radius:12px; padding:12px 16px; display:flex; align-items:center; gap:12px; box-shadow:0 10px 30px rgba(0,0,0,0.8), 0 0 20px rgba(212,160,64,0.2); cursor:pointer; pointer-events:auto; transition: opacity 0.4s;';
     popup.innerHTML =
-        '<span class="popup-icon" style="font-size:24px;filter:drop-shadow(0 0 5px rgba(212,160,64,0.5));">🏆</span>' +
+        '<span class="popup-icon" style="font-size:24px;filter:drop-shadow(0 0 5px rgba(212,160,64,0.5));"></span>' +
         '<span class="popup-content" style="flex:1;">' +
         '<div class="popup-title" style="font-size:0.85em;color:#e8c060;font-weight:bold;margin-bottom:2px;">成就解锁：' + name + '</div>' +
         '<div class="popup-desc" style="font-size:0.7em;color:#9a6a6a;line-height:1.3;">' + desc + '</div>' +
@@ -2550,12 +2652,12 @@ function renderAchievementHtml() {
         'npc_5': { name: '地狱交际花', desc: '结识了 5 位以上的地狱住民。' },
         'join_faction': { name: '阵营成员', desc: '加入任意派系。' }
     };
-    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">🏆 成就系统</div>';
+    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">成就系统</div>';
     for (var id in achievementData) {
         var a = achievementData[id];
         var unlocked = player.achievements.includes(id);
         html += '<div style="padding:6px;border-bottom:1px solid #1a0a1a;opacity:' + (unlocked ? 1 : 0.4) + ';">';
-        html += '<div style="font-size:0.85em;color:' + (unlocked ? '#e8c060' : '#8a6a6a') + ';">' + (unlocked ? '🏆 ' : '🔒 ') + a.name + '</div>';
+        html += '<div style="font-size:0.85em;color:' + (unlocked ? '#e8c060' : '#8a6a6a') + ';">' + (unlocked ? '' : '') + a.name + '</div>';
         html += '<div style="font-size:0.7em;color:#8a5a62;">' + a.desc + '</div>';
         html += '</div>';
     }
@@ -2568,7 +2670,7 @@ function renderCraft() {
         { name: '强效饱食药剂', ingredients: [{ id: 'digestive_enzyme', qty: 3 }], result: { id: 'strong_food', name: '强效饱食药剂', type: 'consumable', desc: '大幅恢复饱食度。', effects: { food: 50, hp: 20 } } },
         { name: '熔岩匕首', ingredients: [{ id: 'hellhound_fang', qty: 1 }, { id: 'wrath_crystal', qty: 1 }], result: { id: 'lava_dagger', name: '熔岩匕首', type: 'weapon', desc: '攻击附带火焰伤害。', effects: { attack: 5, buffs: [{ id: 'lava_burn', name: '熔岩灼烧', desc: '攻击时概率灼烧敌人。', type: 'positive', duration: 9999 }] } } }
     ];
-    var html = '<div class="status-box"><p style="color:#e8c060;font-weight:bold;text-align:center;">🔧 合成台</p>';
+    var html = '<div class="status-box"><p style="color:#e8c060;font-weight:bold;text-align:center;">合成台</p>';
     for (var i = 0; i < recipes.length; i++) {
         var r = recipes[i];
         var avail = true;
@@ -2603,7 +2705,7 @@ function doCraft(index) {
         removeItem(r.ingredients[j].id, r.ingredients[j].qty);
     }
     addItem(r.result.id, r.result.name, r.result.type, r.result.desc, 1, r.result.effects);
-    st('<p style="color:#80c080;">✅ 成功合成 ' + r.result.name + '！</p>');
+    st('<p style="color:#80c080;">成功合成 ' + r.result.name + '！</p>');
     cb();
     ab('继续', function() { switchTab('craft'); });
     checkHp();
@@ -2611,8 +2713,13 @@ function doCraft(index) {
 }
 function renderFactionHtml() {
     var factions = {
-        '傲慢之环': { name: '晨星会', desc: '由傲慢之环的高阶恶魔组成，追求极致的秩序与完美。', buff: '理智恢复+10%，购物折扣95%' },
-        '贪婪之环': { name: '万宝盟', desc: '地狱最大的商业联合体，信奉金钱万能。', buff: '金币收益+15%，黑市手续费减免' }
+        '傲慢之环': { name: '黎明审判庭', desc: '由傲慢之环的高阶恶魔组成，追求极致的秩序与完美。', buff: '理智恢复+10%，购物折扣95%' },
+        '贪婪之环': { name: '万宝商业会', desc: '地狱最大的商业联合体，信奉金钱万能。', buff: '金币收益+15%，黑市手续费减免' },
+        '暴怒之环': { name: '血焰角斗团', desc: '以暴力和力量为信仰的斗士集团。', buff: '战斗伤害+10%' },
+        '色欲之环': { name: '极乐交响乐', desc: '追求感官极致与艺术控制的魅魔组织。', buff: '魅惑成功率+20%' },
+        '嫉妒之环': { name: '深渊暗流', desc: '在暗中编织阴谋的情报网。', buff: '潜行与盗窃成功率+15%' },
+        '暴食之环': { name: '无尽吞噬者', desc: '信奉“万物皆为养分”的狂信徒。', buff: '饱食消耗减半' },
+        '懒惰之环': { name: '永恒静眠教', desc: '向往绝对静止与安眠的沉思者。', buff: '疲劳积累速度减半' }
     };
     var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">派系阵营</div>';
     if (!player.faction) {
@@ -2636,6 +2743,17 @@ function getMoodText() {
     else moods.push('你保持着清醒的头脑，对周围的一切有着敏锐的感知。');
     if (player.desire >= 15) moods.push('欲望在你体内燃烧，几乎要将理智吞没。');
     else if (player.desire >= 10) moods.push('一股隐隐的渴望在你心中涌动。');
+    
+    if (player.flags.addicted) {
+        if (player.flags.withdrawal) {
+            moods.push('<span style="color:#e85060;font-weight:bold;text-shadow:0 0 4px #e85060;">戒断反应如同万蚁噬骨，你的灵魂在尖叫着渴求下一剂药物！</span>');
+        } else {
+            moods.push('<span style="color:#d4a040;">禁忌药物带来的极乐在你的血液中流淌，但你深知这份快乐是有致命代价的。</span>');
+        }
+    }
+    if (player.flags.mutationGland) {
+        moods.push('<span style="color:#8a2be2;">心脏旁的黑色肉瘤在跳动，带给你无尽的疯狂呓语与超常的再生力。</span>');
+    }
     if (player.hp < player.maxHp * 0.3) moods.push('你身受重伤，每一次呼吸都带来疼痛。');
     else if (player.hp < player.maxHp * 0.6) moods.push('你身上带着些许伤痕，需要休养。');
     for (var i = 0; i < player.buffs.length; i++) { moods.push(player.buffs[i].desc); }
@@ -2659,21 +2777,22 @@ function usb() {
         }
         if (!buffHtml) buffHtml = '<span style="color:#5a5a6a;font-size:0.72em;">无</span>';
         var satietyStatus = player.food <= 0 ? '<span style="color:#e85060;">饥饿</span>' : (player.food < 30 ? '<span style="color:#d4a040;">半饱</span>' : '<span style="color:#80c080;">饱足</span>');
-        sc.innerHTML = '<div class="status-box"><div class="stat-row"><span class="s-label">🕐 时间</span><span class="s-val" style="color:#8ab4d4;">' + getTimeString() + '</span></div><div class="stat-row"><span class="s-label">📅 日期</span><span class="s-val">' + getDateString() + ' (存活' + player.daysSurvived + '天)</span></div><div class="stat-row"><span class="s-label">姓名</span><span class="s-val s-highlight">' + player.name + '</span></div><div class="stat-row"><span class="s-label">种族</span><span class="s-val">' + rl + '</span></div><div class="stat-row"><span class="s-label">性别</span><span class="s-val">' + gen + '</span></div><div class="stat-row"><span class="s-label">等级</span><span class="s-val">' + player.level + '</span></div><div class="stat-row"><span class="s-label">EXP</span><span class="s-val">' + (player.exp||0) + ' / ' + (player.level*20) + '</span></div><div class="stat-row"><span class="s-label">职业</span><span class="s-val">' + player.job + '</span></div></div>' +
-        '<div class="status-box"><div class="stat-row"><span class="s-label">❤️ HP</span><span class="s-val s-highlight">' + player.hp + ' / ' + player.maxHp + '</span></div><div class="stat-row"><span class="s-label">🧠 理智</span><span class="s-val">' + player.sanity + ' / ' + player.maxSanity + '</span></div><div class="stat-row"><span class="s-label">🔥 欲望</span><span class="s-val" style="color:#d4a040;">' + player.desire + ' / ' + player.maxDesire + '</span></div><div class="stat-row"><span class="s-label">🍖 饱食度</span><span class="s-val">' + Math.floor(player.food) + ' / ' + player.maxFood + ' (' + satietyStatus + ')</span></div><div class="stat-row"><span class="s-label">😫 疲劳度</span><span class="s-val">' + Math.floor(player.fatigue) + ' / ' + player.maxFatigue + '</span></div><div class="stat-row"><span class="s-label">⚔️ 物攻</span><span class="s-val">' + Math.floor(player.strength * 1.5) + '</span></div><div class="stat-row"><span class="s-label">✨ 法攻</span><span class="s-val">' + Math.floor(player.magic * 1.5) + '</span></div></div>' +
+        sc.innerHTML = '<div class="status-box"><div class="stat-row"><span class="s-label">时间</span><span class="s-val" style="color:#8ab4d4;">' + getTimeString() + '</span></div><div class="stat-row"><span class="s-label">日期</span><span class="s-val">' + getDateString() + ' (存活' + player.daysSurvived + '天)</span></div><div class="stat-row"><span class="s-label">姓名</span><span class="s-val s-highlight">' + player.name + '</span></div><div class="stat-row"><span class="s-label">种族</span><span class="s-val">' + rl + '</span></div><div class="stat-row"><span class="s-label">性别</span><span class="s-val">' + gen + '</span></div><div class="stat-row"><span class="s-label">等级</span><span class="s-val">' + player.level + '</span></div><div class="stat-row"><span class="s-label">EXP</span><span class="s-val">' + (player.exp||0) + ' / ' + (player.level*20) + '</span></div><div class="stat-row"><span class="s-label">职业</span><span class="s-val">' + player.job + '</span></div></div>' +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">HP</span><span class="s-val s-highlight">' + player.hp + ' / ' + player.maxHp + '</span></div><div class="stat-row"><span class="s-label">理智</span><span class="s-val">' + player.sanity + ' / ' + player.maxSanity + '</span></div><div class="stat-row"><span class="s-label">欲望</span><span class="s-val" style="color:#d4a040;">' + player.desire + ' / ' + player.maxDesire + '</span></div><div class="stat-row"><span class="s-label">饱食度</span><span class="s-val">' + Math.floor(player.food) + ' / ' + player.maxFood + ' (' + satietyStatus + ')</span></div><div class="stat-row"><span class="s-label">疲劳度</span><span class="s-val">' + Math.floor(player.fatigue) + ' / ' + player.maxFatigue + '</span></div><div class="stat-row"><span class="s-label">物攻</span><span class="s-val">' + Math.floor(player.strength * 1.5) + '</span></div><div class="stat-row"><span class="s-label">法攻</span><span class="s-val">' + Math.floor(player.magic * 1.5) + '</span></div></div>' +
         '<div class="status-box"><div class="stat-row"><span class="s-label">金币</span><span class="s-val s-gold">' + player.gold + '</span></div><div class="stat-row"><span class="s-label">罪孽/本质</span><span class="s-val s-gold">' + (player.sin || '-') + '</span></div><div class="stat-row"><span class="s-label">罪业等级</span><span class="s-val" style="color:#ff6080;">' + player.sinLevelLabel + ' (Lv.' + player.sinLevel + ')</span></div><div class="stat-row"><span class="s-label">罪业值</span><span class="s-val">' + player.sinValue + '</span></div><div class="stat-row"><span class="s-label">所在环</span><span class="s-val">' + (player.currentRing || '-') + '</span></div><div class="stat-row"><span class="s-label">当前区域</span><span class="s-val">' + (player.currentDistrict || '-') + '</span></div></div>' +
         '<div class="status-box"><div class="stat-row"><span class="s-label">所属派系</span><span class="s-val">' + (player.faction || '无') + '</span></div></div>' +
-        '<div class="status-box"><div class="stat-row"><span class="s-label">衣着</span><span class="s-val">' + player.outfit + '</span></div><p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + player.outfitDesc + '</p></div>' +
+        '<div class="status-box">' + (player.appearance ? '<div class="stat-row"><span class="s-label">外貌</span><span class="s-val" style="font-size:0.85em;text-align:right;"><span style="color:' + player.appearance.hairColor.color + ';">' + player.appearance.hairColor.name + '</span>的' + player.appearance.hairStyle + '，<span style="color:' + player.appearance.eyeColor.color + ';">' + player.appearance.eyeColor.name + '</span>双眸<br>' + player.appearance.height + '，' + player.appearance.bodyType + '<br><span style="color:#c04050;">' + player.appearance.mutation + '</span></span></div><div class="divider" style="margin:6px 0;opacity:0.3;"></div>' : '') +
+        '<div class="stat-row"><span class="s-label">衣着</span><span class="s-val">' + player.outfit + '</span></div><p style="font-size:0.7em;color:#8a5a62;margin-top:4px;">' + player.outfitDesc + '</p></div>' +
         '<div class="status-box"><div class="status-label">BUFF / DEBUFF</div><div style="margin-top:4px;">' + buffHtml + '</div><div class="status-mood">' + getMoodText() + '</div></div>' +
-        '<div class="status-box"><div class="stat-row"><span class="s-label">💪 力量</span><span class="s-val">' + player.strength + '</span></div><div class="stat-row"><span class="s-label">🏃 敏捷</span><span class="s-val">' + player.agility + '</span></div><div class="stat-row"><span class="s-label">✨ 魔力</span><span class="s-val">' + player.magic + '</span></div><div class="stat-row"><span class="s-label">💋 魅力</span><span class="s-val">' + player.charisma + '</span></div></div>' +
-        (isBlackMarketOpen() ? '<div class="status-box" style="border-color:#ff4060;"><p style="color:#ff6080;text-align:center;font-weight:bold;">🌙 黑市开放中 (22:00-02:00)</p></div>' : '') +
+        '<div class="status-box"><div class="stat-row"><span class="s-label">力量</span><span class="s-val">' + player.strength + '</span></div><div class="stat-row"><span class="s-label">敏捷</span><span class="s-val">' + player.agility + '</span></div><div class="stat-row"><span class="s-label">魔力</span><span class="s-val">' + player.magic + '</span></div><div class="stat-row"><span class="s-label">魅力</span><span class="s-val">' + player.charisma + '</span></div></div>' +
+        (isBlackMarketOpen() ? '<div class="status-box" style="border-color:#ff4060;"><p style="color:#ff6080;text-align:center;font-weight:bold;">黑市开放中 (22:00-02:00)</p></div>' : '') +
         '<div class="status-box" style="border-top: 1px solid #1a0812; margin-top: 6px; padding-top: 8px;">' +
         '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">' +
-        '<button onclick="switchTab(\'faction\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">⚔️ 派系</button>' +
-        '<button onclick="switchTab(\'achievement\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">🏆 成就</button>' +
-        '<button onclick="switchTab(\'map\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">🗺️ 地图</button>' +
-        '<button onclick="switchTab(\'craft\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#80c080;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">🔧 合成</button>' +
-        '<button onclick="switchTab(\'save\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d4a040;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">💾 存档</button>' +
+        '<button onclick="switchTab(\'faction\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">派系</button>' +
+        '<button onclick="switchTab(\'achievement\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">成就</button>' +
+        '<button onclick="switchTab(\'map\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d0c0c4;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">地图</button>' +
+        '<button onclick="switchTab(\'craft\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#80c080;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">合成</button>' +
+        '<button onclick="switchTab(\'save\');usb();" style="padding:10px;background:#180610;border:1px solid #2a0a16;color:#d4a040;border-radius:6px;font-family:inherit;font-size:0.75em;cursor:pointer;touch-action:manipulation;">存档</button>' +
         '</div></div>';
     } else if (sidebarTab === 'inventory') {
         var invHtml = '';
@@ -2684,10 +2803,10 @@ function usb() {
                 var item = player.inventory[i];
                 var typeLabel = '';
                 switch (item.type) {
-                    case 'weapon': typeLabel = '⚔️'; break;
+                    case 'weapon': typeLabel = ''; break;
                     case 'armor': typeLabel = '🛡️'; break;
                     case 'consumable': typeLabel = '🧪'; break;
-                    case 'material': typeLabel = '📦'; break;
+                    case 'material': typeLabel = ''; break;
                     case 'key': typeLabel = '🔑'; break;
                     case 'misc': typeLabel = '📌'; break;
                     default: typeLabel = '📌';
@@ -2695,7 +2814,7 @@ function usb() {
                 var equippedMark = item.equipped ? ' <span style="color:#ff6080;">[已装备]</span>' : '';
                 var buffDesc = '';
                 if (item.effects && item.effects.buffs && item.effects.buffs.length > 0) {
-                    buffDesc = '<p style="font-size:0.65em;color:#80c080;margin-top:2px;">✨ ' + item.effects.buffs.map(function(b){return b.name + ' (' + b.desc + ')';}).join('; ') + '</p>';
+                    buffDesc = '<p style="font-size:0.65em;color:#80c080;margin-top:2px;">' + item.effects.buffs.map(function(b){return b.name + ' (' + b.desc + ')';}).join('; ') + '</p>';
                 }
                 invHtml += '<div class="status-box" style="margin-bottom:6px;">';
                 invHtml += '<div style="display:flex;justify-content:space-between;align-items:center;">';
@@ -2785,10 +2904,10 @@ function usb() {
             '<button onclick="loadFromSlot('+i+')" style="padding:2px 4px;font-size:0.6em;background:#0a1a14;color:#d0c0c4;">读</button></span></div>';
     }
     slotsHtml += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #3a0a14;">';
-    slotsHtml += '<button onclick="exportSaveFile()" style="width:100%;margin-bottom:4px;padding:6px;font-size:0.75em;background:#180610;color:#d0c0c4;border:1px solid #2a0a16;">📤 导出存档文件 (JSON)</button>';
+    slotsHtml += '<button onclick="exportSaveFile()" style="width:100%;margin-bottom:4px;padding:6px;font-size:0.75em;background:#180610;color:#d0c0c4;border:1px solid #2a0a16;">导出存档文件 (JSON)</button>';
     slotsHtml += '<button onclick="document.getElementById(\'load-input\').click()" style="width:100%;padding:6px;font-size:0.75em;background:#180610;color:#d0c0c4;border:1px solid #2a0a16;">📥 导入存档文件 (JSON)</button>';
     slotsHtml += '<input type="file" id="load-input" style="display:none;" onchange="importSaveFile(event)">';
-    slotsHtml += '<button onclick="resetGameFromMenu()" style="width:100%;margin-top:8px;padding:8px;background:#1a0812;border:1px solid #e85060;color:#e85060;border-radius:6px;font-family:inherit;font-size:0.78em;cursor:pointer;">💀 重置游戏（删除所有存档）</button>';
+    slotsHtml += '<button onclick="resetGameFromMenu()" style="width:100%;margin-top:8px;padding:8px;background:#1a0812;border:1px solid #e85060;color:#e85060;border-radius:6px;font-family:inherit;font-size:0.78em;cursor:pointer;">重置游戏（删除所有存档）</button>';
     slotsHtml += '</div></div>';
     sc.innerHTML = slotsHtml;
 
@@ -2803,7 +2922,7 @@ function usb() {
 
 // ==================== 地图系统 ====================
 function renderMapHtml() {
-    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">🗺️ 七环地狱 · 地图</div>';
+    var html = '<div class="status-box"><div style="text-align:center;font-weight:bold;color:#e8c060;margin-bottom:8px;">七环地狱 · 地图</div>';
     var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环'];
     var ringColors = {
         '傲慢之环': '#d4a0d4',
@@ -2848,78 +2967,70 @@ var taskPool = [];
 function generateTask() {
     var templates = [
         { 
-            title: '🔗 收集暗影结晶', 
+            title: '收集暗影结晶', 
             desc: '傲慢之环灰烬区最深处的废弃矿道里，冰冷刺骨的黑水顺着崎岖的岩壁缓缓渗出。岩壁的缝隙间嵌着一块块暗影结晶——那是被地狱高压挤碎的自杀者遗言与负面情绪凝固而成的产物。矿道里弥漫着令人作呕的腐肉臭味，空气中不断回荡着刺穿耳膜的诡异低语。你必须忍受着大脑神经的撕裂感，用工具将这些散发着黑气的晶体从坚硬的岩层里硬生生抠挖出来。', 
             deadline: 2, rewardGold: 18, rewardExp: 15, type: 'collect', target: 'shadow_crystal', quantity: 3 
         },
         { 
-            title: '🐛 清除寄生尸虫', 
+            title: '清除寄生尸虫', 
             desc: '通往铜板巷的昏暗运尸道内，地面上铺满了一层滑腻且半腐烂的内脏与碎肉。成群贪婪的地狱尸虫正寄生在这里，它们不仅疯狂吞噬着地上的腐肉，甚至还在啃食那些路过、尚未完全断气的罪人。这些爬行怪物满嘴滴落着具有腐蚀性的毒液。你必须踩着令人作呕的血肉泥泞，挥舞武器或直接抬脚，将这些令人发指的虫子一只接一只地彻底踩成粘稠的浆糊。', 
             deadline: 1, rewardGold: 22, rewardExp: 20, type: 'combat', target: 'hell_worm', quantity: 1 
         },
         { 
-            title: '💀 搬运"损耗品"', 
+            title: '搬运"损耗品"', 
             desc: '一队从暴怒之环退役、浑身布满致命伤口的奴隶被铁链拴在一起，像牲畜一样被驱赶着。他们是卖给暴食之环加工厂的廉价"损耗品"。由于伤势过重，他们只能在泥泞的贫民窟街道上艰难爬行，不断发出绝望的哀嚎。周围阴暗的角落里，潜伏着无数试图分一杯羹的贪婪掠夺者。你面无表情地握着武器跟在队伍旁边，无视脚下奴隶的凄厉求饶，随时准备砍断任何敢于靠近的掠夺者的肢体，只为了保证这批"材料"在抵达目的地时还能保留最后一口气。', 
             deadline: 1, rewardGold: 28, rewardExp: 18, type: 'escort', target: 'merchant', quantity: 1 
         },
         { 
-            title: '💍 寻找剥落的眼球', 
+            title: '寻找剥落的眼球', 
             desc: '色欲之环的暗巷深处，空气中弥漫着令人窒息的甜腻香水味与腐烂发酵的酸臭。狭窄泥泞的街道上到处是污秽的积水。一枚由纯净理智凝结而成的昂贵义眼遗失在了这里。你必须忍受着周围那些散发着廉价欲望的视线，在满是污垢的恶臭排水沟里翻找，或者直接掰开那些蜷缩在角落里的疯癫乞丐紧握的手指，强行将那枚沾满泥水的昂贵饰品夺回来。', 
             deadline: 2, rewardGold: 20, rewardExp: 15, type: 'collect', target: 'stolen_heirloom', quantity: 1 
         },
         { 
-            title: '🕳️ 封堵绝望渗漏', 
+            title: '封堵绝望渗漏', 
             desc: '嫉妒之环水沟区极其复杂的地下管道网中，粗糙的管壁上裂开了一道巨大的缝隙。浓稠的灰色雾气正伴随着强烈的绝望情绪从裂缝中疯狂喷涌。周围吸入雾气的低阶恶魔双眼泛白，正迅速异化为毫无理智的行尸走肉。这里的每一寸空气都沉重得让人产生强烈的自毁冲动。你紧紧握着特制的金属封堵工具，屏住呼吸，直接潜入那片齐腰深、极具腐蚀性的冰冷黑水迷宫中，顶着灰雾的侵蚀向裂缝源头艰难推进。', 
             deadline: 2, rewardGold: 15, rewardExp: 12, type: 'explore', target: 'pollution_source', quantity: 1 
         },
         { 
-            title: '📢 散布毁灭福音', 
+            title: '散布毁灭福音', 
             desc: '嫉妒之环的镜面街区里，你穿梭在那些表面虚假华丽的建筑阴影中。你刻意压低声音，向那些内心极度扭曲的围观者散布着关于某位高阶恶魔已经彻底失去君主宠信的致命流言。你冷眼看着那些恶魔的眼底迅速燃起因嫉妒与狂热而发亮的病态光芒，看着他们犹如闻到血腥味的鬣狗般倾巢而出，去亲手撕碎、毁灭他们曾经只能跪地仰望的目标。', 
             deadline: 1, rewardGold: 25, rewardExp: 10, type: 'social', target: 'rumor', quantity: 3, sinReward: 6 
         },
         { 
-            title: '🧪 窃取"纯度"配方', 
+            title: '窃取"纯度"配方', 
             desc: '暴食之环美食大道的后厨里，地面上积着厚厚一层滑腻的暗色油脂。空气中充斥着高温油炸的刺鼻气味和未知生物被活体宰杀时发出的凄厉尖叫。你避开那些挥舞着滴血菜刀的臃肿厨师，犹如一道没有实体的影子般潜入后厨最深处的储藏室。你撬开沾满油污的铁锁，将那份用暗红色鲜血书写、记录着跨位面灵魂碎片萃取方法的罪恶配方迅速塞进怀里。', 
             deadline: 2, rewardGold: 35, rewardExp: 20, type: 'steal', target: 'secret_recipe', quantity: 1, sinReward: 5 
         },
         { 
-            title: '🩸 镇压失控的肉块', 
+            title: '镇压失控的肉块', 
             desc: '血焰角斗场的地下训练室内，墙壁和天花板上溅满了极其浓稠的暗红色血污。一个因过载注射兴奋剂而自爆的角斗士，其残缺的肉块在暴怒能量的扭曲下彻底变异。那些布满青筋的碎肉正在地面上疯狂地蠕动、增殖，并向着一切散发热量的活物弹跳攻击。你面无表情地握紧手中沉重锋利的武器，迎着扑面而来的血腥气冲上前，机械而精准地将那些剧烈弹跳的活性肉块一次次狠狠斩断、剁碎，直到它们化为一滩彻底死寂的烂泥。', 
             deadline: 1, rewardGold: 20, rewardExp: 25, type: 'combat', target: 'angry_gladiator', quantity: 1 
         },
         { 
-            title: '🍷 收集干涸的精气', 
+            title: '收集干涸的精气', 
             desc: '色欲之环最底层那些低矮逼仄、散发着浓重腐败与体液酸臭味的廉价隔间里，粗糙的木质地板和冰冷的墙壁上，到处残留着罪人们被彻底榨干后留下的浑浊黏液。你蹲在满是污垢的地上，无视周围隔间里不断传来的沉闷撞击声与嘶哑呻吟，面无表情地握着一把锋利的金属刮刀。刀刃用力刮擦过粗糙的地面，将那些已经半干涸、散发着甜腻与绝望气息的黏稠残渣一点点刮下，收集进密封的玻璃瓶中。', 
             deadline: 2, rewardGold: 16, rewardExp: 13, type: 'collect', target: 'desire_residue', quantity: 5, desireReward: 5 
         },
         { 
-            title: '🕸️ 清理惰性蛛网', 
-            desc: '懒惰之环浓重的灰雾深处，半空中悬挂着大量如同透明果冻般粘稠的巨大蛛网。这些蛛网散发着极度致命的倦意，网上黏附着几个路过的倒霉恶魔，他们已经在沉睡中被逐渐融化成了一滩滩灰色的粘稠液体，顺着蛛丝缓慢滴落。你紧咬着牙关，用疼痛刺激着自己因惰性而变得极其迟缓的神经。你挥动武器或者直接上手，用力撕扯开那些极具黏性与韧性的果冻状网丝，为后方缓慢前行的物资车队强行清理出一条通道。', 
-            deadline: 2, rewardGold: 20, rewardExp: 15, type: 'explore', target: 'lazy_trap', quantity: 3 }
+            title: '清理惰性蛛网', 
+            desc: '懒惰之环浓重的灰雾深处，半空中悬挂着大量如同透明果冻般粘稠的巨大蛛网。这些蛛网散发着极度致命的倦意，网上黏附着几个路过的倒霉恶魔，他们在沉睡中被逐渐融化成了一滩滩灰色的粘稠液体。你紧咬着牙关，用疼痛刺激着自己因惰性而变得极其迟缓的神经，挥动武器或者直接上手，用力撕扯开那些极具黏性与韧性的果冻状网丝，为后方缓慢前行的物资车队强行清理出一条通道。', 
+            deadline: 2, rewardGold: 20, rewardExp: 18, type: 'explore', target: 'lazy_web', quantity: 1 
+        }
     ];
-    var tpl = templates[Math.floor(Math.random() * templates.length)];
-    var task = {
-        id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
-        title: tpl.title,
-        desc: tpl.desc,
-        deadline: player.daysSurvived + tpl.deadline,
-        rewardGold: tpl.rewardGold + Math.floor(Math.random() * 6),
-        rewardExp: tpl.rewardExp + Math.floor(Math.random() * 4),
-        type: tpl.type,
-        target: tpl.target,
-        quantity: tpl.quantity || 1,
-        progress: 0,
-        sinReward: tpl.sinReward || 0,
-        desireReward: tpl.desireReward || 0,
-        status: 'active'
-    };
-    return task;
+    var idx = Math.floor(Math.random() * templates.length);
+    var base = templates[idx];
+    var t = JSON.parse(JSON.stringify(base));
+    t.id = 'task_' + Date.now() + '_' + Math.floor(Math.random()*1000);
+    t.deadline = player.daysSurvived + t.deadline;
+    return t;
 }
 function acceptTask(task) {
     if (player.activeTasks.length >= 3) {
         st('<p class="highlight">你已有太多未完成的任务，无法承接新的任务。</p>');
         cb();
-        ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+        
+    ab('🔪 走入地下血肉工坊', function() { enterAbattoir(); });
+    ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
         return;
     }
     player.activeTasks.push(task);
@@ -2943,7 +3054,7 @@ function checkTaskDeadlines() {
     }
 }
 function renderTasksHtml() {
-    var html = '<div class="status-box"><p style="color:#e8c060;font-weight:bold;text-align:center;">📋 任务面板</p>';
+    var html = '<div class="status-box"><p style="color:#e8c060;font-weight:bold;text-align:center;">任务面板</p>';
     if (player.activeTasks.length === 0 && player.completedTasks.length === 0 && player.failedTasks.length === 0) {
         html += '<p style="color:#5a5a6a;font-size:0.78em;text-align:center;padding:10px 0;">暂无任务。探索地狱，寻找需要帮助的人。</p>';
     }
@@ -3045,7 +3156,9 @@ function generateBlackMarketItem() {
         { name: '地狱犬的獠牙', price: 28, desc: '一头地狱猎犬的獠牙，可以打磨成匕首，或用作施法材料。', effects: { strength: 2 }, type: 'material' },
         { name: '混沌之卵', price: 70, desc: '一个来自混沌深处的卵，据说孵化后会诞生出不可名状的生物，极度危险。', effects: { sanity: -5, buffs: [{ id: 'chaos_egg', name: '混沌之卵', desc: '理智-5，但获得混沌之力。', type: 'negative', duration: 9999 }] }, type: 'misc' },
         { name: '虚空之盐', price: 15, desc: '一种能暂时让恶魔失去力量的盐，撒在地上可以制造安全区域。', effects: {}, type: 'consumable' },
-        { name: '血月之花', price: 38, desc: '只在血月之夜绽放的花，能用来炼制强大的迷幻药剂。', effects: { sanity: 4, buffs: [{ id: 'blood_moon', name: '血月之花', desc: '理智+4，但可能产生幻觉。', type: 'positive', duration: 30 }] }, type: 'consumable' }
+        { name: '血月之花', price: 38, desc: '只在血月之夜绽放的花，能用来炼制强大的迷幻药剂。', effects: { sanity: 4, buffs: [{ id: 'blood_moon', name: '血月之花', desc: '理智+4，但可能产生幻觉。', type: 'positive', duration: 30 }] }, type: 'consumable' },
+        { name: '极乐致幻剂', price: 60, desc: '伊莱亚斯的残次品。能带来瞬间的极乐幻觉，使用后必定成瘾。每天必须吸食一次，否则引发强烈的戒断反应。', effects: { hp: 50, strength: 5, magic: 5, charisma: 5 }, type: 'consumable' },
+        { name: '高纯度恶魔脑髓液', price: 120, desc: '从高阶恶魔脑中抽取的原液。不仅带来极乐，还能大幅提升能力。使用后必定成瘾。', effects: { hp: 100, strength: 10, agility: 10, magic: 10 }, type: 'consumable' }
     ];
     var tpl = templates[Math.floor(Math.random() * templates.length)];
     var item = {
@@ -3072,15 +3185,90 @@ function refreshBlackMarket() {
         player.blackMarketLastRefresh = day;
     }
 }
+
+function enterAbattoir() {
+    var html = '<div class="scene-title">血肉工坊</div>';
+    html += '<p>浓重的防腐剂和血腥味刺入鼻腔。这里是黑市最底层的器官与灵魂交易场。墙壁上挂着浸泡在绿色溶液里的残肢断臂。一个半边脸都是机械的恶魔医生用惨白的眼珠盯着你。</p>';
+    html += '<p style="color:#c04050;font-style:italic;">"欢迎来到血肉工坊。这里不收金币……只收代价。你要出卖什么？又想换取什么？"</p>';
+    html += '<div class="divider">◆ 交易清单 ◆</div>';
+    st(html);
+    cb();
+    
+    ab('💉 抽血化验 (出卖20HP换取15金币)', function() {
+        if (player.hp > 20) {
+            player.hp -= 20;
+            player.gold += 15;
+            st('<div class="scene-title">抽血化验</div><p>生锈的粗大针头刺入你的静脉，黑红色的血液被抽出。医生丢给你一袋沾血的金币。HP-20，获得15金币。</p>');
+            cb(); ab('继续交易', function() { enterAbattoir(); }); ab('离开', function() { enterBlackMarket(); });
+        } else {
+            st('<p class="highlight">你的血太少了，医生怕把你抽死脏了地板。</p>');
+            cb(); ab('返回', function() { enterAbattoir(); });
+        }
+    });
+    
+    ab('🩸 割让灵魂 (永久-10最大生命，全属性+2)', function() {
+        if (player.maxHp > 20) {
+            player.maxHp -= 10;
+            if(player.hp > player.maxHp) player.hp = player.maxHp;
+            player.strength += 2; player.agility += 2; player.magic += 2; player.charisma += 2;
+            player.sanity -= 5;
+            st('<div class="scene-title">割让灵魂</div><p>一台冰冷的仪器刺入你的脊髓，你感觉灵魂被硬生生撕裂了一块。作为交换，狂暴的深渊能量注入你的四肢百骸。最大生命值永久-10，全属性+2，理智-5。</p>');
+            cb(); ab('继续交易', function() { enterAbattoir(); }); ab('离开', function() { enterBlackMarket(); });
+        } else {
+            st('<p class="highlight">你的灵魂已经千疮百孔，无法承受再次剥离。</p>');
+            cb(); ab('返回', function() { enterAbattoir(); });
+        }
+    }, 'danger-btn');
+    
+    ab('👁️ 植入畸变腺体 (永久-20最大理智，罪业值+20，获得强大再生力)', function() {
+        if (player.maxSanity > 30 && !player.flags.mutationGland) {
+            player.maxSanity -= 20;
+            if(player.sanity > player.maxSanity) player.sanity = player.maxSanity;
+            player.sinValue += 20;
+            player.flags.mutationGland = true;
+            st('<div class="scene-title">植入畸变腺体</div><p>医生用锯子剖开你的胸腔，将一颗还在跳动的黑色肉瘤塞进了你的心脏旁。肉瘤开始生根发芽，你感觉脑海中多出了无尽的疯狂呓语。最大理智永久-20，罪业值+20，你获得了「畸变再生」。</p>');
+            cb(); ab('继续交易', function() { enterAbattoir(); }); ab('离开', function() { enterBlackMarket(); });
+        } else if (player.flags.mutationGland) {
+            st('<p class="highlight">你体内已经有足够的畸变物了，再植入你会彻底变成肉块的。</p>');
+            cb(); ab('返回', function() { enterAbattoir(); });
+        } else {
+            st('<p class="highlight">你的理智太脆弱，植入这个会让你直接变成失去自我的疯子。</p>');
+            cb(); ab('返回', function() { enterAbattoir(); });
+        }
+    }, 'danger-btn');
+    
+    
+    ab('💉 剥离毒素 (永久-5全属性，花费100金币)', function() {
+        if (player.gold >= 100) {
+            if (player.flags.addicted) {
+                player.gold -= 100;
+                player.strength -= 5; player.agility -= 5; player.magic -= 5; player.charisma -= 5;
+                player.flags.addicted = false;
+                player.flags.withdrawal = false;
+                player.flags.drugTakenToday = false;
+                st('<div class="scene-title">剥离毒素</div><p>恶魔医生狞笑着收下金币。一台抽吸机连接到你的脊柱，硬生生将那些扎根在灵魂中的毒素与杂质抽出。剧痛让你几乎晕厥，你的全属性永久降低了5点，但你终于摆脱了对药物的依赖。</p>');
+                cb(); ab('继续交易', function() { enterAbattoir(); }); ab('离开', function() { enterBlackMarket(); });
+            } else {
+                st('<p class="highlight">你体内并没有成瘾的毒素，医生表示没必要白花钱受罪。</p>');
+                cb(); ab('返回', function() { enterAbattoir(); });
+            }
+        } else {
+            st('<p class="highlight">你的金币不足，医生不会免费为你进行这种精密的神经剥离手术。</p>');
+            cb(); ab('返回', function() { enterAbattoir(); });
+        }
+    }, 'danger-btn');
+    ab('返回黑市', function() { enterBlackMarket(); });
+}
+
 function enterBlackMarket() {
     if (!isBlackMarketOpen()) {
-        st('<div class="scene-title">🌙 黑市</div><p>黑市只在夜晚开放（22:00-02:00）。现在还未到营业时间。</p>');
+        st('<div class="scene-title">黑市</div><p>黑市只在夜晚开放（22:00-02:00）。现在还未到营业时间。</p>');
         cb();
         ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
         return;
     }
     refreshBlackMarket();
-    var html = '<div class="scene-title">🌙 黑 市</div><p>暗巷深处，一个被阴影笼罩的摊位前，一个戴着兜帽的商人正在等你。</p><p style="color:#ff6080;font-size:0.82em;">"欢迎光临……我这里有些……特别的货物。"</p>';
+    var html = '<div class="scene-title">黑 市</div><p>暗巷深处，一个被阴影笼罩的摊位前，一个戴着兜帽的商人正在等你。</p><p style="color:#ff6080;font-size:0.82em;">"欢迎光临……我这里有些……特别的货物。"</p>';
     html += '<div style="background:#180610;border:1px solid #2a0a16;border-radius:6px;padding:10px;margin:8px 0;">';
     var availableItems = player.blackMarketItems.filter(function(it) { return !it.sold; });
     if (availableItems.length === 0) {
@@ -3114,7 +3302,7 @@ function enterBlackMarket() {
                     }
                     checkHp();
     ua();
-                    st('<p>✅ 你购买了 <span style="color:#ff6080;">' + item.name + '</span>。</p>');
+                    st('<p>你购买了 <span style="color:#ff6080;">' + item.name + '</span>。</p>');
                     // 标记为已售（不删除）
                     item.sold = true;
                 } else {
@@ -3192,6 +3380,152 @@ function generateRandomEvent() {
 
 // ==================== NPC随机事件反应库 ====================
 var npcRandomReactions = {
+
+    '墨菲': {
+        low: [
+            { text: '你在霓虹舞台的后台遇到了墨菲。他看到你，瞬间将双腿化为粗壮的触手，露出吸盘里的剧毒。<em>滚出去，别逼我把你的骨头绞碎。</em>', effect: function() { } },
+            { text: '墨菲正对着镜子补妆，看到你进来，他嫌弃地用一块紫红色的丝巾捂住鼻子。<em>真臭。马上从我的视线里消失，你的存在污染了这里的空气。</em>', effect: function() { } }
+        ],
+        neutral: [
+            { text: '墨菲在舞台上尽情地表演着，紫青色的触手在灯光下闪烁着迷幻的光芒。台下的恶魔们疯狂地为他欢呼，他显然没空搭理你。', effect: function() { } },
+            { text: '你看到墨菲正和一个狂热的粉丝交涉，他巧妙地用指尖的一滴致幻毒素让那个粉丝陷入了极乐的昏迷，然后顺手拿走了对方钱包里的所有金币。', effect: function() { } }
+        ],
+        high: [
+            { text: '墨菲看到你，高兴地从舞台上跳下来，用柔软的触手轻轻卷住你的手腕。<em>亲爱的~你来看我的演出了吗？等会儿来后台找我，我给你留了最好的位置。</em>', effect: function() { } },
+            { text: '墨菲塞给你一瓶淡紫色的小药水。<em>一点改良过的不致命毒素，关键时刻能帮你脱身。可别说我没照顾你哦~</em>', effect: function() { } }
+        ]
+    },
+    '厄尔': {
+        low: [
+            { text: '厄尔缩在废弃禁闭室的角落里，左手死死掐着自己的脖子。他的右眼流淌着黑血，冲你发出撕裂般的咆哮：<em>滚！趁我还没把你撕碎，快滚！</em>', effect: function() { } },
+            { text: '你碰巧看到厄尔正在发狂，他用锋利的指甲将一个试图靠近的低阶恶魔撕成了碎片，黑红色的污血溅满了整面墙壁。你明智地避开了他。', effect: function() { } }
+        ],
+        neutral: [
+            { text: '厄尔正处于短暂的平静期。他呆呆地看着自己那只被深渊侵蚀的右手，左半边脸流下痛苦的泪水，嘴里喃喃自语。', effect: function() { } },
+            { text: '你经过时，厄尔正用力撞击着禁闭室的铁门，试图把自己撞晕过去，以此来抵抗右半边那疯狂的杀戮本能。', effect: function() { } }
+        ],
+        high: [
+            { text: '厄尔看到你，痛苦的喘息声稍微平缓了一些。他用仅存的一定理智，吃力地从怀里掏出一本残破的实验记录扔给你。<em>这是那个疯子的弱点……拿去……别让他再害人了……</em>', effect: function() { } },
+            { text: '厄尔强忍着右半边的狂躁，勉强对你扯出一个比哭还难看的笑容。<em>如果有一天……我完全变成了怪物……请你杀了我。</em>', effect: function() { } }
+        ]
+    },
+    '西珀': {
+        low: [
+            { text: '你刚爬上钟楼，就感到脖子一凉。西珀的利爪已经抵住了你的咽喉。<em>想偷袭我？再练一百年吧。现在，把值钱的东西留下，然后滚。</em>', effect: function() { } },
+            { text: '你试图在屋顶追踪西珀，但他只是几个轻巧的跳跃就消失在了夜色中，只留下一串嘲讽的轻笑声在风中回荡。', effect: function() { } }
+        ],
+        neutral: [
+            { text: '西珀正蹲在避雷针上，抛接把玩着一颗刚偷来的红宝石。他敏锐地察觉到了你，但只要你不靠近，他也懒得搭理你。', effect: function() { } },
+            { text: '你看到西珀灵巧地避开了玛门商行的两个收债人的追踪，像一道白色的闪电般消失在两栋高楼之间的缝隙里。', effect: function() { } }
+        ],
+        high: [
+            { text: '西珀悄无声息地倒挂在屋檐下，突然从上面探出头来吓了你一跳。<em>哟！又见面了。看在熟人的份上，今天我就不摸你的钱包了。</em>', effect: function() { } },
+            { text: '西珀扔给你一枚金光闪闪的金币。<em>刚从一个暴发户那里顺来的。见者有份，请你喝杯酒吧~</em>说完便轻巧地跳上了屋顶。', effect: function() { } }
+        ]
+    },
+    '塞缪尔': {
+        low: [
+            { text: '塞缪尔正处于严重的酒精戒断反应中。他双手发抖，举着铁十字架见人就砸。你差点被飞溅的碎石击中，赶紧跑开了。', effect: function() { } },
+            { text: '塞缪尔喝得烂醉，直接一口烈酒龙息喷向路边的一个垃圾桶，引发了一场小规模爆炸。他在爆炸声中狂笑不止。', effect: function() { } }
+        ],
+        neutral: [
+            { text: '你看到塞缪尔正坐在街角狂灌劣质酒精，他的神父袍上又多了一片新鲜的血迹，铁十字架上还在往下滴着不知名液体的残渣。', effect: function() { } },
+            { text: '塞缪尔正和几个黑帮分子在街头大打出手。他完全无视了打在身上的子弹，像一头发狂的公牛一样挥舞着十字架，把对方砸成了肉泥。', effect: function() { } }
+        ],
+        high: [
+            { text: '塞缪尔难得清醒了一点。他打着酒嗝，用铁十字架重重地拍了拍你的肩膀。<em>小子，在这鬼地方，拳头比祈祷管用得多。如果有谁欺负你，报老子的名字！</em>', effect: function() { } },
+            { text: '塞缪尔扔给你半瓶没喝完的劣质私酿。<em>喝一口！能让你忘记疼，也能让你忘记那些该死的伪君子！</em>', effect: function() { } }
+        ]
+    },
+
+
+    '洛柯': {
+        low: [
+            { text: '你碰巧路过一个废弃仓库，听到里面传来震耳欲聋的枪声。洛柯正倒挂在天花板上，用两把重型冲锋枪疯狂扫射几个倒霉鬼。他脸颊的裂口咧到耳根，毒液滴在地上。你明智地选择了远离这个火药桶。', effect: function() { } },
+            { text: '洛柯正蹲在巷子口擦枪。看到你靠近，他六只眼睛同时凶狠地盯过来。<em>滚远点！老子现在没心情见客，除非你想试试子弹的味道！</em>', effect: function() { } }
+        ],
+        neutral: [
+            { text: '你看到洛柯正和一个走私商讨价还价。他不耐烦地将双臂反向折叠，用极其诡异的姿势把枪拍在桌上，吓得对方连连后退。', effect: function() { } },
+            { text: '洛柯像一只巨大的毒蜘蛛一样在天花板上高速爬行。他似乎正在追杀某个欠了高利贷的倒霉蛋，完全没有注意到你的存在。', effect: function() { } }
+        ],
+        high: [
+            { text: '洛柯看到你，高兴地从天花板上跳下来，关节发出清脆的咔哒声。<em>哟！这不是老子的常客吗！今天有没有兴趣搞点大生意？老子刚搞到一批好货！</em>', effect: function() { } },
+            { text: '洛柯主动扔给你一把精致的匕首。<em>拿着防身。要是在贪婪环有不长眼的家伙敢动你，就用这个把他们的眼珠子挖出来！</em>', effect: function() { } }
+        ]
+    },
+    '维奥莱特': {
+        low: [
+            { text: '你试图进入“盲点”沙龙，却被门口的重装护卫拦住。维奥莱特坐在远处的沙发上，连看都没看你一眼。<em>把这种没有价值的垃圾扔出去，别脏了我的地毯。</em>', effect: function() { } },
+            { text: '维奥莱特正坐在马车里。你刚想靠近打招呼，她便冷笑着摇上了车窗。', effect: function() { } }
+        ],
+        neutral: [
+            { text: '你看到维奥莱特正在和一个高级恶魔交谈。她嘴角挂着完美的优雅假笑，但那双无瞳的眼睛里却透着深深的算计。', effect: function() { } },
+            { text: '维奥莱特端着红茶，静静地听留声机里的音乐。她似乎察觉到了你的存在，但只是微微偏了偏头，没有理会。', effect: function() { } }
+        ],
+        high: [
+            { text: '维奥莱特主动邀请你进入她的私人包厢。<em>进来吧。外面的空气太浑浊，在这里我们可以谈点真正有价值的东西。</em>她优雅地为你倒了一杯红茶。', effect: function() { } },
+            { text: '维奥莱特递给你一张加密的字条。<em>一点微不足道的小情报，就当是送给你的礼物了。别让我失望。</em>', effect: function() { } }
+        ]
+    },
+    '维德': {
+        low: [
+            { text: '你经过当铺，维德正释放出恐怖的深海水压，将一个违约的恶魔压得内脏破裂。他用那只畸变的复眼冷冷地扫了你一眼，警告你不要多管闲事。', effect: function() { } },
+            { text: '维德看你的眼神就像在看一块没有价值的死肉。<em>除非你打算把灵魂抵押给我，否则就从我的视线里消失。</em>', effect: function() { } }
+        ],
+        neutral: [
+            { text: '维德正在把玩一颗深海珍珠。他察觉到了你，只是微微咧开长满利齿的嘴，露出一个令人窒息的假笑。', effect: function() { } },
+            { text: '你看到维德正在和几个海产走私犯接头。他海藻般的绿发在黑暗中微微晃动，右眼的复眼在清点货物的数量。', effect: function() { } }
+        ],
+        high: [
+            { text: '维德罕见地对你露出了一个相对真诚的笑容。<em>既然是你，我可以稍微放宽一点利息。毕竟，你是个懂得深渊规矩的聪明人。</em>', effect: function() { } },
+            { text: '维德扔给你一块深绿色的鳞片。<em>带着这个，在深水区遇到麻烦时，或许能救你一命。这是属于我们之间的特殊契约。</em>', effect: function() { } }
+        ]
+    },
+
+
+    '康特·恩顿': {
+        low: [
+            { text: '康特像一只受惊的老鼠一样缩在垃圾堆里。看到你靠近，他发出刺耳的尖叫。<em>滚开！别碰我的药！</em>他朝你扔了一个空注射器，然后手脚并用地爬上墙壁逃走了。', effect: function() { } },
+            { text: '你在阴暗的巷子里遇到了康特。他正处于严重的戒断反应中，浑身发抖，指甲把自己的手臂抓得鲜血淋漓。他看到你，眼神里满是恐惧，拖着抽搐的身体拼命向后缩去。', effect: function() { } }
+        ],
+        neutral: [
+            { text: '康特正倒挂在一根生锈的管道上，咯咯地笑着。他看到你，挥了挥手里装着荧光绿液体的注射器：<em>喂！要不要来一口？这可是伊莱亚斯最新的好货！</em>', effect: function() { } },
+            { text: '你经过时，康特正在对着一堵空墙自言自语，手舞足蹈地和空气里不存在的人争吵。他似乎完全没有注意到你的存在。', effect: function() { } }
+        ],
+        high: [
+            { text: '康特一看到你，就像橡皮糖一样黏了上来。<em>朋友！你是我最好的朋友！咯咯咯！给你看个好玩的！</em>他从嘴里吐出一团冒烟的粉色泡泡，泡泡在半空中炸开，变成一蓬致幻的紫烟。', effect: function() { } },
+            { text: '康特显得非常亢奋。<em>那些烦人的小人都不见了！因为你在！你就是那颗最亮的药丸！</em>他试图拥抱你，但在你警告的眼神下，只能委屈地揉了揉头顶的两撮头发。', effect: function() { } }
+        ]
+    },
+    '泽维尔': {
+        low: [
+            { text: '泽维尔站在阴影中，用那双白色的细长瞳孔冷冷地盯着你。黑色的黏液像毒蛇一样在他的脚下翻滚，散发着危险的气息。你明智地选择了绕道而行。', effect: function() { } },
+            { text: '你碰巧目睹了泽维尔在“清理”现场。他连看都没看你一眼，只是把玩着一柄黑刃：<em>如果不希望自己变成下一件被清理的货物，就闭上你的嘴，然后滚远点。</em>', effect: function() { } }
+        ],
+        neutral: [
+            { text: '泽维尔正靠在墙角，优雅地整理着沾了一点血迹的白色西装领口。他看到你，嘴角裂出一个极其夸张的愉悦笑容。<em>晚上好，需要处理什么麻烦吗？价格好商量。</em>', effect: function() { } },
+            { text: '你看到泽维尔下半身的阴影正像触手一样吞噬着一堆不可名状的肉块。他用纯黑的眼睛瞥了你一眼，微微欠身行了个绅士礼，仿佛他正在做一件极其高雅的事情。', effect: function() { } }
+        ],
+        high: [
+            { text: '泽维尔看到你，嘴角的笑容似乎变得更真诚了一些。他用阴影递给你一杯不知从哪拿来的红酒。<em>敬黑夜里的同路人。在这个地方，知道如何保持沉默的人总是能活得更久。</em>', effect: function() { } },
+            { text: '泽维尔难得地主动和你搭话。<em>你的手法也挺干净利落。如果有那些我不方便出面的“私活”，或许我们可以合作。五五分账，怎么样？</em>他的细长瞳孔里闪烁着赞赏的光芒。', effect: function() { } }
+        ]
+    },
+    '塞西莉亚': {
+        low: [
+            { text: '塞西莉亚正用一把精美的洋伞遮住并不存在的阳光。她看到你，蔚蓝的眼睛里闪过一丝极度的嫌恶，像看垃圾一样撇了撇嘴，然后用一块带有刺鼻香水味的手帕捂着鼻子匆匆离开。', effect: function() { } },
+            { text: '你经过塞西莉亚身边。她冷冷地打量了你一眼，下意识地摸了摸脖子上的红宝石项圈。<em>离我远点，下等人。别把你的穷酸气沾到我的裙子上。</em>', effect: function() { } }
+        ],
+        neutral: [
+            { text: '塞西莉亚正端着一杯茶，优雅地坐在遮阳伞下。她朝你露出一个完美但虚伪的柔弱笑容：<em>哎呀，又见面了。希望您今天一切顺利。</em>她的声音很甜，但眼神冰冷。', effect: function() { } },
+            { text: '你碰巧看到塞西莉亚正在把玩一把藏在扇骨里的锋利刀片。她注意到你，立刻熟练地收起刀片，换上一副受惊的楚楚可怜模样，仿佛什么都没发生过。', effect: function() { } }
+        ],
+        high: [
+            { text: '塞西莉亚看到你，嘴角的弧度稍微放松了一点。她微微提起裙摆向你致意。<em>在这个地狱里，能找到一个稍微顺眼点的存在可不容易。或许改天我们可以一起喝杯下午茶？</em>', effect: function() { } },
+            { text: '塞西莉亚难得地没有戴着那种虚假的面具。她蔚蓝的眼睛深深看了你一眼。<em>你知道吗？他们都觉得我很恶毒。但比起那些虚伪的家伙，我只是更懂得如何在这个世界活下去。</em>', effect: function() { } }
+        ]
+    },
+
             '莱利': {
                 low: [
                     '你走在狭窄的街道上，眼角的余光捕捉到一个灰色的单薄身影正从旁边的巷子里一闪而过。他似乎也在同一时间察觉到了你的存在。他头顶的猫耳瞬间向后紧紧折起，呈现出极其明显的抗拒与防备姿态。他没有任何停留，立刻加快了脚下的步伐，将身体迅速隐入阴影，彻底消失在了前方的转角处。',
@@ -3534,6 +3868,30 @@ function findJob() {
 // ==================== NPC 交互（修复：次数限制+好感审视） ====================
 function getNpcFirstMeetText(npcId) {
     var sin = player.sin, race = player.race;
+    
+    if (npcId === '墨菲') {
+        if (race === 'sinner') return '色欲环的地下霓虹舞台后场，空气中弥漫着一股甜腻得发昏的香气。墨菲正对着镜子整理他那件半透明的紫青色真丝衬衫。听到脚步声，他的脖子以一种完全没有骨头支撑的诡异角度直接扭转了180度看向你，亮黄色的兽瞳里闪过一丝兴奋。\n\n<em>"哎呀，一只迷路的小罪人~"</em>他猛地转过身，身后的细长尾巴兴奋地拍打着地面，迈着极其妖娆的步伐向你走来，指尖隐隐分泌出透明的致幻毒液，<em>"看看这干瘪的灵魂……亲爱的，需要我给你注射一点‘快乐’，让你在这无聊的地狱里重新鲜活起来吗？"</em>';
+        return '墨菲正慵懒地瘫在紫丝绒沙发上，他的双腿和左臂此刻已经完全化作了粗壮的紫青色章鱼触手，上面密密麻麻的吸盘正贪婪地呼吸着空气中的水分。看到你出现，他立刻将触手收缩重塑成修长的人类肢体，从沙发上弹了起来，顺手理了理腰间的金属细链。\n\n<em>"哦~原生恶魔的魔力味道，真是令人迷醉。"</em>他双手夸张地捧着脸颊，亮黄色的眼睛弯成月牙，甜腻的声音里藏着致命的危险，<em>"欢迎来到我的后台，小可怜。你是来找乐子的，还是来买秘密的？事先声明，我的出场费可是很贵的哦，可能要拿你的理智来换呢。"</em>';
+    }
+    if (npcId === '厄尔') {
+        return '一间布满焦痕和血迹的冰冷禁闭室里，角落传出断断续续的绝望悲泣，与一种病态、沙哑的狂笑声交织在一起。厄尔蜷缩在阴影中，左半边脸极度怯懦痛苦，而右半边脸被深渊侵蚀，长着三只毫无高光的多重眼睛。\n\n察觉到你的靠近，他猛地抬起头。左眼流下泪水，声音哽咽：<em>"快走……别过来……它要出来了！"</em>但他右边长着暗红色恶魔角的额头猛地抽搐，嘴里爆发出狂躁的笑声：<em>"哈哈哈哈！食物！新的玩具！撕碎你！"</em>他痛苦地用左手死死掐住自己的右半边脖子，在理智与疯狂的深渊中挣扎。';
+    }
+    if (npcId === '西珀') {
+        if (race === 'sinner') return '贪婪之环的最高建筑顶端，夜风凛冽。西珀正蹲在一根狭窄的避雷针上，脖颈处的白色绒毛被风吹得轻轻飘动。察觉到你的气息，他停止了动作，回过头，琥珀色的竖瞳在黑暗中泛着微光。\n\n<em>"哟~大半夜还在街上晃悠的罪人，你的口袋里有什么闪闪发光的好玩意儿吗？"</em>他露出两颗尖锐的小虎牙，像只发现毛线球的猫一样轻笑起来，紧接着毫无预兆地松开双腿，在半空中轻盈地翻滚了一圈，悄无声息地落在你身后，冰冷的利爪瞬间抵住了你的后颈，<em>"别动哦，如果不把有趣的东西交出来，我可是会咬人的~"</em>';
+        return '贪婪之环的最高建筑顶端，夜风凛冽。西珀正蹲在一根狭窄的避雷针上，脖颈处的白色绒毛被风吹得轻轻飘动。他手里正抛着一颗刚偷来的高阶灵魂宝石。察觉到你的气息，他回头看向你。\n\n<em>"原生恶魔的气息……真难闻。"</em>他嫌弃地皱了皱鼻子，琥珀色的竖瞳瞬间缩紧成一条线，充满戒备与野性。他将宝石随手塞进口袋，身体重心压低，做出了随时准备弹射起步的攻击姿态，<em>"如果你是来替那些蠢货要回这块石头的，我劝你省省力气。我不想跟你打，但如果你非要拦我的路……我不介意在你的脸上留几道血印子。"</em>';
+    }
+    if (npcId === '塞缪尔') {
+        if (race === 'sinner') return '暴怒之环的阴暗街角，空气中弥漫着刺鼻的劣质酒精味和血腥味。塞缪尔正摇摇晃晃地靠在墙边，手里拎着一个酒瓶，脚下踩着一个不知死活的倒霉蛋。巨大的生锈铁十字架被扔在一旁，上面还沾着新鲜的碎肉。\n\n听到你的脚步声，他打了个响亮的酒嗝，猛地抬起头。布满血丝的眼球凶狠地死盯着你。<em>"看什么看？没见过神父做礼拜吗？"</em>他随手把空酒瓶砸碎在墙上，玻璃碴溅了一地，摇晃着抓起地上的铁十字架，大舌头地骂骂咧咧，<em>"又来一个不知死活的罪人……过来！让老子用主的名义，把你这狗娘养的脑袋敲碎！"</em>';
+        return '地下酒吧的后巷里，塞缪尔正扒着垃圾桶剧烈地干呕。他灰白色的油腻长发垂在脸颊两侧，黑色的神父袍上全是污渍。察觉到原生恶魔的气息，他胡乱用袖子擦了擦嘴，转过身来。\n\n<em>"原生恶魔……嗝……高高在上的大人物……"</em>他眯起那双神经质的眼睛，充满敌意地上下打量着你。他从怀里掏出一个扁酒壶猛灌了一大口，劣质酒精顺着下巴流进敞开的领口。他单手将那把几百斤重的铁十字架扛在肩上。<em>"你们这群地狱里的寄生虫，身上那股子优越感真是熏得我直恶心。趁我还没发火，赶紧滚出我的视线！"</em>';
+    }
+    if (npcId === '维奥莱特') {
+        if (race === 'sinner') return '情报沙龙“盲点”的顶层包厢里，空气中弥漫着昂贵的红茶香气。维奥莱特端坐在天鹅绒高背椅上。她穿着一身剪裁利落的暗红色西装长裤，戴着黑色蕾丝手套的双手交叠放在膝盖上。紫色的短卷发完美地贴合在脸颊两侧。\n\n听到大门推开的声音，她缓缓抬起头。那双没有瞳孔的纯白眼眸准确无误地“看”向了你所在的方向。\n\n“一股混杂着人间泥土味和劣质执念的酸气。”她嘴角的弧度加深了几分，声音轻柔得像是在叹息，“一个罪人。既然你能在不惊动我护卫的情况下走到这里，说明你的灵魂里藏着点有价值的东西。坐吧，告诉我，你想用什么秘密来换取我的时间？”';
+        return '维奥莱特正站在留声机旁，戴着蕾丝手套的手指轻轻将唱针搭在黑胶唱片上。悠扬的大提琴声在房间里流淌开来。\n\n她转过身，那双空洞纯白的眼睛直直地对准了你。她没有后退，也没有做出任何防备的动作，只是穿着那身干练的暗红色西装长裤，优雅地将双手交叠在身前。紫色的短卷发在昏暗的灯光下泛着幽暗的光泽。\n\n“纯粹的魔力波动……原生恶魔的灵魂总是比那些罪人要干净一些，但也无趣得多。”她微微歪了歪头，“在这个时间闯入我的沙龙，希望你带来的情报，配得上你打扰我听音乐的失礼。”';
+    }
+    if (npcId === '维德') {
+        if (race === 'sinner') return '昏暗的地下当铺里弥漫着一股潮湿的海腥味。维德正坐在水族箱前的阴影里，深渊海蓝色的西装几乎与黑暗融为一体。听到动静，他缓缓转过头，海藻般的幽绿短发微微晃动。右眼眶里那几个荧光绿色的复眼在暗处幽幽亮起，像深海探照灯一样锁定了你。\n\n<em>"一股快要溺水窒息的绝望味道……罪人。"</em>他咧开嘴，露出交错的鲨鱼尖牙，脖颈处的鳃裂兴奋地开合着，声音低沉得仿佛带着海底的回音，<em>"欢迎来到深渊。想要抓住那根救命稻草吗？用你的灵魂来换，我保证过程……会像沉入海底一样安静。"</em>';
+        return '维德把玩着手里一颗散发着幽光的深海珍珠，印着气泡图案的领带在昏暗光线下显得格外诡异。他苍白透绿的修长手指轻轻敲击着桌面，右眼的多个绿色瞳孔同时缩紧，冷冷地审视着你。\n\n<em>"嫉妒环的深海水压……可不是每个原生恶魔都能承受得住的。"</em>他将珍珠随手抛进旁边的水杯里，发出一声沉闷的入水声，脸上的假笑毫无温度，<em>"既然敢走进我的当铺，就说明你已经做好了被深渊吞噬的准备。说吧，你想从海底捞出什么东西？"</em>';
+    }
     if (npcId === '莱利') {
         if (race === 'sinner' && (sin === '贪婪' || sin === '色欲')) return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着，动作极轻。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的两只猫耳瞬间向后折起，进入高度警觉的状态。原本还在缓慢晃动的长尾巴猛地绷直，尾尖的毛发微微炸开。他浑身的肌肉肉眼可见地紧绷起来，目光死死地锁定在你的位置。<em>贪婪……还是色欲？</em>他的声音没有丝毫情绪起伏，语气生硬且冷漠，如同从这座废弃矿坑最深处吹上来的寒风，带着明显的排斥与防备。<em>我不喜欢这两种味道。离我远点。</em>他收回视线，转过身去再次背对着你。他手中的小刀在金属片上重重地划过，刺耳的摩擦声中迸发出几点明亮的火星。周围的金属碎屑和地上的废弃铁器开始发生有规律的轻微震颤。你能清晰地感觉到，一股由金属幻化而成的锁链力量正被他强行压制在掌心之中。只要你再向前靠近半步，那些锁链就会瞬间爆发。';
         if (race === 'sinner') return '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。你放轻脚步，小心翼翼地跨过地上散落的石块。就在这时，一阵细微却尖锐的金属摩擦声传入耳中。你立刻停下脚步，判断出前方不远处有人。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n他的视线越过倾斜的水晶板，直直地投向你。那双左金右银的异色瞳孔里既没有被打扰的愤怒，也没有任何欢迎的意味，只剩下一种夹杂着深度戒备与疲惫的冷漠审视。<em>……又是一个罪人。</em>他冷冷地吐出几个字，常年极少与人交谈让他的声音听起来有些干涩沙哑。他站在原地没有动，连脸上的表情都凝固着，只有头顶竖起的猫耳微微转动了一下方向，敏锐地捕捉着你这边的每一丝呼吸声。<em>我也曾是。如果你是来找茬的，现在就可以走了。</em>刀刃刮擦金属的声音重新在死寂的矿区里响起。但他握刀的手腕没有了刚才那种专注的流畅感，金属片被剥落的节奏明显变慢、变沉了。那条原本因警惕而僵直的长尾巴也缓缓松懈下来，垂在地上，尾尖在满是粉尘的石块上无意识地轻轻扫动。他虽然没有再抬头看你，但紧绷的肩膀和停顿的刀尖都暴露出他并没有放松警惕——他在安静地等待你开口，或是走出下一步。';
@@ -3579,6 +3937,25 @@ function getNpcFirstMeetText(npcId) {
 }
 
 var npcData = {
+    '亚罗': { ring: '嫉妒之环', level: 'poor', timeStart: 0, timeEnd: 1440, dislikeSins: [], workPlace: '地下穿行', homeDesc: '没定居所。', firstMeetText: '你看到一个身穿破旧风衣、背着一个巨大的残缺风筝翅膀的恶魔正从一个通风管里钻出来。他戴着防风镜，行动极其敏捷，像一只警惕的老鼠。<em>别挡道。</em>他压低声音说了一句，眼神不断在周围扫视，似乎在确认是否安全。' },
+    '莫娜': { ring: '色欲之环', level: 'poor', timeStart: 600, timeEnd: 1440, dislikeSins: ['嫉妒'], workPlace: '暗巷药铺', homeDesc: '到处都是水烟壶的房间。', firstMeetText: '空气中弥漫着令人昏沉的甜香。你看到一个有着发光水母裙摆的女恶魔正靠在墙边。她手里拿着一根精致的彩色烟管，吐出一口心形的迷幻烟雾。<em>想要忘记这地狱般的痛苦吗？</em>她咯咯地笑着，声音甜腻得发腻，<em>只需要付出一点小小的代价哦。</em>' },
+    '赛斯': { ring: '暴怒之环', level: 'poor', timeStart: 400, timeEnd: 1200, dislikeSins: [], workPlace: '废旧机械厂', homeDesc: '满是油污的车间。', firstMeetText: '在火花四溅的废弃车间里，一个半身被粗糙机械改造的恶魔正疯狂地用扳手砸着一个卡壳的火炮。他的左眼是一颗散发红光的机械眼，胸口的装甲裂开，能看到里面齿轮运转和漏出的黑色机油。<em>滚开！没看见老子在忙吗？！</em>他转过头，像一头被激怒的野兽般冲你咆哮。' },
+
+    '墨菲': { ring: '色欲之环', level: 'middle', timeStart: 1020, timeEnd: 300, dislikeSins: ['嫉妒'], workPlace: '地下霓虹舞台', homeDesc: '一个充满迷幻色彩和柔软抱枕的奢华化妆间。', firstMeetText: '' },
+    '厄尔': { ring: '暴怒之环', level: 'poor', timeStart: 0, timeEnd: 1440, dislikeSins: ['傲慢'], workPlace: '废弃禁闭室', homeDesc: '一间布满焦痕和血迹的冰冷禁闭室。', firstMeetText: '' },
+    '西珀': { ring: '贪婪之环', level: 'rich', timeStart: 1200, timeEnd: 360, dislikeSins: [], workPlace: '内城最高钟楼', homeDesc: '一个堆满各种发光小物件和昂贵宝石的隐秘通风管道。', firstMeetText: '' },
+    '塞缪尔': { ring: '暴怒之环', level: 'poor', timeStart: 0, timeEnd: 1440, dislikeSins: ['贪婪', '色欲'], workPlace: '阴暗街角', homeDesc: '一个散发着劣质酒精味和呕吐物酸臭的垃圾桶旁。', firstMeetText: '' },
+
+
+    '洛柯': { ring: '贪婪之环', level: 'poor', timeStart: 1080, timeEnd: 1440, dislikeSins: ['傲慢'], workPlace: '地下酒吧', homeDesc: '一个塞满重型枪械和烈性炸药的地下潮湿仓库。', firstMeetText: '贪婪之环的地下酒吧里，光线昏暗。洛柯大马金刀地坐在吧台的高脚凳上。由于腿短，双脚只能悬空晃荡。他正用一把带血的匕首剔指甲，手臂的肘关节呈现出一种微微向外反向弯折的怪异弧度，额前的卷曲刘海和左侧的那缕头发随着动作轻晃。\n\n听到脚步声，他停下动作，颈椎发出“咔哒”一声脆响，脑袋猛地转过来。脸上的三对眼睛同时看向你，六道冰冷的视线让人头皮发麻。<em>看什么看？没见过老子这么大口径的左轮？</em>他手腕一翻，以不可思议的关节柔韧度瞬间将一把重型手枪拍在吧台上，嘴里的毒牙若隐若现，<em>要是来找茬的，老子劝你先看看自己的膝盖够不够硬；要是来谈生意的……先把钱放在桌上，别他妈跟老子废话。</em>' },
+    '维奥莱特': { ring: '傲慢之环', level: 'rich', timeStart: 720, timeEnd: 1440, dislikeSins: ['暴怒', '懒惰'], workPlace: '情报沙龙“盲点”', homeDesc: '傲慢之环的高阶贵族府邸，陈设极其考究。', firstMeetText: '' },
+    '维德': { ring: '嫉妒之环', level: 'middle', timeStart: 600, timeEnd: 1320, dislikeSins: [], workPlace: '深海当铺', homeDesc: '深海当铺的底层，常年保持着深海般的水压与潮湿。', firstMeetText: '' },
+
+
+    '康特·恩顿': { ring: '暴食之环', level: 'poor', timeStart: 1080, timeEnd: 300, dislikeSins: [], workPlace: '暴食之环废弃化工厂', homeDesc: '一个散发着刺鼻化学废料气味的垃圾堆。', firstMeetText: '推开废弃化工厂的铁门，震耳欲聋的重金属音乐夹杂着诡异的笑声扑面而来。康特正倒挂在天花板的生锈管道上，紫红相间的条纹夹克松垮地垂落。他的身体以一种扭曲的姿势晃动着，手里正把玩着一支装着荧光绿色液体的注射器。\n\n听到动静，他猛地扭过头。巨大的半垂眼布满血丝，亮粉色的瞳孔极度涣散，但又在瞬间锁定了你。脸上的肌肉不受控制地抽搐着，扯出一个撕裂般夸张的笑容，露出满口尖锐的荧光粉色獠牙。\n\n<em>咯咯咯……又来了一个试药的？还是来找乐子的？</em>他松开脚，整个人像一滩没有骨头的烂泥一样砸在地上，却似乎感觉不到任何疼痛，扭曲着肢体迅速爬向你，<em>没关系，我这里有最顶级的货！保证让你的脑子像烟花一样炸开！</em>' },
+    '泽维尔': { ring: '贪婪之环', level: 'middle', timeStart: 1320, timeEnd: 480, dislikeSins: [], workPlace: '黑市深巷', homeDesc: '没有固定住所，隐藏在城市的阴影中。', firstMeetText: '暗巷的尽头，浓重的血腥味还未散去。一具残缺的尸体倒在血泊中，而那个身影正站在尸体上方。\n\n他转过身，身形高挑，穿着一件熨烫平整的白色翻领西装衬衫，打着整齐的黑色领带。凌乱的浅色短发下，是一双半眯的狭长双眼，纯黑色的巩膜和白色的细长瞳孔在阴暗中散发着令人毛骨悚然的愉悦。最让人毛骨悚然的是他的下半身和手肘以下——那不是血肉，而是深渊暗影构成的流体，正像粘稠的活物般蠕动、蔓延。\n\n他裂开嘴，一直裂到非人的角度，露出交错的尖锐獠牙，发出一阵神经质的低笑。<em>哦？有目击者？</em>他由阴影构成的手臂化作一柄锐利的黑刃，滴着黑色的粘液，<em>不巧，我现在是下班时间。不过……如果你愿意支付一笔可观的封口费，我或许可以当做没看见你。</em>' },
+    '塞西莉亚': { ring: '贪婪之环', level: 'rich', timeStart: 1020, timeEnd: 1440, dislikeSins: ['色欲'], workPlace: '贪婪之环高级宴会厅', homeDesc: '一栋极其奢华的私人宅邸。', firstMeetText: '贪婪之环的高级宴会厅里，塞西莉亚正端着一杯红酒，耀眼的金发在水晶灯下熠熠生辉。她脖子上的红宝石项圈完美遮盖着断头切痕与掐痕。察觉到你毫不掩饰的打量视线，她蔚蓝的眼底极快地闪过一丝嫌恶与生理性反胃，但转瞬即逝。\n\n<em>哎呀，一位陌生的客人。</em>她立刻换上温柔无辜的笑容，提着裙摆款款走来，随身散发着致命香水味，<em>在这个冰冷的地狱里，能遇到您这样有趣的灵魂真是太好了。不知道您是否愿意，听一个可怜女人诉说她的委屈呢？</em>' },
+
     '莱利': { ring: '傲慢之环', level: 'poor', timeStart: 1080, timeEnd: 1320, dislikeSins: ['贪婪','色欲'], workPlace: '废弃水晶矿场', homeDesc: '一间由碎水晶搭建的简陋棚屋。', firstMeetText: '傲慢之环灰烬区的边缘地带，一座废弃的水晶矿场笼罩在暗紫色的微光中。地面上满是碎石，断裂的巨大水晶柱犹如巨兽的残骨般杂乱地刺向半空。空气中悬浮着呛人的矿石粉尘，混杂着常年不见天日滋生出的浓重霉味。\n\n你借着掩体靠近，在一块倾斜的巨大水晶板后方看到了那个人。他身形高挑却偏瘦，穿着一件黑色的连帽卫衣。灰色的头发显得有些凌乱，左半边的发色深灰近黑。头顶的猫耳微微翕动，身后一条长长的灰色猫尾正贴着地面缓慢地左右摇晃。他正背对着你，手里握着一把小刀，刀刃抵着一块金属片，正专注而谨慎地削刮着。似乎是察觉到了你的视线，他突然停下手里的动作，转过头来。昏暗的光线下，他那双左眼鎏金、右眼银灰的异色瞳孔闪过一丝冷厉的光。\n\n<em>……你站那里多久了？</em>他的声音冷淡，带着明显的戒备。那条原本垂落在地上的长尾巴迅速收拢，紧紧卷住了他自己的小腿。<em>如果你是来嘲笑我的眼睛的，现在就可以走了。</em>' },
     '弗雷迪': { ring: '贪婪之环', level: 'middle', timeStart: 720, timeEnd: 1140, dislikeSins: ['暴怒','嫉妒'], workPlace: '万宝商行分店', homeDesc: '金丝街一间挂着深色窗帘的公寓。', firstMeetText: '贪婪之环的金丝街上，整条街道的地面都铺满了金币。万宝商行分店的奢华建筑在这片反光中投下巨大的倒影。你推开沉重的水晶大门，一股混合了陈旧羊皮纸、浓郁檀香以及生锈金属的复杂气味立刻扑面而来。\n\n柜台后方站着一个身形极高的男人。他穿着一件深棕色、边缘镶嵌着金线的长袍，深红棕色的披肩长发垂落在肩侧。他的右眼角横亘着一道狰狞的刀疤，右眼戴着一枚单片眼镜。最引人注目的是他的右臂——那不是血肉，而是一只巨大的灰色乌鸦羽翼，末端长着尖锐的利爪，羽毛边缘在灯光下泛着幽暗的蓝光。暗红色的锋利瞳孔透过镜片审视着你，目光犹如刀锋般锐利，充满了商人评估货物价值时的算计。<em>新面孔。欢迎光临。</em>' },
     '埃文·格雷': { ring: '色欲之环', level: 'poor', timeStart: 1080, timeEnd: 1380, dislikeSins: [], workPlace: '暗巷深处', homeDesc: '暗巷一间被封死的房间。', firstMeetText: '色欲之环暗巷的最深处，在一堆散发着霉味的废弃木箱后方，你看到了那个极其畸形的身影。他只有大半截躯干，双腿从大腿根部被完全截断，双臂也只剩下肩膀以下极短的一截残端。残缺的切面狰狞而泥泞，正向外渗着浑浊的体液。他的脖子上紧紧扣着一个粗糙的黑色皮质项圈，上面连着一条沉重的银色锁链。头顶一对浅紫色的软塌兔耳无力地拖拽在满是污垢的地面上，绒毛上结满了干涸发黑的血块。\n\n察觉到你的存在，他费力地仰起那张病态苍白的脸。他的左眼被浸透血污的绷带死死缠住，仅露出的右眼是一只浅金色的瞳孔。那眼神空洞而麻木，却在看向你的瞬间闪过一丝复杂的光芒——恐惧、期待、和某种更深层的病态渴求。<em>请……请不要伤害我……</em>他的声音细弱且不断发颤，干裂的嘴角却不受控制地微微上扬。' },
@@ -3588,6 +3965,82 @@ var npcData = {
 };
 
 var npcInteractionData = {
+
+    '墨菲': [
+        { text: '购买情报', loveChange: 3, response: '你递上一袋金币。墨菲用细长的触手卷走金币，亮黄色的兽瞳里透出狡黠。<em>真大方~我听说傲慢环的某些高层正在秘密接触下层的黑帮，或许你可以去打听打听。</em>' },
+        { text: '试图触摸触手', loveChange: -4, response: '你伸手想碰他紫青色的触手。他瞬间收缩，触手上的吸盘分泌出危险的毒液。<em>哎呀，小可怜，别随便乱碰。这可是会让你在极乐中脑死亡的毒药哦。</em>' },
+        { text: '赞美舞台装', loveChange: 2, response: '你称赞他的紫色渐变真丝衬衫。他得意地扭动着身体，像水母一样轻盈。<em>亲爱的，你的眼光真不错。这可是我为了今晚的演出特意定制的。</em>' },
+        { text: '嫌弃他的毒液', loveChange: -2, response: '你捂住鼻子，表示讨厌他身上的毒素味道。他翻了个白眼，细长的尾巴烦躁地拍打地面。<em>真是不解风情。不知道有多少人排着队求我给他们注射一点“快乐”呢。</em>' },
+        { text: '邀请同台', loveChange: 1, response: '你开玩笑说要和他一起上台表演。他掩嘴娇笑，亮黄色的眼睛弯成月牙。<em>哦~你真有意思。不过我的舞台可不适合新手，你会被我的毒素溶化得骨头都不剩的。</em>' }
+    ],
+    '厄尔': [
+        { text: '尝试安抚左边', loveChange: 2, response: '你轻声安抚他怯懦的左半边脸。他左眼流下泪水，声音哽咽。<em>谢谢你……但我控制不住……那个怪物要出来了……</em>' },
+        { text: '挑衅右边', loveChange: -4, response: '你冲他狂笑的右半边脸挑衅。他猛地发出刺耳的狂笑，黑红色的污血飞溅，暗红色的恶魔角亮起诡异的光芒。<em>对！就是这样！来啊，互相撕碎吧！哈哈哈哈！</em>' },
+        { text: '递给绷带', loveChange: 3, response: '你递给他一卷干净的绷带。他左手颤抖着接过，拼命擦拭着流血的右眼。<em>谢谢……可是没用的……深渊的侵蚀……永远停不下来……</em>' },
+        { text: '询问伊莱亚斯', loveChange: -2, response: '你问起那个疯狂科学家的名字。他突然像是触电般浑身痉挛，左手死死掐住自己的脖子。<em>别提他！别提那个名字！痛……好痛！</em>' },
+        { text: '静静旁观', loveChange: 1, response: '你站在一旁，看着他左右互搏。他最终无力地瘫倒在地，右半边的狂笑和左半边的抽泣交织成一首绝望的悲歌。' }
+    ],
+    '西珀': [
+        { text: '夸奖他的身手', loveChange: 2, response: '你称赞他刚才的翻滚动作。他得意地抖了抖雪白的毛耳。<em>那是当然！在整个地狱，能跟上我速度的家伙一只手都数得过来。</em>' },
+        { text: '试图抢夺宝石', loveChange: -5, response: '你伸手去抓他手里的灵魂宝石。他像炸毛的猫一样瞬间弹开，利爪在你手背上留下一道血痕。<em>想黑吃黑？你找错对象了！</em>' },
+        { text: '购买失窃物', loveChange: 3, response: '你表示想买下那颗宝石。他琥珀色的竖瞳转了转，开出了一个极高的天价。<em>看在你是原生恶魔的份上，给你个友情价。要不要？</em>' },
+        { text: '摸他的毛茸茸耳朵', loveChange: -2, response: '你伸手想摸他的雪豹耳朵。他立刻呲出小虎牙，喉咙里发出警告的低吼。<em>手别乱伸！只有死人才能碰我的耳朵！</em>' },
+        { text: '分享发光小物件', loveChange: 2, response: '你拿出一块打磨光滑的傲慢环水晶。他眼睛一亮，毫不客气地一把抓走。<em>谢啦！这玩意儿虽然不值钱，但看着挺顺眼。</em>' }
+    ],
+    '塞缪尔': [
+        { text: '买一瓶好酒', loveChange: 4, response: '你花重金买了一瓶纯度极高的烈酒递给他。他眼睛瞬间放光，抢过酒瓶猛灌了一大口，打了个满足的酒嗝。<em>好酒！看在酒的份上，今天主就宽恕你一次。</em>' },
+        { text: '劝他少喝点', loveChange: -3, response: '你劝他别喝了。他勃然大怒，举起几百斤的铁十字架猛砸在你脚边。<em>少他妈对老子指手画脚！你以为你是谁？该下地狱的圣母？</em>' },
+        { text: '赞赏物理超度', loveChange: 2, response: '你夸赞他的铁十字架杀伤力惊人。他咧开满是酒气的嘴，露出残忍的笑意。<em>那是当然！能把那些恶心家伙的脑浆敲出来，才是真正的净化！</em>' },
+        { text: '嘲笑他的神父袍', loveChange: -4, response: '你嘲笑他破烂的神父袍。他直接一口烈酒喷向火源，化作一道火柱向你袭来。<em>闭上你的狗嘴！别逼我把你烧成灰烬！</em>' },
+        { text: '询问生前事', loveChange: -1, response: '你问起他在人间的教会。他神经质地干呕了一声，眼神变得极其凶狠。<em>那是一个比地狱还要肮脏一百倍的粪坑。别再提了，否则我连你一块砸了。</em>' }
+    ],
+
+
+    '洛柯': [
+        { text: '提议买军火', loveChange: 2, response: '你把几枚金币拍在桌上。洛柯三对眼睛同时亮了起来，手里的重型手枪瞬间变魔术般消失在风衣里。<em>算你懂规矩。老子这里的货，连君主的脑袋都能轰出个坑。</em>' },
+        { text: '嘲笑他的身高', loveChange: -5, response: '你看着他悬空的双脚笑了一声。洛柯脸上的金属缝合线瞬间崩断，裂口咧到耳根。他以肉眼无法捕捉的速度从天花板上倒挂下来，枪口直接抵住你的眉心。<em>你想试试膝盖被轰碎的滋味吗，高脚怪？</em>' },
+        { text: '赞赏他的火力', loveChange: 3, response: '你看着他风衣里的重火力吹了声口哨。洛柯得意地咧开嘴，毒液滴在吧台上。<em>算你有眼光！这可是老子亲手改装的。改天带你去看看真正的“烟花表演”！</em>' },
+        { text: '盯着他的眼睛', loveChange: -1, response: '你忍不住多看了几眼他脸上的六只眼睛。洛柯烦躁地扭动了一下脖子，发出骨骼摩擦的咔哒声。<em>看什么看？再看老子把你的眼珠子挖出来当下酒菜！</em>' },
+        { text: '请他喝一杯', loveChange: 1, response: '你推过去一杯烈酒。洛柯狐疑地看了你一眼，端起酒杯一饮而尽。<em>老子可不欠你人情。下次有人找你麻烦，报老子的名字。</em>' }
+    ],
+    '维奥莱特': [
+        { text: '赞美她的品味', loveChange: 2, response: '你称赞了她的红茶和音乐。维奥莱特嘴角泛起一抹优雅的微笑。<em>在这个粗鄙的地方，难得遇到懂得欣赏美好事物的人。你今天的品味为你赢得了我十分钟的时间。</em>' },
+        { text: '试图隐瞒情报', loveChange: -4, response: '你试图在交易中撒谎。维奥莱特那双没有瞳孔的纯白眼眸仿佛看穿了你的灵魂。<em>在“盲点”撒谎，是非常愚蠢的行为。我的眼睛虽然看不见光，但能看清你灵魂里腐臭的谎言。</em>' },
+        { text: '购买秘密', loveChange: 3, response: '你奉上足够的金币。她轻轻摘下一只蕾丝手套，收下金币。<em>很公平的交易。如果你想知道最近贪婪之环高层在筹划什么，也许你可以多留意一下那些不起眼的契约公证人。</em>' },
+        { text: '盯着她的眼睛', loveChange: -1, response: '你一直盯着她纯白的眼眶。她不悦地微微蹙眉，端起茶杯遮住半张脸。<em>如果你的好奇心只有这种程度，那我们的谈话可以结束了。这种无礼的注视令我感到乏味。</em>' },
+        { text: '邀请她合作', loveChange: 2, response: '你提出长期情报交换的意向。她轻轻放下茶杯，手指交叉。<em>长期合作？那要看你能活多久了。不过，我喜欢有野心的人。</em>' }
+    ],
+    '维德': [
+        { text: '出示抵押物', loveChange: 2, response: '你拿出一件沾着血迹的魔法物品。维德右眼的荧光复眼转动了一下，似乎很满意。<em>带着贪婪与绝望的味道。这是一件好商品。我会给你一个“合理”的价格。</em>' },
+        { text: '抱怨环境潮湿', loveChange: -2, response: '你抱怨当铺里的海腥味太重。维德脸上的假笑消失了，一股让人窒息的深海威压瞬间笼罩了你。<em>不喜欢深海的泥泞？那你最好现在就离开，免得自己也被溺死在这里。</em>' },
+        { text: '赞叹他的眼光', loveChange: 3, response: '你夸赞他对物品的估价极其精准。他张开长满交错尖牙的嘴低沉地笑了。<em>在这个地方，眼光就是寿命。不过，能看懂我的眼光，你也算有点本事。</em>' },
+        { text: '拒绝签契约', loveChange: -3, response: '你拒绝了他递过来的借款契约。他将契约收回，绿色的海藻头发微微晃动。<em>真遗憾。放弃了这根救命稻草，你很快就会发现，外面的世界比深海更冷。</em>' },
+        { text: '打听走私渠道', loveChange: 1, response: '你试探性地询问他是否有特别渠道。他脸上的复眼闪烁了一下。<em>你想把手伸进深海里？可以。只要你付得起溺水的代价。</em>' }
+    ],
+
+
+    '康特·恩顿': [
+        { text: '观察他的异常', loveChange: 2, response: '你盯着他颤抖的手臂。他突然凑近，粉色獠牙几乎贴到你脸上。<em>你觉得这很奇怪？不！这是进化！这感觉太棒了！咯咯咯！</em>说着，他从指尖挤出一滴荧光液体，液体滴在地上瞬间腐蚀出一个冒烟的黑洞。' },
+        { text: '拒绝他的推销', loveChange: -1, response: '你摆手拒绝了他递来的注射器。他瞳孔骤缩，原本狂热的笑脸瞬间垮塌，变成极度的狂躁。<em>你不懂艺术！你不懂飞升的快乐！你们这些清醒的蠢货！</em>他神经质地抓挠着自己的脸，留下道道血痕。' },
+        { text: '询问他的药剂', loveChange: 3, response: '你顺口问起他手里的荧光液体。他像献宝一样高举注射器，<em>伊莱亚斯！那个伟大的疯子给我的！不过我加了点我自己的血，这玩意现在能让巨龙都看到太奶！你要不要来一口？</em>' },
+        { text: '警告他安静点', loveChange: -2, response: '你让他闭嘴。他愣了一下，接着发出震耳欲聋的狂笑。<em>嘘——嘘！幻觉里的小人在尖叫！你听不到吗？他们说你要杀我！你要杀我！</em>他像一只受惊的毒蜘蛛一样瞬间窜上天花板，用那双布满血丝的半垂眼死死盯着你。' },
+        { text: '给他一些金币', loveChange: 1, response: '你扔给他几枚金币。他抓起金币放进嘴里咬了咬，含糊不清地嘟囔：<em>冰冷的金属……买不到真正的快乐。不过能换到伊莱亚斯的残次品。</em>他把金币塞进夹克口袋，咯咯笑着向你挥了挥那只扭曲的手。' }
+    ],
+    '泽维尔': [
+        { text: '询问他的工作', loveChange: 2, response: '你问他平时处理什么。他优雅地整理了一下领带，<em>一些碍眼的垃圾，一些不听话的货物。我的服务很贵，但绝对干净。阴影会吞没一切，连灵魂都不剩。</em>' },
+        { text: '远离他的阴影', loveChange: -1, response: '你后退半步，避开蔓延到脚边的黑色黏液。他狭长的双眼眯起，露出神经质的愉悦笑容。<em>怕脏？还是怕死？猎物总是喜欢挣扎，但这只会让阴影更兴奋。</em>黏液像毒蛇一样缩回了他脚下。' },
+        { text: '赞赏他的效率', loveChange: 3, response: '你夸赞他清理现场的手法。他裂开非人的大嘴，发出一连串轻声的低笑。<em>懂行的人越来越少了。很多人喜欢把内脏弄得满地都是，那简直是野蛮人的做法。阴影，才是最完美的裹尸布。</em>' },
+        { text: '质疑他的收费', loveChange: -2, response: '你抱怨他的要价太高。他嘴角的笑容瞬间消失，纯黑的巩膜死死盯住你。深渊暗影化作一柄抵住你喉咙的黑刃。<em>我从不讨价还价。要么付钱，要么……变成免费的饲料。</em>' },
+        { text: '提议雇佣他', loveChange: 4, response: '你表示未来可能有需要他的时候。他重新换上了那副完美的神经质笑容，暗影化作一张黑色的名片递到你手里。<em>随时恭候，只要你能付得起代价。记住，我只认金币，不认交情。</em>' }
+    ],
+    '塞西莉亚': [
+        { text: '称赞她的裙子', loveChange: 3, response: '你称赞她的高定束腰宫廷长裙。她用蕾丝折扇遮住半张脸，发出银铃般的笑声。<em>哎呀，您真有眼光。这可是用上好的材料定制的。</em>你注意到她的目光始终避开你的眼睛，带着一种高高在上的傲慢。' },
+        { text: '拆穿她的伪装', loveChange: -5, response: '你直言不讳地指出她刚刚杀人的事实。她嘴角的笑容瞬间僵住，蔚蓝的眼睛里满是冰冷的杀意。她手中的洋伞瞬间弹出一截淬毒细剑，<em>有些话，还是带进坟墓里比较好。</em>但她很快又收回了武器，恢复了柔弱的神态，只是眼神不再有一丝温度。' },
+        { text: '顺着她的话说', loveChange: 2, response: '你顺着她的抱怨安慰她。她眼里立刻泛起泪花，用香水味浓郁的手帕轻轻擦拭眼角。<em>您真是个好人。在这个残酷的地方，只有您愿意听我诉苦。</em>尽管她的表情完美无瑕，但你总觉得她的眼神像是在打量一件即将被拍卖的商品。' },
+        { text: '询问她项圈', loveChange: -3, response: '你盯着她的红宝石项圈。她下意识地捂住脖子，眼底闪过一丝极度的厌恶和生理性的反胃。<em>探究一位女士的隐私，可不是什么绅士的作为。</em>她冷冷地转过身，不再理你。' },
+        { text: '邀请她喝一杯', loveChange: 1, response: '你端起酒杯。她微笑着与你碰杯，举止优雅。<em>为我们在这个地狱中的相遇干杯。</em>她轻轻抿了一口红酒，但你注意到她碰杯后，悄悄用一块手帕擦了擦被你触碰过的杯壁。' }
+    ],
+
     '莱利': [
         { text: '问他关于水晶矿场的事', loveChange: 2, response: '你问他关于水晶矿场的事，莱利停下了手中的刀。那把自制小刀的刀尖还抵在金属片上，但他没有再往下削。他沉默了几秒，那双左金右银的异色瞳孔扫了你一眼——那目光很短，像是确认你不是在开玩笑。他用拇指指腹擦了擦刀刃上沾着的金属碎屑，然后偏过头，用下巴指了指矿场东边的方向。<em>……矿场东边有个废弃的坑道。里面有残留的水晶碎片。</em>他的声音比刚才多了一丝不易察觉的犹豫，像是在权衡要不要把后半句话说完。他的长尾巴在碎石地面上缓慢地扫了一下，卷起一小撮粉尘。<em>不过那里偶尔会塌方。我不建议你进去。</em>说完，他重新低下头继续削金属片。但你注意到，他削的速度比之前慢了许多——也许他在等你再问点什么。' },
         { text: '问他关于眼睛的事', loveChange: -3, response: '你问他关于眼睛的事，话音未落，莱利的猫耳瞬间向后折起，几乎贴紧了灰色的头发。他的手指猛地攥住了小刀，指关节因为过度用力而泛白。周围的空气骤然绷紧——那些散落在地上的金属碎屑和废弃铁器开始发出细微的震颤，如同被无形的力量唤醒。那双左金右银的异色瞳孔死死地锁定了你，眼底翻涌着不加掩饰的愤怒和某种更深的、被触及禁忌的痛苦。<em>……你问了不该问的问题。</em>他的声音骤然变得极冷——比矿坑最深处的寒风还要冷。他站起身，背对着你，那条长尾巴僵硬地卷在腿边，尾尖微微发颤。<em>如果你再提一次，我会让你后悔走进这个矿场。</em>对话已经结束了。他全身的每一个线条都在告诉你：再靠近一步，你会后悔。' },
@@ -3741,7 +4194,7 @@ function addNpcButton(npcId, ring, level) {
                 return;
             }
             var remain = getNpcTalkRemaining(npcId);
-            ab('💬 与 ' + npcId + ' 交谈（剩余' + remain + '次）', function() {
+            ab('与 ' + npcId + ' 交谈（剩余' + remain + '次）', function() {
                 addTime(5);
                 if (!player.relationships[npcId]) sceneNpcFirstMeet(npcId, ring, level);
                 else sceneNpcInteraction(npcId, ring, level);
@@ -3762,7 +4215,7 @@ function enterShop(type) {
             var typeName = { food: '食品店', cloth: '服装店', item: '道具店' } [type];
             var html = '<div class="scene-title">◆ ' + typeName + ' ◆</div>';
             html += '<div style="background:#180610;border:1px solid #2a0a16;border-radius:6px;padding:10px;margin:8px 0;">';
-            html += '<p style="color:#8a5a62;font-size:0.78em;margin-bottom:6px;">📦 可购买物品：</p>';
+            html += '<p style="color:#8a5a62;font-size:0.78em;margin-bottom:6px;">可购买物品：</p>';
             for (var i = 0; i < items.length; i++) {
                 var it = items[i];
                 var extra = '';
@@ -3770,7 +4223,7 @@ function enterShop(type) {
                 if (it.hp) extra += ' ❤️+' + it.hp;
                 if (it.strength) extra += ' 💪+' + it.strength;
                 if (it.charisma) extra += ' 💋+' + it.charisma;
-                if (it.magic) extra += ' ✨+' + it.magic;
+                if (it.magic) extra += ' +' + it.magic;
                 if (it.sanity) extra += ' 🧠+' + it.sanity;
                 if (it.desire) extra += ' 🔥+' + it.desire;
                 if (it.agility) extra += ' 🏃+' + it.agility;
@@ -3779,7 +4232,7 @@ function enterShop(type) {
                     extra + '</p>';
                 if (it.buffs) {
                     for (var b = 0; b < it.buffs.length; b++) {
-                        html += '<p style="font-size:0.65em;color:#80c080;padding-left:16px;">✨ ' + it.buffs[b].name +
+                        html += '<p style="font-size:0.65em;color:#80c080;padding-left:16px;">' + it.buffs[b].name +
                             ': ' + it.buffs[b].desc + '</p>';
                     }
                 }
@@ -3818,7 +4271,7 @@ function enterShop(type) {
                             }
                             checkHp();
     ua();
-                            st('<p>✅ 你购买了 <span style="color:#e8c060;">' + item.name + '</span>。</p>');
+                            st('<p>你购买了 <span style="color:#e8c060;">' + item.name + '</span>。</p>');
                         } else {
                             st('<p class="highlight">⚠️ 金币不足。需要 ' + item.price + ' 金币，你只有 ' + player.gold +
                                 ' 金币。</p>');
@@ -3899,12 +4352,12 @@ var L = {
 
 // ==================== 各环新手教程NPC数据 ====================
 var ringTutorialNPCs = {
-    '贪婪之环': { npcName: '科尔温', placeName: '诚信典当行', introScene: '铜板巷的空气中弥漫着霉味和绝望。街道两旁是摇摇欲坠的当铺和债奴工坊，每一个路过的人都行色匆匆，眼神中混合着贪婪和恐惧——他们在计算每一个擦肩而过的人的价值，也在担心自己成为别人算计的对象。巷子深处，一间挂着"诚信典当"招牌的店铺突兀地亮着灯。那招牌上的金字已经褪色，但"诚信"两个字被人用新鲜的油漆重新描过——在这条街上，这几乎是一种讽刺。\n\n一个精瘦的男人倚在门框上。他穿着剪裁合体的深色外套，领口别着一枚褪色的金质徽章——那是曾经在玛门商行任职过的标志，如今只剩下装饰的意义。他戴着单边金丝眼镜，镜片后的眼睛在昏暗的灯光下闪烁着金色的光芒。他的手指在一把精致的黄铜算盘上飞速拨动，算珠碰撞的声音清脆而急促，像是在给这条街上每一个路过的灵魂标价。\n\n看到你走近，他停下了手指。算盘上的最后一颗珠子停在了某个数字上——仿佛那恰好是你的价格。', npcDesc: '科尔温——前玛门商行的中级职员。三年前因为一笔失败的内部投资被赶出了金丝街，如今在铜板巷经营这家典当行。他专门从走投无路的新人身上榨取价值，但和铜板巷其他放高利贷的不同——他至少会给你一份看起来公平的合同。至于合同的附属条款里写了什么，那就不是他的问题了。他的十根手指上戴满了各式戒指——每一枚都刻着不同的契约符文，据说这些戒指能让他感知到周围一切有价值的事物。', dialogue: '新面孔——而且，让我猜猜，口袋不太鼓。他摘下单片眼镜，用袖口擦了擦。别紧张。在贪婪之环，穷不是罪。穷还不愿意想办法变富，才是罪。我叫科尔温，以前在金丝街的罪业银行做事——你听说过罪业银行吗？没听过也没关系，你只需要知道，我曾经坐在比这条巷子高一万倍的地方数钱。现在嘛——他环顾了一下自己破旧的店铺，嘴角扯出一个自嘲的笑容——我在这里。但这不代表我不能帮你。\n\n我这儿有几条路给新人，看你想走哪条。听好了，我只说一遍，因为重复会浪费我的时间，而时间就是金钱——在贪婪之环，这句话不是比喻。\n\n第一条：典当。你身上有什么值钱的东西？武器？饰品？情报？哪怕是你的一颗牙，只要它值得什么东西，我就能给你一个价格。当然——这个价格不会是你想要的，但这就是典当的本质。\n\n第二条：借贷。我借你一笔启动资金，利息不高——每周15%，复利计算。别用那种眼神看我。在金丝街，最低的利率是每周20%。我已经给你打了折。\n\n第三条：我给你一份工作。看到巷子尽头那扇绿色的门了吗？里面住着一个欠了我三个月账的屠夫。帮我把账收回来——不管用什么方法——收回来的钱我们对半分。怎么样？选一个吧。', option1Text: '💰 典当身上值钱的东西（失去5-15金币，耗时5分钟）', option2Text: '📝 签借贷合同（获得10金币，但欠下高利贷，耗时3分钟）', option3Text: '⚔️ 帮他收烂账（触发战斗，胜利获得20金币，耗时10分钟）', option4Text: '↩ 离开典当行', hasSell: false, hasCombat: true, combatName: '欠债的屠夫', combatHp: 45, combatAtk: 9, combatDef: 3, combatReward: 20, combatSin: 3 },
-    '暴怒之环': { npcName: '碎骨·乌尔里克', placeName: '碎骨铁匠铺', introScene: '碎骨巷的空气中弥漫着血腥和铁锈的混合气味。街道两侧的墙壁上布满了凹痕和裂缝——有些是拳头砸的，有些是刀刃砍的，还有一些是整具身体被摔上去时留下的。远处传来拳头撞击肉体的闷响和断断续续的嘶吼声，但巷子里的行人都像是没听见一样匆匆走过。在暴怒之环，打斗的声音和呼吸一样平常。\n\n巷子尽头是一间没有招牌的铁匠铺。门口堆满了废弃的兵器——断裂的长剑、凹陷的盾牌、卷刃的斧头——以及破碎的盔甲碎片。在这些废铁堆中，一个高大的身影正抡着铁锤砸在一块烧红的铁块上，每一次锤击都迸出璀璨的火星。他的左臂不是血肉——而是一只锈迹斑斑的粗重铁质义肢，随着每次锤击发出沉闷的金属撞击声，那声音混在铁锤的节奏中，形成了一种粗粝的、属于暴怒之环特有的打击乐。\n\n看到你走近，他放下铁锤，锤头砸在铁砧上发出一声巨响。他用一块黑乎乎的布擦了擦手——或者说擦了擦他剩下的那只手——然后转过身来。他的光头上有三道平行的抓痕，从左眼上方一直延伸到后脑，据说是和一头地狱猎犬搏斗时留下的。那道伤疤让他的表情永远带着一种狰狞的笑意。', npcDesc: '乌尔里克——血焰角斗场的前任角斗士。在血焰角斗场打了二十年，从最低级的铁笼格斗一路打到冠军赛，然后在拿到冠军的那天宣布退役。在暴怒之环，能够活着退役的角斗士屈指可数——大多数人要么死在角斗场上，要么在退役后被人寻仇杀死。乌尔里克是例外。他靠打铁维生，偶尔训练新来的角斗士。每一个想进血焰角斗场的年轻人，都会先来他的铁匠铺——不是为了武器，而是为了得到他的认可。', dialogue: '哈！新崽子！他咧嘴笑了，露出一口被金属碎片崩掉了一半的牙齿。你身上还没有血腥味——这得改。在暴怒之环，干净的拳头是最大的耻辱。我叫乌尔里克，以前在血焰角斗场打了二十年——看到这个了吗？他举起铁质义肢，那东西在炉火的映照下泛着暗红色的光——这是第八年的纪念品。一头地狱猎犬咬掉了我的左手，我把它宰了，用它的骨头打了一副新胳膊。它比原来的好用。\n\n在暴怒之环，只有一条规矩——强者活，弱者死。没有中间地带。你想变强？我这儿有三条路。\n\n第一条：把你的金币留下，换一把像样的武器。我打的每一把刀都能砍进骨头三寸深——这是我在角斗场用二十年经验换来的本事。\n\n第二条：进铁笼子跟我打一场。活下来，我免费给你打一把刀。死在里面——你的尸体就是下一把刀的淬火材料。\n\n第三条：滚出我的铺子，别浪费我的时间。我不是开慈善机构的。', option1Text: '⚔️ 用金币换武器（失去10金币，获得铁匠短刀，耗时5分钟）', option2Text: '💀 进铁笼和乌尔里克打一场（高强度战斗，胜利获得武器，耗时10分钟）', option3Text: '🏃 转身离开', option4Text: '', hasSell: false, hasCombat: true, combatName: '碎骨·乌尔里克', combatHp: 65, combatAtk: 15, combatDef: 6, combatReward: 0, combatSin: 0 },
-    '色欲之环': { npcName: '薇尔维特', placeName: '暗红之门', introScene: '暗巷的光线昏暗而暧昧。墙壁上涂着褪色的霓虹颜料，在黑暗中泛着微弱的粉紫色光芒——那是最廉价的魅惑涂料，在欲望之环的任何一个街角都能买到。空气中有一种甜腻的香气，混合了过期的香水、汗水和某种更原始的、让人心跳加速的气息。巷子两侧的窗户大多封死了，但偶尔有一两扇窗户透出摇曳的烛光，窗帘后面隐约可见晃动的身影。\n\n巷子深处有一扇漆成暗红色的门。门框上挂着一串风铃——不是普通的风铃，而是由细小的骨骼和彩色玻璃碎片串成的。每一次微风吹过，风铃就发出细碎的响声，那声音不像音乐，更像是某种低沉的、撩拨神经的耳语。门半开着，透出柔和的粉色灯光。\n\n一个深紫色长发的魅魔倚在门边。她的长发垂到腰际，发丝间缠绕着细小的银铃。她的眼眸是与发色相配的紫罗兰色，在昏暗的光线下泛着温润的光泽。她的嘴角永远挂着一个似是而非的微笑——那弧度恰好让人无法判断她是在邀请还是在审视。她手指间夹着一根细长的烟管，烟雾在她面前缭绕，让她的面容若隐若现。\n\n她看到你时，嘴角的笑意加深了一分。那不是欢迎——而是一种评估，像一个经验丰富的鉴宝师在审视一件尚未定价的商品。', npcDesc: '薇尔维特——在暗巷经营着一家小型情欲旅馆的魅魔。她不是最高阶的魅魔——那些在霓虹大道上——但在暗巷这一带，她的名字就是通行证。她的旅馆是色欲之环底层最安全的交易场所，前提是你付得起她的价格。有人说她曾经是阿斯蒙蒂斯本人的宠儿，后来因为厌倦了红雾宫殿的勾心斗角而自愿下放到暗巷。她本人从不承认也不否认这个传闻——这让她的名声变得更加神秘。', dialogue: '嗯~新来的。她吐出一口烟雾，那烟雾在你面前盘旋了一瞬，然后消散在空气中。你身上还没有欲望之环的味道——太干净了。在别的地方，干净可能是优点。在这里——她歪了歪头，紫罗兰色的眼眸在昏暗中闪了一下——干净意味着你还没有被标记。没有被占有过。没有被欲望触碰过。在这里，这是一张白纸——而白纸的价值，取决于谁在上面写字。\n\n我叫薇尔维特。这家旅馆是我的。在暗巷，它是最安全的地方——因为你在这里遇到的每一个人，都是付了钱才进来的。付钱意味着守规矩。不守规矩的人——她用手指了指门框上那串风铃——在上面。\n\n我可以帮你——如果你愿意为我工作。在色欲之环，最大的资本不是金币。是你的身体，你的魅力，还有你让别人为你着迷的能力。如果你有这些，你可以在这里活得比任何地方都好。如果你没有——那你至少需要我的保护。\n\n第一条：把金币交出来，换取我的保护。你在暗巷不会被人骚扰——至少不会被人成功地骚扰。\n\n第二条：为我工作。提供服务，报酬丰厚。你的外表在这里是资本，别浪费它。\n\n第三条：如果你觉得自己够强，可以试着挑战我。不过——她吸了一口烟管，烟雾从她嘴角溢出——上一个尝试的人现在在我的风铃上。他的骨头很轻，风一吹就响。', option1Text: '💰 交出金币换取保护（失去8金币，耗时3分钟）', option2Text: '💋 为她工作（卖身路线，色欲环魅力判定加成，耗时30分钟）', option3Text: '⚔️ 挑战她（触发战斗，耗时10分钟）', option4Text: '↩ 离开暗红之门', hasSell: true, sellThreshold: 7, sellReward1: 10, sellReward2: 18, sellReward3: 30, hasCombat: true, combatName: '薇尔维特', combatHp: 35, combatAtk: 7, combatDef: 2, combatReward: 15, combatSin: 5 },
-    '嫉妒之环': { npcName: '暗鳍', placeName: '栈桥下的阴影', introScene: '水沟区的地面上永远浸着一层齐踝深的黑水。这水不是普通的水——它带着腐蚀性，会缓慢地褪去一切光鲜的颜色。墙壁上所有的涂鸦都被它侵蚀成了模糊的灰色，路边的招牌上的字迹也被溶解成了无法辨认的墨迹。在黑水中走得太久，连皮肤都会开始发痒，然后蜕皮——但水沟区的人已经习惯了。他们的皮肤早就蜕过无数次了。\n\n在一个歪斜的木栈桥下面，你看到了一个蜷缩着的身影。栈桥原本连接着嫉妒之环的中层区域，但已经废弃多年——桥面上布满了裂缝，随时可能坍塌。没有人会到这里来——除了他。\n\n他蹲在水边，青灰色的手指在水中划来划去。那手指之间长着半透明的蹼，每划一次水面就泛起一圈圈暗色的涟漪。他时不时从黑水中捞起一些东西——一块生锈的徽章、半片破损的镜片、一段断了的手链、一片沾满污渍的羽毛。他把每一样东西都举到眼前仔细端详，灰绿色的眼眸中闪烁着一种复杂的、让你不安的光芒——那是在判断。在评估。在嫉妒。然后他把那些东西放进身后的一个防水皮袋里，继续捞下一样。\n\n察觉到你的目光，他转过头来。他的脸很瘦，颧骨突出，肤色是水底生物特有的青灰色。他的瞳孔在阴暗中收缩成两条细缝。', npcDesc: '暗鳍——没有人知道他的真名，也没有人知道他在这里待了多久。他总是在水沟区捡东西，那些被上层环层丢弃的、遗忘的、不屑一顾的东西。但如果你需要情报——任何情报——他总有办法搞到。他出售的情报价格低廉但真假参半，就像他从黑水中捞起来的所有东西一样：你需要自己判断什么是宝石，什么是垃圾。', dialogue: '我、我看到你了。他说话时没有抬头，仍然盯着水中的什么东西。你也是来捡东西的？还是来嘲笑我的？如果是嘲笑的话——他歪了歪头，灰绿色的眼眸终于看向你——你可以走了。我已经被嘲笑够了。如果你是想买东西——他拍了拍身后的皮袋——那就另当别论。\n\n我叫暗鳍。在嫉妒之环，每个人都在捡别人丢掉的东西。上面的环——他用手指朝上方指了指——傲慢环、贪婪环、暴怒环……他们每天都会丢掉很多东西。情报、物品、秘密。它们顺着黑水流下来，流到水沟区，然后——他做了一个捞的动作——被我捡起来。\n\n你知道水沟区最值钱的是什么吗？不是这些破东西——他摇了摇手中的半片镜片——是秘密。每一个人嫉妒别人的时候，都会暴露自己的弱点。我收集这些弱点。我出售这些弱点。如果你有兴趣——我这儿有几条路。\n\n第一条：花钱买情报。不贵——但我不保证情报是真的。在嫉妒之环，真假不重要。重要的是你想要什么。\n\n第二条：帮我除掉一个人——嫉妒之环的规矩很简单。你得不到的，别人也别想得到。如果你想让谁失去什么，我可以帮你。当然，收费的。\n\n第三条：你可以试着抢我的皮袋——他说这话的时候，眼睛突然变得锐利起来——但你要想清楚。在水沟区，我知道每一个可以藏身的角落和每一条可以逃跑的暗流。你不知道。', option1Text: '📜 花钱买情报（失去5金币，耗时3分钟）', option2Text: '🔪 委托他除掉一个人（失去10金币，罪业值+5，耗时5分钟）', option3Text: '⚔️ 抢他的皮袋（触发战斗，耗时10分钟）', option4Text: '↩ 离开栈桥', hasSell: false, hasCombat: true, combatName: '暗鳍', combatHp: 30, combatAtk: 6, combatDef: 1, combatReward: 8, combatSin: 8 },
-    '暴食之环': { npcName: '饕餮·格鲁姆', placeName: '铁锅旁的棚子', introScene: '残渣区的气味几乎让人无法呼吸。腐烂的食物残渣堆积成山——果皮、骨头、变质的面包、发霉的蛋糕——它们层层叠叠地堆在街道两侧，形成了一道道令人作呕的堤坝。但在这片恶臭的海洋中，你却闻到了一丝奇异的香气。那是某种正在烹煮的食物的味道——浓烈、鲜美、带着一种让人无法抗拒的诱惑力。你的胃不由自主地发出了咕噜声。\n\n你顺着香气走过去。在残渣区深处的一个角落里，有人用废木板和破帆布搭了一个简陋的棚子。棚子下面，一个肥胖得不成比例的恶魔正坐在一个大铁锅旁边。他的身上挂着一条满是油渍的围裙，围裙上缝着大大小小十几个口袋，每个口袋里都塞满了各种调味料的小瓶子。他的脸圆得几乎看不到脖子，但那双小眼睛里闪烁着一种危险的精光——那不是一个单纯的厨师的温和，而是一种掠食者在进食前的专注。\n\n铁锅里咕嘟咕嘟地煮着深色的液体——那颜色太深了，看不出里面有什么。但那股香气就是从这口锅里飘出来的。锅的旁边摆着一排碗，碗的材质各不相同——有木头的、有金属的、有陶瓷的——显然是从不同的地方捡来的。\n\n他注意到你的目光，用一把大汤勺敲了敲锅沿。那声音沉闷而厚重，在残渣区的恶臭中回荡。', npcDesc: '格鲁姆——大家都叫他饕餮。他是暴食之环底层最有名的"厨师"——用别人丢弃的食材烹饪出让人欲罢不能的料理。他在暴食之环的底层已经混了太久，久到没有人记得他是从什么时候开始在这里煮汤的。有人说他的锅里煮过恶魔的尸体，有人说他的汤能让喝下去的人上瘾——但没有人能否认，在残渣区，他的汤是唯一让人感到温暖的东西。', dialogue: '哦！新来的！他的声音洪亮而愉快，与周围的腐烂形成了诡异的对比。你饿了。我闻得出来——你胃里的声音，我在十步之外就听到了。刚诞生的总是最饿的——那饥饿不是胃里来的，是骨子里来的。是灵魂深处的空洞在喊叫。你吃了东西，它安静一会儿，然后又饿了。永远是这样。\n\n我叫格鲁姆，不过大家都叫我饕餮。在暴食之环，饥饿是一切。它比你更了解你自己。它知道你想要什么，知道你能为了填饱肚子做到什么程度。我见过太多人为了吃一口东西把自己卖了的——不是比喻，是真的签了契约。\n\n我这儿有吃的——但吃的不是免费的。在暴食之环，天下没有白吃的午餐——也没有早餐和晚餐。第一条：把你身上的金币交出来，换一碗热汤。我保证，这碗汤比你吃过的任何东西都要好。当然——别问里面放了什么。\n\n第二条：帮我收集食材。看到那边那座残渣山了吗？去翻一翻，找一些还能用的边角料。不用多好——能吃的就行。我给你辛苦费。\n\n第三条——他用汤勺指着你，小眼睛里闪过一丝危险的光芒——如果你觉得你能打得过我，你可以试试。不过我要提前告诉你——我的锅还缺一点新鲜的肉。而你已经站在我的锅旁边了。', option1Text: '🍖 用金币换一碗热汤（失去5金币，恢复15HP，耗时5分钟）', option2Text: '🗑️ 帮忙收集食材（无战斗，获得5金币，耗时15分钟）', option3Text: '⚔️ 抢他的锅（触发战斗，耗时10分钟）', option4Text: '↩ 离开棚子', hasSell: false, hasCombat: true, combatName: '饕餮·格鲁姆', combatHp: 50, combatAtk: 10, combatDef: 4, combatReward: 5, combatSin: 8 },
-    '懒惰之环': { npcName: '休眠者·莫尔', placeName: '灰雾中的躺椅', introScene: '停滞区的灰雾比懒惰之环其他地方更加浓稠。这里的雾不是飘在空中的——它是沉在地面上的，像一层厚重的灰色毯子，包裹着一切。每走一步都感到深深的倦意，那倦意不来自肌肉，而是从意识的深处涌上来的。它在你耳边低语：停下来。躺下。闭上眼睛。\n\n路边散落着分不清是睡着还是消亡的身影。他们的身体半埋在灰雾中，有些还在缓慢地呼吸——胸口每隔十几秒才起伏一次——有些则已经完全静止了。没有人能分辨出区别。在停滞区，沉睡和死亡之间的距离已经模糊到了近乎没有。\n\n就在这时，你注意到路边有一张由凝固的惰性能量构成的躺椅。那躺椅的形状完美贴合人体曲线——仿佛它已经在无数年的时间里被躺出了一个最舒适的形状。上面躺着一个几乎与灰雾融为一体的身影。他的呼吸极其缓慢，每一次胸口的起伏之间都隔了十几秒。周身散落着零星的羽毛状碎片——那是"懒得维持完整形态"的产物。\n\n就在你以为他已经睡着了的时候，两点昏沉的淡金色瞳孔突然在灰雾中亮了起来——像是两颗遥远的、快要熄灭的星星。他伸出一只手——如果那能算手的话，更像是一团稍微浓密一点的雾凝聚成了手臂的形状——指了指旁边另一张空的躺椅。', npcDesc: '莫尔——没有人知道他在这里躺了多久。有人说他从懒惰之环诞生那天就躺在这里了，也有人说他曾经是贝尔芬格的近侍，因为"太勤快"被赶了出来——当然，在懒惰之环，"太勤快"意味着一天之内做了两件事。他的身体几乎完全被灰雾包裹，只能勉强看到一张慵懒的面孔和两只淡金色的瞳孔。他的动作极其缓慢，但每一下都异常精准——仿佛他已经花了无尽的时间来优化每一个动作，使它们消耗尽可能少的能量。', dialogue: '……坐。他的声音含混不清，像是从三床被子下面传来的。别站着。站着太累了。\n\n你等了很久——久到开始怀疑他是不是又睡着了。然后那两点淡金色的光又亮了起来。\n\n我叫莫尔。不过没什么人叫我的名字——他们都叫我"那个一直躺着的家伙"。在懒惰之环，名字不重要。效率也不重要。只有一件事重要——你舒不舒服。\n\n我看你刚从外面来——他停顿了很久，久到那句话的尾音在灰雾中消散了——身上还带着其他环的灰尘。傲慢环的冷光、贪婪环的金屑、暴怒环的铁锈……它们粘在你身上，让你不舒服。它们让你的灵魂很重。\n\n我可以帮你——虽然帮人也很累。但他还是继续说了下去，仿佛是为了完成一个很久以前就答应过的承诺——你有两个选择。\n\n第一条：把金币留下，躺下来。在这里睡觉能恢复你的理智。灰雾会帮你把那些灰尘洗干净。\n\n第二条：帮我去那边的懒鬼外包公司跑个腿。我有一份文件——他用手指了指躺椅旁边一叠积满灰尘的纸张——三个月前就该交了。我不想动。你帮我去交一下。', option1Text: '💰 把金币留下，躺下休息（失去3金币，恢复5理智，耗时30分钟）', option2Text: '📋 帮他跑腿（无战斗，获得15经验值，耗时20分钟）', option3Text: '↩ 离开灰雾', option4Text: '', hasSell: false, hasCombat: false, combatName: '', combatHp: 0, combatAtk: 0, combatDef: 0, combatReward: 0, combatSin: 0 }
+    '贪婪之环': { npcName: '科尔温', placeName: '诚信典当行', introScene: '铜板巷的空气中弥漫着霉味和绝望。街道两旁是摇摇欲坠的当铺和债奴工坊，每一个路过的人都行色匆匆，眼神中混合着贪婪和恐惧——他们在计算每一个擦肩而过的人的价值，也在担心自己成为别人算计的对象。巷子深处，一间挂着"诚信典当"招牌的店铺突兀地亮着灯。那招牌上的金字已经褪色，但"诚信"两个字被人用新鲜的油漆重新描过——在这条街上，这几乎是一种讽刺。\n\n一个精瘦的男人倚在门框上。他穿着剪裁合体的深色外套，领口别着一枚褪色的金质徽章——那是曾经在玛门商行任职过的标志，如今只剩下装饰的意义。他戴着单边金丝眼镜，镜片后的眼睛在昏暗的灯光下闪烁着金色的光芒。他的手指在一把精致的黄铜算盘上飞速拨动，算珠碰撞的声音清脆而急促，像是在给这条街上每一个路过的灵魂标价。\n\n看到你走近，他停下了手指。算盘上的最后一颗珠子停在了某个数字上——仿佛那恰好是你的价格。', npcDesc: '科尔温——前玛门商行的中级职员。三年前因为一笔失败的内部投资被赶出了金丝街，如今在铜板巷经营这家典当行。他专门从走投无路的新人身上榨取价值，但和铜板巷其他放高利贷的不同——他至少会给你一份看起来公平的合同。至于合同的附属条款里写了什么，那就不是他的问题了。他的十根手指上戴满了各式戒指——每一枚都刻着不同的契约符文，据说这些戒指能让他感知到周围一切有价值的事物。', dialogue: '新面孔——而且，让我猜猜，口袋不太鼓。他摘下单片眼镜，用袖口擦了擦。别紧张。在贪婪之环，穷不是罪。穷还不愿意想办法变富，才是罪。我叫科尔温，以前在金丝街的罪业银行做事——你听说过罪业银行吗？没听过也没关系，你只需要知道，我曾经坐在比这条巷子高一万倍的地方数钱。现在嘛——他环顾了一下自己破旧的店铺，嘴角扯出一个自嘲的笑容——我在这里。但这不代表我不能帮你。\n\n我这儿有几条路给新人，看你想走哪条。听好了，我只说一遍，因为重复会浪费我的时间，而时间就是金钱——在贪婪之环，这句话不是比喻。\n\n第一条：典当。你身上有什么值钱的东西？武器？饰品？情报？哪怕是你的一颗牙，只要它值得什么东西，我就能给你一个价格。当然——这个价格不会是你想要的，但这就是典当的本质。\n\n第二条：借贷。我借你一笔启动资金，利息不高——每周15%，复利计算。别用那种眼神看我。在金丝街，最低的利率是每周20%。我已经给你打了折。\n\n第三条：我给你一份工作。看到巷子尽头那扇绿色的门了吗？里面住着一个欠了我三个月账的屠夫。帮我把账收回来——不管用什么方法——收回来的钱我们对半分。怎么样？选一个吧。', option1Text: '💰 典当身上值钱的东西（失去5-15金币，耗时5分钟）', option2Text: '📝 签借贷合同（获得10金币，但欠下高利贷，耗时3分钟）', option3Text: '帮他收烂账（触发战斗，胜利获得20金币，耗时10分钟）', option4Text: '↩ 离开典当行', hasSell: false, hasCombat: true, combatName: '欠债的屠夫', combatHp: 45, combatAtk: 9, combatDef: 3, combatReward: 20, combatSin: 3 },
+    '暴怒之环': { npcName: '碎骨·乌尔里克', placeName: '碎骨铁匠铺', introScene: '碎骨巷的空气中弥漫着血腥和铁锈的混合气味。街道两侧的墙壁上布满了凹痕和裂缝——有些是拳头砸的，有些是刀刃砍的，还有一些是整具身体被摔上去时留下的。远处传来拳头撞击肉体的闷响和断断续续的嘶吼声，但巷子里的行人都像是没听见一样匆匆走过。在暴怒之环，打斗的声音和呼吸一样平常。\n\n巷子尽头是一间没有招牌的铁匠铺。门口堆满了废弃的兵器——断裂的长剑、凹陷的盾牌、卷刃的斧头——以及破碎的盔甲碎片。在这些废铁堆中，一个高大的身影正抡着铁锤砸在一块烧红的铁块上，每一次锤击都迸出璀璨的火星。他的左臂不是血肉——而是一只锈迹斑斑的粗重铁质义肢，随着每次锤击发出沉闷的金属撞击声，那声音混在铁锤的节奏中，形成了一种粗粝的、属于暴怒之环特有的打击乐。\n\n看到你走近，他放下铁锤，锤头砸在铁砧上发出一声巨响。他用一块黑乎乎的布擦了擦手——或者说擦了擦他剩下的那只手——然后转过身来。他的光头上有三道平行的抓痕，从左眼上方一直延伸到后脑，据说是和一头地狱猎犬搏斗时留下的。那道伤疤让他的表情永远带着一种狰狞的笑意。', npcDesc: '乌尔里克——血焰角斗场的前任角斗士。在血焰角斗场打了二十年，从最低级的铁笼格斗一路打到冠军赛，然后在拿到冠军的那天宣布退役。在暴怒之环，能够活着退役的角斗士屈指可数——大多数人要么死在角斗场上，要么在退役后被人寻仇杀死。乌尔里克是例外。他靠打铁维生，偶尔训练新来的角斗士。每一个想进血焰角斗场的年轻人，都会先来他的铁匠铺——不是为了武器，而是为了得到他的认可。', dialogue: '哈！新崽子！他咧嘴笑了，露出一口被金属碎片崩掉了一半的牙齿。你身上还没有血腥味——这得改。在暴怒之环，干净的拳头是最大的耻辱。我叫乌尔里克，以前在血焰角斗场打了二十年——看到这个了吗？他举起铁质义肢，那东西在炉火的映照下泛着暗红色的光——这是第八年的纪念品。一头地狱猎犬咬掉了我的左手，我把它宰了，用它的骨头打了一副新胳膊。它比原来的好用。\n\n在暴怒之环，只有一条规矩——强者活，弱者死。没有中间地带。你想变强？我这儿有三条路。\n\n第一条：把你的金币留下，换一把像样的武器。我打的每一把刀都能砍进骨头三寸深——这是我在角斗场用二十年经验换来的本事。\n\n第二条：进铁笼子跟我打一场。活下来，我免费给你打一把刀。死在里面——你的尸体就是下一把刀的淬火材料。\n\n第三条：滚出我的铺子，别浪费我的时间。我不是开慈善机构的。', option1Text: '用金币换武器（失去10金币，获得铁匠短刀，耗时5分钟）', option2Text: '💀 进铁笼和乌尔里克打一场（高强度战斗，胜利获得武器，耗时10分钟）', option3Text: '🏃 转身离开', option4Text: '', hasSell: false, hasCombat: true, combatName: '碎骨·乌尔里克', combatHp: 65, combatAtk: 15, combatDef: 6, combatReward: 0, combatSin: 0 },
+    '色欲之环': { npcName: '薇尔维特', placeName: '暗红之门', introScene: '暗巷的光线昏暗而暧昧。墙壁上涂着褪色的霓虹颜料，在黑暗中泛着微弱的粉紫色光芒——那是最廉价的魅惑涂料，在欲望之环的任何一个街角都能买到。空气中有一种甜腻的香气，混合了过期的香水、汗水和某种更原始的、让人心跳加速的气息。巷子两侧的窗户大多封死了，但偶尔有一两扇窗户透出摇曳的烛光，窗帘后面隐约可见晃动的身影。\n\n巷子深处有一扇漆成暗红色的门。门框上挂着一串风铃——不是普通的风铃，而是由细小的骨骼和彩色玻璃碎片串成的。每一次微风吹过，风铃就发出细碎的响声，那声音不像音乐，更像是某种低沉的、撩拨神经的耳语。门半开着，透出柔和的粉色灯光。\n\n一个深紫色长发的魅魔倚在门边。她的长发垂到腰际，发丝间缠绕着细小的银铃。她的眼眸是与发色相配的紫罗兰色，在昏暗的光线下泛着温润的光泽。她的嘴角永远挂着一个似是而非的微笑——那弧度恰好让人无法判断她是在邀请还是在审视。她手指间夹着一根细长的烟管，烟雾在她面前缭绕，让她的面容若隐若现。\n\n她看到你时，嘴角的笑意加深了一分。那不是欢迎——而是一种评估，像一个经验丰富的鉴宝师在审视一件尚未定价的商品。', npcDesc: '薇尔维特——在暗巷经营着一家小型情欲旅馆的魅魔。她不是最高阶的魅魔——那些在霓虹大道上——但在暗巷这一带，她的名字就是通行证。她的旅馆是色欲之环底层最安全的交易场所，前提是你付得起她的价格。有人说她曾经是阿斯蒙蒂斯本人的宠儿，后来因为厌倦了红雾宫殿的勾心斗角而自愿下放到暗巷。她本人从不承认也不否认这个传闻——这让她的名声变得更加神秘。', dialogue: '嗯~新来的。她吐出一口烟雾，那烟雾在你面前盘旋了一瞬，然后消散在空气中。你身上还没有欲望之环的味道——太干净了。在别的地方，干净可能是优点。在这里——她歪了歪头，紫罗兰色的眼眸在昏暗中闪了一下——干净意味着你还没有被标记。没有被占有过。没有被欲望触碰过。在这里，这是一张白纸——而白纸的价值，取决于谁在上面写字。\n\n我叫薇尔维特。这家旅馆是我的。在暗巷，它是最安全的地方——因为你在这里遇到的每一个人，都是付了钱才进来的。付钱意味着守规矩。不守规矩的人——她用手指了指门框上那串风铃——在上面。\n\n我可以帮你——如果你愿意为我工作。在色欲之环，最大的资本不是金币。是你的身体，你的魅力，还有你让别人为你着迷的能力。如果你有这些，你可以在这里活得比任何地方都好。如果你没有——那你至少需要我的保护。\n\n第一条：把金币交出来，换取我的保护。你在暗巷不会被人骚扰——至少不会被人成功地骚扰。\n\n第二条：为我工作。提供服务，报酬丰厚。你的外表在这里是资本，别浪费它。\n\n第三条：如果你觉得自己够强，可以试着挑战我。不过——她吸了一口烟管，烟雾从她嘴角溢出——上一个尝试的人现在在我的风铃上。他的骨头很轻，风一吹就响。', option1Text: '💰 交出金币换取保护（失去8金币，耗时3分钟）', option2Text: '💋 为她工作（卖身路线，色欲环魅力判定加成，耗时30分钟）', option3Text: '挑战她（触发战斗，耗时10分钟）', option4Text: '↩ 离开暗红之门', hasSell: true, sellThreshold: 7, sellReward1: 10, sellReward2: 18, sellReward3: 30, hasCombat: true, combatName: '薇尔维特', combatHp: 35, combatAtk: 7, combatDef: 2, combatReward: 15, combatSin: 5 },
+    '嫉妒之环': { npcName: '暗鳍', placeName: '栈桥下的阴影', introScene: '水沟区的地面上永远浸着一层齐踝深的黑水。这水不是普通的水——它带着腐蚀性，会缓慢地褪去一切光鲜的颜色。墙壁上所有的涂鸦都被它侵蚀成了模糊的灰色，路边的招牌上的字迹也被溶解成了无法辨认的墨迹。在黑水中走得太久，连皮肤都会开始发痒，然后蜕皮——但水沟区的人已经习惯了。他们的皮肤早就蜕过无数次了。\n\n在一个歪斜的木栈桥下面，你看到了一个蜷缩着的身影。栈桥原本连接着嫉妒之环的中层区域，但已经废弃多年——桥面上布满了裂缝，随时可能坍塌。没有人会到这里来——除了他。\n\n他蹲在水边，青灰色的手指在水中划来划去。那手指之间长着半透明的蹼，每划一次水面就泛起一圈圈暗色的涟漪。他时不时从黑水中捞起一些东西——一块生锈的徽章、半片破损的镜片、一段断了的手链、一片沾满污渍的羽毛。他把每一样东西都举到眼前仔细端详，灰绿色的眼眸中闪烁着一种复杂的、让你不安的光芒——那是在判断。在评估。在嫉妒。然后他把那些东西放进身后的一个防水皮袋里，继续捞下一样。\n\n察觉到你的目光，他转过头来。他的脸很瘦，颧骨突出，肤色是水底生物特有的青灰色。他的瞳孔在阴暗中收缩成两条细缝。', npcDesc: '暗鳍——没有人知道他的真名，也没有人知道他在这里待了多久。他总是在水沟区捡东西，那些被上层环层丢弃的、遗忘的、不屑一顾的东西。但如果你需要情报——任何情报——他总有办法搞到。他出售的情报价格低廉但真假参半，就像他从黑水中捞起来的所有东西一样：你需要自己判断什么是宝石，什么是垃圾。', dialogue: '我、我看到你了。他说话时没有抬头，仍然盯着水中的什么东西。你也是来捡东西的？还是来嘲笑我的？如果是嘲笑的话——他歪了歪头，灰绿色的眼眸终于看向你——你可以走了。我已经被嘲笑够了。如果你是想买东西——他拍了拍身后的皮袋——那就另当别论。\n\n我叫暗鳍。在嫉妒之环，每个人都在捡别人丢掉的东西。上面的环——他用手指朝上方指了指——傲慢环、贪婪环、暴怒环……他们每天都会丢掉很多东西。情报、物品、秘密。它们顺着黑水流下来，流到水沟区，然后——他做了一个捞的动作——被我捡起来。\n\n你知道水沟区最值钱的是什么吗？不是这些破东西——他摇了摇手中的半片镜片——是秘密。每一个人嫉妒别人的时候，都会暴露自己的弱点。我收集这些弱点。我出售这些弱点。如果你有兴趣——我这儿有几条路。\n\n第一条：花钱买情报。不贵——但我不保证情报是真的。在嫉妒之环，真假不重要。重要的是你想要什么。\n\n第二条：帮我除掉一个人——嫉妒之环的规矩很简单。你得不到的，别人也别想得到。如果你想让谁失去什么，我可以帮你。当然，收费的。\n\n第三条：你可以试着抢我的皮袋——他说这话的时候，眼睛突然变得锐利起来——但你要想清楚。在水沟区，我知道每一个可以藏身的角落和每一条可以逃跑的暗流。你不知道。', option1Text: '📜 花钱买情报（失去5金币，耗时3分钟）', option2Text: '🔪 委托他除掉一个人（失去10金币，罪业值+5，耗时5分钟）', option3Text: '抢他的皮袋（触发战斗，耗时10分钟）', option4Text: '↩ 离开栈桥', hasSell: false, hasCombat: true, combatName: '暗鳍', combatHp: 30, combatAtk: 6, combatDef: 1, combatReward: 8, combatSin: 8 },
+    '暴食之环': { npcName: '饕餮·格鲁姆', placeName: '铁锅旁的棚子', introScene: '残渣区的气味几乎让人无法呼吸。腐烂的食物残渣堆积成山——果皮、骨头、变质的面包、发霉的蛋糕——它们层层叠叠地堆在街道两侧，形成了一道道令人作呕的堤坝。但在这片恶臭的海洋中，你却闻到了一丝奇异的香气。那是某种正在烹煮的食物的味道——浓烈、鲜美、带着一种让人无法抗拒的诱惑力。你的胃不由自主地发出了咕噜声。\n\n你顺着香气走过去。在残渣区深处的一个角落里，有人用废木板和破帆布搭了一个简陋的棚子。棚子下面，一个肥胖得不成比例的恶魔正坐在一个大铁锅旁边。他的身上挂着一条满是油渍的围裙，围裙上缝着大大小小十几个口袋，每个口袋里都塞满了各种调味料的小瓶子。他的脸圆得几乎看不到脖子，但那双小眼睛里闪烁着一种危险的精光——那不是一个单纯的厨师的温和，而是一种掠食者在进食前的专注。\n\n铁锅里咕嘟咕嘟地煮着深色的液体——那颜色太深了，看不出里面有什么。但那股香气就是从这口锅里飘出来的。锅的旁边摆着一排碗，碗的材质各不相同——有木头的、有金属的、有陶瓷的——显然是从不同的地方捡来的。\n\n他注意到你的目光，用一把大汤勺敲了敲锅沿。那声音沉闷而厚重，在残渣区的恶臭中回荡。', npcDesc: '格鲁姆——大家都叫他饕餮。他是暴食之环底层最有名的"厨师"——用别人丢弃的食材烹饪出让人欲罢不能的料理。他在暴食之环的底层已经混了太久，久到没有人记得他是从什么时候开始在这里煮汤的。有人说他的锅里煮过恶魔的尸体，有人说他的汤能让喝下去的人上瘾——但没有人能否认，在残渣区，他的汤是唯一让人感到温暖的东西。', dialogue: '哦！新来的！他的声音洪亮而愉快，与周围的腐烂形成了诡异的对比。你饿了。我闻得出来——你胃里的声音，我在十步之外就听到了。刚诞生的总是最饿的——那饥饿不是胃里来的，是骨子里来的。是灵魂深处的空洞在喊叫。你吃了东西，它安静一会儿，然后又饿了。永远是这样。\n\n我叫格鲁姆，不过大家都叫我饕餮。在暴食之环，饥饿是一切。它比你更了解你自己。它知道你想要什么，知道你能为了填饱肚子做到什么程度。我见过太多人为了吃一口东西把自己卖了的——不是比喻，是真的签了契约。\n\n我这儿有吃的——但吃的不是免费的。在暴食之环，天下没有白吃的午餐——也没有早餐和晚餐。第一条：把你身上的金币交出来，换一碗热汤。我保证，这碗汤比你吃过的任何东西都要好。当然——别问里面放了什么。\n\n第二条：帮我收集食材。看到那边那座残渣山了吗？去翻一翻，找一些还能用的边角料。不用多好——能吃的就行。我给你辛苦费。\n\n第三条——他用汤勺指着你，小眼睛里闪过一丝危险的光芒——如果你觉得你能打得过我，你可以试试。不过我要提前告诉你——我的锅还缺一点新鲜的肉。而你已经站在我的锅旁边了。', option1Text: '🍖 用金币换一碗热汤（失去5金币，恢复15HP，耗时5分钟）', option2Text: '🗑️ 帮忙收集食材（无战斗，获得5金币，耗时15分钟）', option3Text: '抢他的锅（触发战斗，耗时10分钟）', option4Text: '↩ 离开棚子', hasSell: false, hasCombat: true, combatName: '饕餮·格鲁姆', combatHp: 50, combatAtk: 10, combatDef: 4, combatReward: 5, combatSin: 8 },
+    '懒惰之环': { npcName: '休眠者·莫尔', placeName: '灰雾中的躺椅', introScene: '停滞区的灰雾比懒惰之环其他地方更加浓稠。这里的雾不是飘在空中的——它是沉在地面上的，像一层厚重的灰色毯子，包裹着一切。每走一步都感到深深的倦意，那倦意不来自肌肉，而是从意识的深处涌上来的。它在你耳边低语：停下来。躺下。闭上眼睛。\n\n路边散落着分不清是睡着还是消亡的身影。他们的身体半埋在灰雾中，有些还在缓慢地呼吸——胸口每隔十几秒才起伏一次——有些则已经完全静止了。没有人能分辨出区别。在停滞区，沉睡和死亡之间的距离已经模糊到了近乎没有。\n\n就在这时，你注意到路边有一张由凝固的惰性能量构成的躺椅。那躺椅的形状完美贴合人体曲线——仿佛它已经在无数年的时间里被躺出了一个最舒适的形状。上面躺着一个几乎与灰雾融为一体的身影。他的呼吸极其缓慢，每一次胸口的起伏之间都隔了十几秒。周身散落着零星的羽毛状碎片——那是"懒得维持完整形态"的产物。\n\n就在你以为他已经睡着了的时候，两点昏沉的淡金色瞳孔突然在灰雾中亮了起来——像是两颗遥远的、快要熄灭的星星。他伸出一只手——如果那能算手的话，更像是一团稍微浓密一点的雾凝聚成了手臂的形状——指了指旁边另一张空的躺椅。', npcDesc: '莫尔——没有人知道他在这里躺了多久。有人说他从懒惰之环诞生那天就躺在这里了，也有人说他曾经是贝尔芬格的近侍，因为"太勤快"被赶了出来——当然，在懒惰之环，"太勤快"意味着一天之内做了两件事。他的身体几乎完全被灰雾包裹，只能勉强看到一张慵懒的面孔和两只淡金色的瞳孔。他的动作极其缓慢，但每一下都异常精准——仿佛他已经花了无尽的时间来优化每一个动作，使它们消耗尽可能少的能量。', dialogue: '……坐。他的声音含混不清，像是从三床被子下面传来的。别站着。站着太累了。\n\n你等了很久——久到开始怀疑他是不是又睡着了。然后那两点淡金色的光又亮了起来。\n\n我叫莫尔。不过没什么人叫我的名字——他们都叫我"那个一直躺着的家伙"。在懒惰之环，名字不重要。效率也不重要。只有一件事重要——你舒不舒服。\n\n我看你刚从外面来——他停顿了很久，久到那句话的尾音在灰雾中消散了——身上还带着其他环的灰尘。傲慢环的冷光、贪婪环的金屑、暴怒环的铁锈……它们粘在你身上，让你不舒服。它们让你的灵魂很重。\n\n我可以帮你——虽然帮人也很累。但他还是继续说了下去，仿佛是为了完成一个很久以前就答应过的承诺——你有两个选择。\n\n第一条：把金币留下，躺下来。在这里睡觉能恢复你的理智。灰雾会帮你把那些灰尘洗干净。\n\n第二条：帮我去那边的懒鬼外包公司跑个腿。我有一份文件——他用手指了指躺椅旁边一叠积满灰尘的纸张——三个月前就该交了。我不想动。你帮我去交一下。', option1Text: '💰 把金币留下，躺下休息（失去3金币，恢复5理智，耗时30分钟）', option2Text: '帮他跑腿（无战斗，获得15经验值，耗时20分钟）', option3Text: '↩ 离开灰雾', option4Text: '', hasSell: false, hasCombat: false, combatName: '', combatHp: 0, combatAtk: 0, combatDef: 0, combatReward: 0, combatSin: 0 }
 };
 
 // ==================== 通用新手教程入口 ====================
@@ -4059,7 +4512,7 @@ function sceneTutorialOption2(ring) {
             ua();
             st('<div class="scene-title">铁 笼 之 战</div><p>乌尔里克咧嘴笑了——那笑容里混合着赞赏和暴力的期待。<em>有种。很久没有新来的敢走这条路了。</em>他打开铁匠铺后面的一扇沉重的铁门。门后是一个简陋的铁笼——笼子的栏杆上布满了凹痕和暗色的污渍。<em>进来。规则很简单——活下来，我免费给你打一把更好的刀。死在里面——</em>他敲了敲自己的铁质义肢——<em>你的骨头就是下一把刀的淬火材料。</em></p>');
             cb();
-            ab('⚔️ 进入铁笼！', function() {
+            ab('进入铁笼！', function() {
                 startCombat({
                     name: '碎骨·乌尔里克',
                     hp: 65,
@@ -4152,7 +4605,7 @@ function sceneTutorialOption3(ring) {
     st('<div class="scene-title">战 斗</div><p>' + td.npcName + '看着你，眼中闪过一丝意外——然后是危险的兴奋。' + msg + '</p><p style="color:#e85060;">罪业值+' + (td.combatSin || 5) + '。战斗即将开始。</p>');
     cb();
 
-    ab('⚔️ 战斗！', function() {
+    ab('战斗！', function() {
         var enemyData = {
             name: td.combatName,
             hp: td.combatHp,
@@ -4171,12 +4624,12 @@ function sceneTutorialOption3(ring) {
 
 // 中层区域事件
 var middleRingScenes = {
-    '傲慢之环': { name: '星尘区', desc: '你踏入了星尘区。这里是傲慢环的中层——君主直属手下的居所。低阶堕天使、审判厅的文书官、执事们在此居住与工作。建筑由暗色石材建成，每一块都经过精确的切割，棱角分明。街道干净得近乎冷酷——没有灰烬区的污渍，也没有晨星高地的辉煌。这里的一切都被一种冰冷的秩序所统治。每一个行人都穿着规整的制服，步履匆匆，面无表情。偶尔有几个低阶堕天使从你身边走过，他们的翅膀被整齐地折叠在背后，羽尖泛着暗紫色的微光。一个执事模样的恶魔站在公告栏前，正在张贴新的审判日程。', events: [{ name: '📋 查看公告栏', desc: '公告栏上贴着最近的审判安排和招募信息。你仔细看了看——上面写着审判厅正在招募低阶文书官，要求是能读写地狱通用语。你目前还不符合条件，但至少知道了一条潜在的职业路径。一个正在看公告的执事注意到了你的目光：<em>想应征？先把通用语学好。审判厅不收文盲。</em>', effect: '获得情报：审判厅招募文书官' }, { name: '💬 与路过的小贩交谈', desc: '一个推着木车的小贩在街角售卖水晶碎片——据说是从晨星高地的边缘捡来的边角料。他用沙哑的声音向你推销：<em>真正的傲慢环水晶，能让你在灰烬区显得与众不同。只要20金币一块。不贵——比起真正的地位，这点钱算什么？</em>', effect: '可购买水晶碎片（20金币）' }, { name: '🏛️ 参观训练场', desc: '星尘区的训练场是低阶堕天使们进行战斗训练的地方。你站在围栏外观看了一会儿——两个年轻的堕天使正在用木剑对练，他们的动作精准而优雅，每一击都经过了精密的计算。一个教官模样的老堕天使注意到了你：<em>新面孔？想加入训练的话，需要得到执事长的许可。不过——</em>他上下打量了你一番——<em>你大概还差得远。</em>', effect: '获得经验值+5' }] },
+    '傲慢之环': { name: '星尘区', desc: '你踏入了星尘区。这里是傲慢环的中层——君主直属手下的居所。低阶堕天使、审判厅的文书官、执事们在此居住与工作。建筑由暗色石材建成，每一块都经过精确的切割，棱角分明。街道干净得近乎冷酷——没有灰烬区的污渍，也没有晨星高地的辉煌。这里的一切都被一种冰冷的秩序所统治。每一个行人都穿着规整的制服，步履匆匆，面无表情。偶尔有几个低阶堕天使从你身边走过，他们的翅膀被整齐地折叠在背后，羽尖泛着暗紫色的微光。一个执事模样的恶魔站在公告栏前，正在张贴新的审判日程。', events: [{ name: '查看公告栏', desc: '公告栏上贴着最近的审判安排和招募信息。你仔细看了看——上面写着审判厅正在招募低阶文书官，要求是能读写地狱通用语。你目前还不符合条件，但至少知道了一条潜在的职业路径。一个正在看公告的执事注意到了你的目光：<em>想应征？先把通用语学好。审判厅不收文盲。</em>', effect: '获得情报：审判厅招募文书官' }, { name: '与路过的小贩交谈', desc: '一个推着木车的小贩在街角售卖水晶碎片——据说是从晨星高地的边缘捡来的边角料。他用沙哑的声音向你推销：<em>真正的傲慢环水晶，能让你在灰烬区显得与众不同。只要20金币一块。不贵——比起真正的地位，这点钱算什么？</em>', effect: '可购买水晶碎片（20金币）' }, { name: '参观训练场', desc: '星尘区的训练场是低阶堕天使们进行战斗训练的地方。你站在围栏外观看了一会儿——两个年轻的堕天使正在用木剑对练，他们的动作精准而优雅，每一击都经过了精密的计算。一个教官模样的老堕天使注意到了你：<em>新面孔？想加入训练的话，需要得到执事长的许可。不过——</em>他上下打量了你一番——<em>你大概还差得远。</em>', effect: '获得经验值+5' }] },
     '贪婪之环': { name: '金丝街', desc: '金丝街——贪婪之环的商业动脉。罪业银行的金色穹顶在远处闪耀，灵魂交易所的霓虹招牌不断滚动着当日的灵魂价格，恶魔股市大厅的门口挤满了紧张地盯着报价板的投资者。空气中充斥着讨价还价的声音、金币碰撞的脆响、以及契约魔法生效时特有的嗡鸣声。街道两旁是鳞次栉比的店铺——从万宝商行的连锁分店到只有一张桌子的小型契约公证处。每一个橱窗里都陈列着来自不同世界的珍品：人间的名画、天堂的残片、地狱各环的特产。一个穿着金丝镶边礼服的拍卖师正在街角大声宣传今晚的拍卖会。', events: [{ name: '📈 查看股市报价', desc: '你在恶魔股市大厅的门口驻足。门口的报价板上滚动着各种"罪业产出预期"——暴怒之环的武器公司股票在上涨，色欲之环的娱乐产业保持稳定，嫉妒之环的仿冒品产业被标注为"高风险"。你注意到最下方有一行小字：<em>首次开户免手续费，最低投资额10金币。</em>', effect: '获得情报：恶魔股市可投资' }, { name: '🛍️ 逛万宝商行分店', desc: '万宝商行的分店比铜板巷的任何店铺都要气派。门口的迎宾恶魔朝你微笑：<em>欢迎光临！本店今日特价——来自人间的古董怀表，只要50金币。或者您可以看看我们的特价区——一些轻微损坏的魔法物品，价格从5金币起。</em>', effect: '可购买特价魔法物品（5金币起）' }, { name: '📝 契约公证处', desc: '一家小型契约公证处门口坐着一个戴着厚厚眼镜的老恶魔。他看到你走近，从眼镜上方打量了你一番：<em>需要公证契约吗？无论商业合同、借贷协议还是灵魂契约，本处都可以提供公证服务。公证费10金币。在贪婪之环，一份公证过的契约比口头承诺值钱一百倍。</em>', effect: '可公证契约（10金币）' }] },
-    '暴怒之环': { name: '铁砧大道', desc: '铁砧大道——暴怒之环的军工区。空气中弥漫着熔炉的灼热和淬火油的刺鼻气味。怒火熔炉的巨大厂房排列在道路两侧，昼夜不停地发出铁锤敲击的轰鸣声。每一次锤击都震得地面微微颤动。血焰角斗场的巨大轮廓在不远处若隐若现——那座倒置的火山口正喷出猩红的岩浆瀑布，角斗场内的观众嘶吼声隔着几条街都能听到。武器商店的橱窗里陈列着从简易匕首到巨型战斧的各种兵器，每一把都散发着淡淡的血腥味。一个浑身肌肉的角斗士训练师正在街边大声招揽学员。', events: [{ name: '⚔️ 参观血焰角斗场外围', desc: '你走近血焰角斗场。即使站在外围，你也能感受到从角斗场内部传来的热浪和声浪。门口的告示牌上写着今晚的角斗赛程——三场铁笼格斗，一场冠军挑战赛。一个售票恶魔朝你喊：<em>新面孔！想进场看比赛还是亲自上场？观众票5金币，角斗士报名费10金币——赢了能拿十倍奖金。</em>', effect: '可购买观众票（5金币）或报名角斗（10金币）' }, { name: '🔧 逛武器商店', desc: '你走进一家名为"碎骨武备"的武器商店。店主是个断了角的年迈恶魔，脸上有一道横跨整张脸的旧伤疤。<em>随便看。</em>他坐在柜台后面磨着一把匕首，<em>从5金币的简易匕首到500金币的定制战斧，什么都有。如果你手头紧——</em>他用磨刀石指了指角落里一堆旧兵器——<em>那边的二手货更便宜。</em>', effect: '可购买武器（5-500金币）' }, { name: '💪 角斗士训练营', desc: '角斗士训练营是一个露天的训练场。几十个角斗士正在泥地上进行各种训练——有的在举重，有的在对练，有的在教练的指导下学习新的格斗技巧。一个教练注意到你在观看：<em>想报名训练？一节课5金币——保证让你在角斗场上多活三十秒。</em>', effect: '可报名训练（5金币，获得少量经验值）' }] },
-    '色欲之环': { name: '霓虹大道', desc: '霓虹大道——色欲之环的娱乐心脏。流动的欲望之光照亮了每一寸空间：欲焰秀场的外墙不断变幻着诱惑的图案，魅骨时装店的橱窗里陈列着用欲望丝线编织的华丽服饰，灵魂契约所的门前排着等待签订欲望契约的长队。空气中充满了各种层次的低语——有些是诱惑，有些是笑声，有些是更加露骨的邀请。魅魔和梦魔们在街角招揽顾客，每一个微笑都经过精确的计算。你注意到一家名为"欲望拍卖行"的建筑门口聚集了一群衣着华丽的恶魔，似乎在等待一场特殊的拍卖会。', events: [{ name: '🎭 欲焰秀场门口', desc: '欲焰秀场的门口站着两个身材高挑的魅魔迎宾。其中一个朝你眨了眨眼：<em>今晚的秀是"七罪之梦"——我们最好的表演。门票15金币起。当然——</em>她压低了声音——<em>如果你愿意在秀后留下来，也许可以和表演者进行更私人的交流。价格另算。</em>', effect: '可购买秀场门票（15金币）' }, { name: '👗 逛魅骨时装店', desc: '魅骨时装店的橱窗里展示着一件用暗红色欲望丝线织成的晚礼服。标签上写着：<em>"魅惑之光"——穿戴者魅力+2。售价：80金币。</em>旁边还有更便宜的配饰区：一条能略微提升魅力的丝巾，只要15金币。', effect: '可购买魅力装备（15-80金币）' }, { name: '💝 灵魂契约所', desc: '灵魂契约所的门前排着长队。一个工作人员正在分发号码牌：<em>今天可以签订三种契约——短期欲望契约、长期情感契约和永久灵魂契约。每种的价格和条款都在墙上贴着。</em>你看了看价目表：短期契约10金币起。', effect: '可签订欲望契约（10金币起）' }] },
+    '暴怒之环': { name: '铁砧大道', desc: '铁砧大道——暴怒之环的军工区。空气中弥漫着熔炉的灼热和淬火油的刺鼻气味。怒火熔炉的巨大厂房排列在道路两侧，昼夜不停地发出铁锤敲击的轰鸣声。每一次锤击都震得地面微微颤动。血焰角斗场的巨大轮廓在不远处若隐若现——那座倒置的火山口正喷出猩红的岩浆瀑布，角斗场内的观众嘶吼声隔着几条街都能听到。武器商店的橱窗里陈列着从简易匕首到巨型战斧的各种兵器，每一把都散发着淡淡的血腥味。一个浑身肌肉的角斗士训练师正在街边大声招揽学员。', events: [{ name: '参观血焰角斗场外围', desc: '你走近血焰角斗场。即使站在外围，你也能感受到从角斗场内部传来的热浪和声浪。门口的告示牌上写着今晚的角斗赛程——三场铁笼格斗，一场冠军挑战赛。一个售票恶魔朝你喊：<em>新面孔！想进场看比赛还是亲自上场？观众票5金币，角斗士报名费10金币——赢了能拿十倍奖金。</em>', effect: '可购买观众票（5金币）或报名角斗（10金币）' }, { name: '逛武器商店', desc: '你走进一家名为"碎骨武备"的武器商店。店主是个断了角的年迈恶魔，脸上有一道横跨整张脸的旧伤疤。<em>随便看。</em>他坐在柜台后面磨着一把匕首，<em>从5金币的简易匕首到500金币的定制战斧，什么都有。如果你手头紧——</em>他用磨刀石指了指角落里一堆旧兵器——<em>那边的二手货更便宜。</em>', effect: '可购买武器（5-500金币）' }, { name: '💪 角斗士训练营', desc: '角斗士训练营是一个露天的训练场。几十个角斗士正在泥地上进行各种训练——有的在举重，有的在对练，有的在教练的指导下学习新的格斗技巧。一个教练注意到你在观看：<em>想报名训练？一节课5金币——保证让你在角斗场上多活三十秒。</em>', effect: '可报名训练（5金币，获得少量经验值）' }] },
+    '色欲之环': { name: '霓虹大道', desc: '霓虹大道——色欲之环的娱乐心脏。流动的欲望之光照亮了每一寸空间：欲焰秀场的外墙不断变幻着诱惑的图案，魅骨时装店的橱窗里陈列着用欲望丝线编织的华丽服饰，灵魂契约所的门前排着等待签订欲望契约的长队。空气中充满了各种层次的低语——有些是诱惑，有些是笑声，有些是更加露骨的邀请。魅魔和梦魔们在街角招揽顾客，每一个微笑都经过精确的计算。你注意到一家名为"欲望拍卖行"的建筑门口聚集了一群衣着华丽的恶魔，似乎在等待一场特殊的拍卖会。', events: [{ name: '🎭 欲焰秀场门口', desc: '欲焰秀场的门口站着两个身材高挑的魅魔迎宾。其中一个朝你眨了眨眼：<em>今晚的秀是"七罪之梦"——我们最好的表演。门票15金币起。当然——</em>她压低了声音——<em>如果你愿意在秀后留下来，也许可以和表演者进行更私人的交流。价格另算。</em>', effect: '可购买秀场门票（15金币）' }, { name: '逛魅骨时装店', desc: '魅骨时装店的橱窗里展示着一件用暗红色欲望丝线织成的晚礼服。标签上写着：<em>"魅惑之光"——穿戴者魅力+2。售价：80金币。</em>旁边还有更便宜的配饰区：一条能略微提升魅力的丝巾，只要15金币。', effect: '可购买魅力装备（15-80金币）' }, { name: '💝 灵魂契约所', desc: '灵魂契约所的门前排着长队。一个工作人员正在分发号码牌：<em>今天可以签订三种契约——短期欲望契约、长期情感契约和永久灵魂契约。每种的价格和条款都在墙上贴着。</em>你看了看价目表：短期契约10金币起。', effect: '可签订欲望契约（10金币起）' }] },
     '嫉妒之环': { name: '镜面街区', desc: '镜面街区——嫉妒之环的居民区。这里的建筑表面覆盖着模仿其他环层风格的装饰：仿冒的傲慢环水晶、仿冒的贪婪环金饰、拙劣的色欲环霓虹模仿。模仿得越不像，越显得可悲。暗潮之眼情报组织的总部就坐落在这条街的中心——一座外表不起眼的灰色建筑，但每一个进出的人都步履匆忙，眼神游移。谣言集市占据了街区的一角，各种真假难辨的消息在这里被大声叫卖。空气中弥漫着酸涩的黑水气味和一种更难以形容的、属于嫉妒本身的酸腐感。', events: [{ name: '👁️ 暗潮之眼总部', desc: '你走近那座灰色建筑。门口的守卫用灰绿色的眼睛扫了你一眼：<em>第一次来？进去左转是情报购买处，右转是情报出售处。记住——在这里，你说的话可能被记录下来。你买的情报可能是假的。但真的情报——</em>他压低声音——<em>能让你在嫉妒之环活得更久。</em>', effect: '可购买或出售情报' }, { name: '🗣️ 谣言集市', desc: '谣言集市挤满了交头接耳的恶魔。一个长着三只耳朵的情报贩子凑近你：<em>嘿！想听最新消息吗？据说利维坦最近看上了一件属于玛门的收藏品——嘘，别声张。这条消息只要3金币。如果你有消息要卖，我也可以收——价格看情报的价值。</em>', effect: '可购买谣言（3金币）或出售情报' }, { name: '🪞 镜厅', desc: '镜厅是镜面街区的标志性建筑——一座由无数面镜子构成的大厅。每一面镜子都映出不同的倒影：有的映出你最嫉妒的人，有的映出你最渴望的东西。一个导游模样的恶魔正在带一群游客参观：<em>请勿长时间注视任何一面镜子——曾经有人在这里站了三天三夜，最后被自己的嫉妒吞噬了。</em>', effect: '凝视镜子（获得经验值+5，理智-1）' }] },
-    '暴食之环': { name: '美食大道', desc: '美食大道——暴食之环的饕餮天堂。从低端的"深渊秽食自助"到高端的"虚无珍馐会所"，各种档次的餐饮场所鳞次栉比。空气中混合着数百种食物的香气——烤肉的焦香、甜点的奶油味、发酵酒类的醇香、以及某种更深层的、让人无法抑制地感到饥饿的原始气息。你的胃在你踏入这条街的瞬间就开始咕咕作响。永饥食品厂的巨大烟囱在远处冒着暗色的烟雾，食教的传教站门口站着一个身穿执事袍的恶魔，正在向路人分发免费的汤品样品。', events: [{ name: '🍽️ 虚无珍馐会所', desc: '虚无珍馐会所的大门由两根巨大的骨头拱卫。门口的侍者穿着洁白的制服——在暴食之环，白色是最难保持的颜色。<em>欢迎。今晚的主厨推荐是"时间慢炖地狱牛尾"——用时间碎片慢炖了三百年的牛尾。价格是60金币一位。当然——</em>他看了看你的衣着——<em>我们也有更实惠的午间套餐，30金币。</em>', effect: '可购买珍馐套餐（30-60金币）' }, { name: '🥘 食教传教站', desc: '食教传教站的执事递给你一小杯暗色的汤品——免费的。<em>尝尝看。</em>他微笑着说，<em>这是用暴食之环最普通的食材熬制的。但如果你加入食教——</em>他的眼睛中闪过一丝蓝绿色的光芒——<em>你可以品尝到更高级的食材。天使的羽翼碎片、人类的记忆精华、甚至空间本身的边角料。一切都可以被吞噬。一切都可以成为你的养分。</em>', effect: '获得免费汤品（恢复5HP），了解食教' }, { name: '🍖 深渊秽食自助', desc: '深渊秽食自助的门面简陋得几乎像一个垃圾站——但门口的队伍却排得很长。一个服务员站在门口收钱：<em>5金币一位，随便吃！不限量！吃到你走不动为止！</em>从门口飘出来的气味混合了各种廉价食材的味道——不精致，但量大管饱。', effect: '可购买自助餐（5金币，恢复10HP）' }] },
+    '暴食之环': { name: '美食大道', desc: '美食大道——暴食之环的饕餮天堂。从低端的"深渊秽食自助"到高端的"虚无珍馐会所"，各种档次的餐饮场所鳞次栉比。空气中混合着数百种食物的香气——烤肉的焦香、甜点的奶油味、发酵酒类的醇香、以及某种更深层的、让人无法抑制地感到饥饿的原始气息。你的胃在你踏入这条街的瞬间就开始咕咕作响。永饥食品厂的巨大烟囱在远处冒着暗色的烟雾，食教的传教站门口站着一个身穿执事袍的恶魔，正在向路人分发免费的汤品样品。', events: [{ name: '虚无珍馐会所', desc: '虚无珍馐会所的大门由两根巨大的骨头拱卫。门口的侍者穿着洁白的制服——在暴食之环，白色是最难保持的颜色。<em>欢迎。今晚的主厨推荐是"时间慢炖地狱牛尾"——用时间碎片慢炖了三百年的牛尾。价格是60金币一位。当然——</em>他看了看你的衣着——<em>我们也有更实惠的午间套餐，30金币。</em>', effect: '可购买珍馐套餐（30-60金币）' }, { name: '🥘 食教传教站', desc: '食教传教站的执事递给你一小杯暗色的汤品——免费的。<em>尝尝看。</em>他微笑着说，<em>这是用暴食之环最普通的食材熬制的。但如果你加入食教——</em>他的眼睛中闪过一丝蓝绿色的光芒——<em>你可以品尝到更高级的食材。天使的羽翼碎片、人类的记忆精华、甚至空间本身的边角料。一切都可以被吞噬。一切都可以成为你的养分。</em>', effect: '获得免费汤品（恢复5HP），了解食教' }, { name: '🍖 深渊秽食自助', desc: '深渊秽食自助的门面简陋得几乎像一个垃圾站——但门口的队伍却排得很长。一个服务员站在门口收钱：<em>5金币一位，随便吃！不限量！吃到你走不动为止！</em>从门口飘出来的气味混合了各种廉价食材的味道——不精致，但量大管饱。', effect: '可购买自助餐（5金币，恢复10HP）' }] },
     '懒惰之环': { name: '慵懒大道', desc: '慵懒大道——懒惰之环的居民区。时间在这里流动得极为缓慢，空气像温吞的糖浆包裹着一切。虚无躺椅总店的门口陈列着各种型号的躺椅——从基础款到可以自动调节惰性能量的豪华款。懒鬼外包公司的办事员们以令人抓狂的低效率处理着其他环委托来的事务，但没有人催促他们——在懒惰之环，催促本身就是一种冒犯。惰性能量采集站的巨大管道从地面延伸到灰雾深处，发出低沉的嗡嗡声。路边的长椅上躺着几个半睡半醒的恶魔，他们的呼吸缓慢到几乎不可察觉。', events: [{ name: '🛋️ 虚无躺椅总店', desc: '虚无躺椅总店的店员——一个几乎被灰雾完全包裹的恶魔——用极其缓慢的语速向你介绍：<em>这……是……我们……的……基础……款……只要……20……金币……可以……让你……更快……入睡……这……是……豪华……款……50……金币……自带……惰性……力场……调节……功能……</em>你听了整整五分钟才听完两句话。', effect: '可购买虚无躺椅（20-50金币）' }, { name: '📄 懒鬼外包公司', desc: '懒鬼外包公司的前台趴在一个抱枕上，抬头看了你一眼——那个动作花了十秒钟。<em>有……什么……需要……委托……的……吗……？</em>你看了看墙上的服务列表：文件抄写（3个工作日——但通常需要两周）、低阶清洁（可能只扫一半）、消息传递（如果传递者没有中途睡着的话）。价格倒是非常便宜——每项服务只要2金币。', effect: '可委托懒鬼公司服务（2金币起）' }, { name: '🌫️ 惰性能量采集站', desc: '惰性能量采集站的门口站着一个身穿灰色制服的技术员——在懒惰之环，能站着工作已经是最高级别的勤快了。他看到你走近，懒洋洋地指了指墙上的价目表：<em>惰性能量提取——10金币。让你在一小时内完全放松。副作用是可能会睡过头。不过——</em>他打了个呵欠——<em>在懒惰之环，睡过头是正常的。</em>', effect: '可购买惰性能量提取（10金币，恢复10理智，但可能触发随机睡眠事件）' }] }
 };
 
@@ -4209,15 +4662,70 @@ function renderMiddleRing(ring) {
             if (RD[ring].middle && RD[ring].middle.npc) {
                 addNpcButton(RD[ring].middle.npc, ring, 'middle');
             }
-            ab('👗 服装店', function() { enterShop('cloth'); });
-            ab('🍽️ 食品店', function() { enterShop('food'); });
-            ab('📦 道具店', function() { enterShop('item'); });
-            ab('🌙 黑市（22:00-02:00）', function() { enterBlackMarket(); });
-            ab('🔨 寻找工作（耗时30分钟）', function() { findJob(); });
-            ab('😴 睡觉（选择住处）', function() { chooseSleepPlace(); });
+            
+            if (ring === '贪婪之环') {
+                ab('探索：黑市深巷', function() {
+                    st('<div class="scene-title">黑市深巷</div><p>这条深巷隐藏在金丝街的繁华背后，常年不见天日，空气里总是混合着金钱的铜臭味与难以掩盖的血腥味。</p>');
+                    var reason = getNpcUnavailableReason('泽维尔');
+                    if (reason === 'time') {
+                        st('<p style="color:#9a6a6a;font-style:italic;">此时的深巷里寂静无声，只有几只低阶的嗜血鼠在啃食着角落里的不明残骸。泽维尔似乎不在附近，也许还没有到这位清道夫的“营业时间”。</p>');
+                    } else {
+                        st('<p>暗巷的尽头，浓重的血腥味还未散去。一具残缺的尸体倒在血泊中，而那个身影正站在尸体上方。泽维尔转过身，纯黑色的巩膜和白色的细长瞳孔在阴暗中散发着令人毛骨悚然的愉悦。他下半身的深渊暗影正像粘稠的活物般蠕动、蔓延。</p>');
+                        addNpcButton('泽维尔', ring, 'middle');
+                    }
+                    addTime(5);
+                    cb();
+                    ab('返回', function() { renderMiddleRing(ring); });
+                });
+            }
+            ab('服装店', function() { enterShop('cloth'); });
+            ab('食品店', function() { enterShop('food'); });
+            ab('道具店', function() { enterShop('item'); });
+            ab('黑市（22:00-02:00）', function() { enterBlackMarket(); });
+            ab('寻找工作（耗时30分钟）', function() { findJob(); });
+            ab('睡觉（选择住处）', function() { chooseSleepPlace(); });
             ab('返回贫民区（耗时10分钟）', function() { addTime(10);
                 sceneExploreDistrict(ring, 'poor'); });
-            ab('🏛️ 加入派系（需对应属性≥12）', function() {
+            
+            ab('🗡️ 袭击路人（暴力劫财）', function() {
+                st('<div class="scene-title">袭 击</div><p>你打量着四周，寻找可以下手的目标。在地狱里，弱肉强食是最基本的法则，但毫无底线的劫掠也会引来不必要的麻烦。你确定要在这里动手吗？</p>');
+                cb();
+                ab('寻找落单目标（触发战斗）', function() {
+                    var targetRaces = ['流浪恶魔', '落魄罪人', '下级魔物', '贪婪收债人', '迷失的魅魔'];
+                    var tr = targetRaces[Math.floor(Math.random()*targetRaces.length)];
+                    var enemy = {
+                        name: '落单的' + tr,
+                        hp: 20 + Math.floor(Math.random()*20),
+                        physicalAttack: 5 + Math.floor(Math.random()*8),
+                        defense: 1 + Math.floor(Math.random()*3),
+                        goldReward: 5 + Math.floor(Math.random()*15),
+                        sinReward: 5,
+                        description: '一个看起来没有多少防备的' + tr + '。'
+                    };
+                    startCombat(enemy, '', ring, level);
+                }, 'danger-btn');
+                ab('取消', function() { sceneExploreDistrict(ring, level); });
+            }, 'danger-btn');
+
+            ab('🤲 乞讨敛财（出卖尊严）', function() {
+                var timeCost = 30;
+                addTime(timeCost);
+                player.sanity = Math.max(0, player.sanity - 2);
+                var success = Math.random() < (player.charisma / 30);
+                var earn = 0;
+                if (success) {
+                    earn = 1 + Math.floor(Math.random() * 5);
+                    player.gold += earn;
+                    st('<div class="scene-title">乞 讨</div><p>你在街角蜷缩了半个小时，放下了所有的尊严，祈求路过的恶魔施舍。几个路过的贵族一边嘲笑着你的落魄，一边像丢垃圾一样把几枚金币踢到了你面前。</p><p style="color:#e8c060;">耗时30分钟。理智 -2。获得 ' + earn + ' 金币。</p>');
+                } else {
+                    player.hp = Math.max(1, player.hp - 2);
+                    st('<div class="scene-title">乞 讨</div><p>你在街角蜷缩了半个小时，但没有得到任何施舍。甚至有个脾气暴躁的恶魔觉得你挡了路，狠狠地踢了你一脚。</p><p style="color:#e85060;">耗时30分钟。理智 -2，HP -2。</p>');
+                }
+                cb();
+                ab('返回', function() { sceneExploreDistrict(ring, level); });
+            });
+
+            ab('加入派系（需对应属性≥12）', function() {
                 var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环'];
                 var html = '<div class="scene-title">加入派系</div><p>选择你想效忠的阵营：</p>';
                 for (var i = 0; i < rings.length; i++) {
@@ -4227,18 +4735,20 @@ function renderMiddleRing(ring) {
                     var reqVal = 12;
                     var curVal = player[req] || 0;
                     var canJoin = curVal >= reqVal;
-                    html += '<p>· ' + r + '（需要 ' + statName + ' ≥ ' + reqVal + '，当前' + curVal + '）<span class="clickable" onclick="if(' + canJoin + ') joinFaction(\'' + r + '\')" style="' + (canJoin ? '' : 'color:#5a5a6a;cursor:not-allowed;') + '">' + (canJoin ? '加入' : '条件不足') + '</span></p>';
+                    
+                var factionTitles = { '傲慢之环':'【黎明审判庭】', '贪婪之环':'【万宝商业会】', '暴怒之环':'【血焰角斗团】', '色欲之环':'【极乐交响乐】', '嫉妒之环':'【深渊暗流】', '暴食之环':'【无尽吞噬者】', '懒惰之环':'【永恒静眠教】' };
+                html += '<p>· ' + factionTitles[r] + ' ' + r + '（需要 ' + statName + ' ≥ ' + reqVal + '，当前' + curVal + '）<br><span class="clickable" onclick="if(' + canJoin + ') joinFaction(\'' + r + '\')" style="' + (canJoin ? '' : 'color:#5a5a6a;cursor:not-allowed;') + '">' + (canJoin ? '加入' : '条件不足') + '</span></p>';
                 }
                 html += '<p style="color:#9a6a6a;font-size:0.8em;">加入后获得对应属性加成，但会影响其他阵营好感度。</p>';
                 st(html);
                 cb();
                 ab('返回', function() { renderMiddleRing(ring); });
             });
-            ab('🗺️ 前往其他环层', function() { sceneChooseResidence(); });
-            ab('📋 打开属性面板', function() { toggleSidebar(); });
+            ab('前往其他环层', function() { sceneChooseResidence(); });
+            ab('打开属性面板', function() { toggleSidebar(); });
             // 贵族区入口
             var richName = RD[ring].rich ? RD[ring].rich.name : '贵族区';
-            ab('👑 前往' + richName + '（耗时15分钟，花费10金币）', function() {
+            ab('前往' + richName + '（耗时15分钟，花费10金币）', function() {
                 if (player.gold >= 10) {
                     player.gold -= 10;
                     addTime(15);
@@ -4263,25 +4773,25 @@ function renderRichRing(ring) {
             checkHp();
     ua();
             var html = '<div class="scene-title">' + rich.name + '</div>';
-            html += '<p style="color:#e8c060;">👑 贵族区 · ' + ring + '</p>';
+            html += '<p style="color:#e8c060;">贵族区 · ' + ring + '</p>';
             html += '<p style="color:#9a6a6a;font-size:0.82em;">' + rich.desc + '</p>';
             html += '<div class="divider">◆ ◆ ◆</div>';
-            html += '<p style="color:#d4a040;">💎 可探索地点：</p>';
+            html += '<p style="color:#d4a040;">可探索地点：</p>';
             st(html);
             cb();
             if (rich.features) {
                 for (var i = 0; i < rich.features.length; i++) {
                     (function(feature) {
                         if (feature.indexOf('禁入') >= 0) {
-                            ab('🔒 ' + feature, function() {
+                            ab('' + feature, function() {
                                 st('<p style="color:#e85060;">⚠️ 此区域需要特定许可才能进入。</p>');
                                 cb();
                                 ab('返回', function() { renderRichRing(ring); });
                             });
                         } else {
-                            ab('🔍 探索：' + feature, function() {
+                            ab('探索：' + feature, function() {
                                 addTime(10);
-                                st('<p style="color:#e8c060;">✨ 你在' + feature +
+                                st('<p style="color:#e8c060;">你在' + feature +
                                     '探索了一番。</p><p style="color:#9a6a6a;font-size:0.82em;">' +
                                     rich.desc + '</p>');
                                 addExp(3);
@@ -4294,9 +4804,25 @@ function renderRichRing(ring) {
                     })(rich.features[i]);
                 }
             }
-            ab('👗 高级服装店', function() { enterShop('cloth'); });
-            ab('🍽️ 高级食品店', function() { enterShop('food'); });
-            ab('📦 稀有道具店', function() { enterShop('item'); });
+            
+            if (ring === '贪婪之环') {
+                ab('探索：高级宴会厅', function() {
+                    st('<div class="scene-title">高级宴会厅</div><p>万宝内城最奢华的社交场所。这里的水晶吊灯折射出令人目眩的光芒，地面铺设着柔软的红天鹅绒地毯，空气中流淌着极其昂贵的特制香水味。</p>');
+                    var reason = getNpcUnavailableReason('塞西莉亚');
+                    if (reason === 'time') {
+                        st('<p style="color:#9a6a6a;font-style:italic;">宴会厅里三三两两地聚着一些贪婪之环的贵族，但你并没有看到塞西莉亚那抹耀眼的金发。也许她正在自己的宅邸里梳妆打扮，准备稍晚的华丽登场。</p>');
+                    } else {
+                        st('<p>在宴会厅最显眼的位置，塞西莉亚正端着一杯红酒，耀眼的金发在水晶灯下熠熠生辉。她脖子上的红宝石项圈完美遮盖着一切瑕疵。察觉到你的视线，她立刻换上温柔无辜的笑容，提着裙摆款款走来。</p>');
+                        addNpcButton('塞西莉亚', ring, 'rich');
+                    }
+                    addTime(5);
+                    cb();
+                    ab('返回', function() { renderRichRing(ring); });
+                });
+            }
+            ab('高级服装店', function() { enterShop('cloth'); });
+            ab('高级食品店', function() { enterShop('food'); });
+            ab('稀有道具店', function() { enterShop('item'); });
             ab('返回中层区', function() { addTime(10);
                 renderMiddleRing(ring); });
         }
@@ -4388,7 +4914,7 @@ function sceneTavernStranger() {
     cb();
     ab('💰 交出金币（抢劫路线，耗时5分钟）', function() { addTime(5); sceneTavernRobbery(); });
     ab('💋 提供"服务"（卖身路线，耗时15分钟）', function() { addTime(15); sceneTavernSellBody(); });
-    ab('⚔️ 拒绝并攻击他（杀戮路线，耗时10分钟）', function() { addTime(10); sceneTavernMurder(); }, 'danger-btn');
+    ab('拒绝并攻击他（杀戮路线，耗时10分钟）', function() { addTime(10); sceneTavernMurder(); }, 'danger-btn');
 }
 function sceneTavernRobbery() {
     var goldLost = Math.min(player.gold, Math.floor(Math.random() * 10) + 5);
@@ -4411,7 +4937,7 @@ function sceneTavernSellBody() {
     if (!success) {
         st('<div class="scene-title">交 易 失 败</div><p>扎里克靠在椅背上，那双蛇瞳上下打量着你——这次的目光比之前任何一次都要仔细，也更加挑剔。他歪着头，像是在审视一件不合心意的商品。然后他嗤笑了一声——那笑声短促而刺耳，像是金属片刮过石头。</p><p><em>就你？</em>他的语气里满是不加掩饰的轻蔑。他靠回椅背，摇了摇头，那动作里混合着失望和某种更接近于厌恶的情绪。<em>老子又不是收破烂的。你以为在这灰烬区，随便什么人脱了衣服就能赚金币？你得有资本——资本懂吗？</em></p><p>他用手指在空中画了个圈，指向你的脸。那根手指停在你面前几寸的地方——指甲缝里嵌着的暗色痕迹在昏暗的光线下格外显眼。</p><p><em>你这张脸——</em>他的蛇瞳眯了起来——<em>连欲望之环最低等的魅魔都不会多看一眼。我给了你一个机会，你浪费了它。而浪费我的时间——</em></p><p>他猛地站起来。椅子向后翻倒在地上，发出响亮的撞击声，在安静的角落中回荡。酒馆里其他几个醉鬼同时抬起头——然后又迅速低下，仿佛什么都没看到。他们知道接下来会发生什么。暗黄色的蛇瞳中闪过危险的光芒，他的手已经伸向了斗篷下面——你能看到那里藏着一把短刀的轮廓。</p><p><em>——是有代价的。</em></p><p style="color:#e85060;">魅力不足！你的魅力值（' + playerCharm + '）未达到阈值（' + charmThreshold + '），判定失败。触发战斗！</p>');
         cb();
-        ab('⚔️ 准备战斗！（耗时10分钟）', function() {
+        ab('准备战斗！（耗时10分钟）', function() {
             addTime(10);
             startCombat({
                 name: '扎里克',
@@ -4449,7 +4975,7 @@ function sceneTavernMurder() {
     ua();
     st('<div class="scene-title">杀 戮</div><p>你冷冷地看着扎里克。你没有说话，但你的眼神已经说明了一切——那双眼睛里没有恐惧，没有犹豫，只有一种被逼到角落后的决绝。你的手在桌子下面悄悄握紧了——指节因为用力而发白。</p><p>扎里克察觉到了。毕竟他在这片灰烬区混了太多年——他见过无数双眼睛，恐惧的、贪婪的、绝望的。但你的眼神里有一种他不太常见的东西——<em>反抗</em>。真正的、准备以命相搏的反抗。</p><p>他嘴角的笑意消失了。那张消瘦的脸上的表情从玩味变成了冷酷——不，不是冷酷，是某种更接近于专业的态度。像一个猎人发现猎物不再逃跑而是转身面对他时，所做出的调整。他慢慢站起来，动作比之前任何一次都要谨慎。他的手伸进斗篷下面——当它再次出现时，握着一把短刀。刀身锈迹斑斑，但刀刃在昏暗的灯光下泛着寒光——那是被反复打磨过的痕迹。</p><p><em>哦？</em>他歪了歪头，蛇瞳眯成两条危险的细缝。<em>看来你选了第三条路。你知道——</em>他用空着的那只手在桌面上那些深深的刀痕上划过——<em>我最喜欢这条路。这是最诚实的路。没有讨价还价，没有交易，只有最简单的规则——活着的人拿钱，死了的人留在这里。</em></p><p>他把短刀在手中转了一圈——那动作熟练得令人不安。<em>来吧。让我看看你有多大本事。别让我失望——我最讨厌失望。</em></p><p style="color:#e85060;">你主动发起了攻击！罪业值大幅增加（+10）。战斗即将开始。</p>');
     cb();
-    ab('⚔️ 拔刀迎战！（耗时10分钟）', function() {
+    ab('拔刀迎战！（耗时10分钟）', function() {
         addTime(10);
         startCombat({
             name: '扎里克（激怒）',
@@ -4482,7 +5008,7 @@ function sceneTavernMurder() {
             // 普通探索界面
             var fl = '';
             for (var i = 0; i < d.features.length; i++) { fl += '<p>—— ' + d.features[i] + '</p>'; }
-            var bmStatus = isBlackMarketOpen() ? '<p style="color:#ff6080;font-weight:bold;">🌙 黑市已开放！</p>' : '';
+            var bmStatus = isBlackMarketOpen() ? '<p style="color:#ff6080;font-weight:bold;">黑市已开放！</p>' : '';
             st('<div class="scene-title">' + d.name + '</div><p>' + d.desc + '</p>' + bmStatus +
                 '<div class="divider">◆ ◆ ◆</div><p><span class="gold-text">可探索地点：</span></p>' + fl);
             cb();
@@ -4491,19 +5017,19 @@ function sceneTavernMurder() {
                 var keys = Object.keys(d.featureScenes);
                 for (var i = 0; i < keys.length; i++) {
                     (function(key) {
-                        var label = '📍 ' + key;
-                        if (key === '破旧酒馆') label = '🍺 走进破旧酒馆';
-                        else if (key === '诚信典当行') label = '💰 走进诚信典当行';
-                        else if (key === '碎骨铁匠铺') label = '⚔️ 走进碎骨铁匠铺';
-                        else if (key === '暗红之门') label = '💋 走进暗红之门';
-                        else if (key === '栈桥下的阴影') label = '👁️ 走向栈桥下的身影';
-                        else if (key === '铁锅旁的棚子') label = '🍖 走向铁锅旁的棚子';
-                        else if (key === '灰雾中的躺椅') label = '💤 走向灰雾中的躺椅';
-                        else if (key === '低阶市场') label = '🛒 逛低阶市场';
-                        else if (key === '流浪者聚集地') label = '🏕️ 走进流浪者聚集地';
-                        else if (key === '暗巷角落') label = '🌑 探索暗巷角落';
-                        else if (key === '失宠者收容所') label = '🏚️ 走进失宠者收容所';
-                        else if (key === '拾荒者营地') label = '🗑️ 探索拾荒者营地';
+                        var label = key;
+                        if (key === '破旧酒馆') label = '走进破旧酒馆';
+                        else if (key === '诚信典当行') label = '走进诚信典当行';
+                        else if (key === '碎骨铁匠铺') label = '走进碎骨铁匠铺';
+                        else if (key === '暗红之门') label = '走进暗红之门';
+                        else if (key === '栈桥下的阴影') label = '走向栈桥下的身影';
+                        else if (key === '铁锅旁的棚子') label = '走向铁锅旁的棚子';
+                        else if (key === '灰雾中的躺椅') label = '走向灰雾中的躺椅';
+                        else if (key === '低阶市场') label = '逛低阶市场';
+                        else if (key === '流浪者聚集地') label = '走进流浪者聚集地';
+                        else if (key === '暗巷角落') label = '探索暗巷角落';
+                        else if (key === '失宠者收容所') label = '走进失宠者收容所';
+                        else if (key === '拾荒者营地') label = '探索拾荒者营地';
                         ab(label, function() {
                             var scene = d.featureScenes[key];
                             if (typeof scene === 'function') { scene(ring, level); } else { st(
@@ -4518,19 +5044,19 @@ function sceneTavernMurder() {
                 }
             }
 
-            ab('👗 服装店', function() { enterShop('cloth'); });
-            ab('🍽️ 食品店', function() { enterShop('food'); });
-            ab('📦 道具店', function() { enterShop('item'); });
-            ab('🌙 黑市（22:00-02:00）', function() { enterBlackMarket(); });
-            ab('🔨 寻找工作（耗时30分钟）', function() { findJob(); });
-            ab('😴 睡觉（选择住处）', function() { chooseSleepPlace(); });
-            if (ring === '傲慢之环' && level === 'poor' && !player.hasClock) { ab('🕐 购买时钟（10金币）', function() {
+            ab('服装店', function() { enterShop('cloth'); });
+            ab('食品店', function() { enterShop('food'); });
+            ab('道具店', function() { enterShop('item'); });
+            ab('黑市（22:00-02:00）', function() { enterBlackMarket(); });
+            ab('寻找工作（耗时30分钟）', function() { findJob(); });
+            ab('睡觉（选择住处）', function() { chooseSleepPlace(); });
+            if (ring === '傲慢之环' && level === 'poor' && !player.hasClock) { ab('购买时钟（10金币）', function() {
                     buyClock(); }); }
 
             if (Math.random() < 0.2 && player.activeTasks.length < 3) {
-                ab('📋 接取随机任务', function() {
+                ab('接取随机任务', function() {
                     var task = generateTask();
-                    st('<div class="scene-title">📋 新任务</div><p><span class="gold-text">' + task.title +
+                    st('<div class="scene-title">新任务</div><p><span class="gold-text">' + task.title +
                         '</span></p><p>' + task.desc + '</p><p style="color:#e85060;">截止：第' + task.deadline +
                         '天</p><p style="color:#e8c060;">奖励：' + task.rewardGold + '金币，' + task.rewardExp +
                         '经验</p>');
@@ -4541,7 +5067,7 @@ function sceneTavernMurder() {
             }
 
             if (level === 'poor' && RD[ring].middle) {
-                ab('🚶 前往' + RD[ring].middle.name + '（需要10金币，耗时20分钟）', function() {
+                ab('前往' + RD[ring].middle.name + '（需要10金币，耗时20分钟）', function() {
                     var hasMiddlePass = player.inventory.some(function(it) { return it.name === '中层通行证' || it.name === '跨环通行证（永久）'; });
                     var passCost = hasMiddlePass ? 0 : 10;
                     
@@ -4564,7 +5090,7 @@ function sceneTavernMurder() {
                     }
                 }, 'gold-btn');
             }
-            ab('🏛️ 加入派系（需对应属性≥12）', function() {
+            ab('加入派系（需对应属性≥12）', function() {
                 var rings = ['傲慢之环', '贪婪之环', '暴怒之环', '色欲之环', '嫉妒之环', '暴食之环', '懒惰之环'];
                 var html = '<div class="scene-title">加入派系</div><p>选择你想效忠的阵营：</p>';
                 for (var i = 0; i < rings.length; i++) {
@@ -4574,14 +5100,16 @@ function sceneTavernMurder() {
                     var reqVal = 12;
                     var curVal = player[req] || 0;
                     var canJoin = curVal >= reqVal;
-                    html += '<p>· ' + r + '（需要 ' + statName + ' ≥ ' + reqVal + '，当前' + curVal + '）<span class="clickable" onclick="if(' + canJoin + ') joinFaction(\'' + r + '\')" style="' + (canJoin ? '' : 'color:#5a5a6a;cursor:not-allowed;') + '">' + (canJoin ? '加入' : '条件不足') + '</span></p>';
+                    
+                var factionTitles = { '傲慢之环':'【黎明审判庭】', '贪婪之环':'【万宝商业会】', '暴怒之环':'【血焰角斗团】', '色欲之环':'【极乐交响乐】', '嫉妒之环':'【深渊暗流】', '暴食之环':'【无尽吞噬者】', '懒惰之环':'【永恒静眠教】' };
+                html += '<p>· ' + factionTitles[r] + ' ' + r + '（需要 ' + statName + ' ≥ ' + reqVal + '，当前' + curVal + '）<br><span class="clickable" onclick="if(' + canJoin + ') joinFaction(\'' + r + '\')" style="' + (canJoin ? '' : 'color:#5a5a6a;cursor:not-allowed;') + '">' + (canJoin ? '加入' : '条件不足') + '</span></p>';
                 }
                 html += '<p style="color:#9a6a6a;font-size:0.8em;">加入后获得对应属性加成，但会影响其他阵营好感度。</p>';
                 st(html);
                 cb();
                 ab('返回', function() { sceneExploreDistrict(ring, level); });
             });
-            ab('📋 打开属性面板', function() { toggleSidebar(); });
+            ab('打开属性面板', function() { toggleSidebar(); });
         }
 
         // ==================== 侧边栏 ====================
@@ -4644,9 +5172,10 @@ function switchTab(tab) {
             }
             usb();
         }
+
 function joinFaction(ring) {
     if (player.faction) {
-        st('<p>你已经加入了 ' + player.faction + '，不能同时加入多个阵营。</p>');
+        st('<div class="scene-title">叛教是不可饶恕的</div><p>你已经宣誓效忠了 ' + player.faction + '，地狱的契约一旦烙印在灵魂上，便绝不容许背叛。至少，你现在还没有背叛的资格。</p>');
         cb();
         ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
         return;
@@ -4655,70 +5184,49 @@ function joinFaction(ring) {
     var stat = reqs[ring];
     if (player[stat] < 12) {
         var statNames = {magic:'魔力',charisma:'魅力',strength:'力量',agility:'敏捷',sanity:'理智'};
-        st('<p class="highlight">你的' + statNames[stat] + '不足12，无法加入。</p>');
+        st('<div class="scene-title">资格不足</div><p class="highlight">你的' + statNames[stat] + '不足12点。那个负责招募的恶魔鄙夷地看了你一眼："我们不需要连门槛都够不到的废物。滚远点。"</p>');
         cb();
         ab('返回', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
         return;
     }
+    
     player.faction = ring;
     player.factionJoinDay = player.daysSurvived;
     var bonus = { '傲慢之环':2, '贪婪之环':2, '暴怒之环':3, '色欲之环':3, '嫉妒之环':2, '暴食之环':2, '懒惰之环':3 };
     var statBonus = bonus[ring];
+    
     if (stat === 'sanity') {
+        player.maxSanity += statBonus;
         player.sanity = Math.min(player.maxSanity, player.sanity + statBonus);
     } else {
         player[stat] += statBonus;
     }
+    
     for (var r in player.factionReputation) {
         if (r === ring) player.factionReputation[r] += 10;
         else player.factionReputation[r] -= 5;
     }
+    
     setTimeout(function() { checkAchievement('join_faction'); }, 150);
     checkHp();
     ua();
-    st('<p>✅ 你加入了 <span class="gold-text">' + ring + '</span> 阵营！获得' + ({magic:'魔力',charisma:'魅力',strength:'力量',agility:'敏捷',sanity:'理智'}[stat]) + '+' + statBonus + '。</p>');
+    
+    var rituals = {
+        '傲慢之环': '你跪在黎明审判庭的冷硬石板上。一名六翼堕天使将一根烧红的暗金刺针钉入了你的锁骨，你甚至没来得及惨叫，一股冰冷而极其纯粹的魔力便从伤口瞬间游走全身。你成为了【黎明审判庭】的底端鹰犬。',
+        '贪婪之环': '万宝商业会的契约公证人让你在一份长达数百页的羊皮纸上按下了血手印。当你按下指纹的瞬间，你感觉到灵魂中有什么东西被抽走了，取而代之的是对金钱和权术无法抑制的渴望与圆滑。你加入了【万宝商业会】。',
+        '暴怒之环': '血焰角斗团的入团仪式简单而残酷。你被迫在三十秒内生生绞断了一头低阶地狱犬的脖子，浑身浴血地站在角斗场中央。周围爆发出震耳欲聋的狂吼，狂暴的力量在你酸痛的肌肉里扎根。你成为了【血焰角斗团】的暴徒。',
+        '色欲之环': '在极乐交响乐的暗室里，你喝下了一杯混有魅魔体液的甜腻红酒。你的视线变得迷离，随后胸口被烙印上了一枚粉色的荆棘唇印。一种深入骨髓的魅惑力与交际手腕融入了你的本能。你加入了【极乐交响乐】。',
+        '嫉妒之环': '深渊暗流的入会仪式在一潭冰冷刺骨的黑水中进行。你被强行按入水中直到近乎窒息，当你在绝望中张开嘴大口吞咽黑水时，你的肺部发生了某种诡异的扭曲变异，你的身手变得如游鱼般滑溜。你潜入了【深渊暗流】。',
+        '暴食之环': '无尽吞噬者的入教测试是吃掉一整盆由活体毒虫和腐肉搅拌而成的“圣餐”。你强忍着恶心吞下最后一口，胃部瞬间产生了一阵痉挛的剧痛，紧接着，那股痛楚转化成了极其恐怖的消化力和蛮力。你加入了【无尽吞噬者】。',
+        '懒惰之环': '你躺进了永恒静眠教的一口石棺中。当棺盖合上的那一刻，灰色的雾气顺着你的七窍钻入脑海。你睡了极其漫长的一觉。醒来时，你发现自己对周围的一切都产生了一种麻木的钝感，但理智却变得坚不可摧。你皈依了【永恒静眠教】。'
+    };
+    
+    st('<div class="scene-title">血 契 烙 印</div><p>' + rituals[ring] + '</p><p style="color:#e8c060;">你的所属派系变更为 ' + ring + '。获得 ' + ({magic:'魔力',charisma:'魅力',strength:'力量',agility:'敏捷',sanity:'理智'}[stat]) + ' +' + statBonus + '。其他阵营对你的敌意增加了。</p>');
     cb();
-    ab('继续', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
-}
-function sceneSellHand() {
-    var goldEarned = Math.floor(Math.random() * 5) + 8;
-    player.gold += goldEarned;
-    player.desire = Math.min(player.maxDesire, player.desire + 10);
-    player.fatigue += 5;
-    player.sanity -= 2;
-    checkHp();
-    ua();
-    st('<div class="scene-title">手 部 侍 奉</div><p>你深吸了一口气，选择了第一种方式。扎里克没有说话，只是身体微微向后靠去，双手随意地搭在大腿上，那双蛇瞳居高临下地注视着你，等待你的动作。角落里的光线昏暗，空气中弥漫着廉价酒精和劣质烟草的刺鼻气味。你蹲下身，隔着粗糙的布料，你感受到他体温的炽热。那是一种粗野而危险的温度。</p><p>你伸出双手，解开他沾满灰尘和污渍的皮带扣。他没有帮忙，只是冷冷地看着，像是在欣赏你被迫屈从的姿态。你咽了口唾沫，手掌包裹住那滚烫的坚硬。粗糙的指腹摩擦着你的手心，带来一丝轻微的刺痛。你开始上下套弄，动作起初有些生疏和僵硬，但随着他沉重的呼吸声在狭小的空间里渐渐粗重，你的手也逐渐找到了节奏。</p><p><em>唔……还算凑合。</em>他低沉的声音在你头顶响起，带着一丝不易察觉的戏谑，<em>不过，比起那些专业的魅魔，你的手还是太粗糙了点。别停。</em></p><p>他的手不知何时抓住了你的头发，虽然没有用力，但那是一种绝对的掌控姿态。你只能被迫仰起头，看着那双在昏暗中闪烁着原始欲望的蛇瞳。随着你的动作加快，他的呼吸越来越重，最终伴随着一声低吼，黏腻的浊液喷洒在你的手背和手腕上。那气味刺鼻而强烈，让你感到一阵轻微的恶心，但你强忍住了。</p><p>他松开了你的头发，从口袋里摸出几枚金币，随意地扔在桌上。金币发出清脆的撞击声。</p><p><em>这是你的报酬。</em>他一边整理衣物，一边冷淡地说，<em>记住，在地狱，你的双手不仅能用来拿武器，也能用来换命。</em></p><p style="color:#e85060;">完成交易。获得 ' + goldEarned + ' 金币。欲望+10，疲劳+5，理智-2。</p>');
-    cb();
-    ab('拿走金币，离开酒馆', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
-}
-function sceneSellOral() {
-    var goldEarned = Math.floor(Math.random() * 8) + 15;
-    player.gold += goldEarned;
-    player.desire = Math.min(player.maxDesire, player.desire + 15);
-    player.fatigue += 10;
-    player.sanity -= 5;
-    checkHp();
-    ua();
-    st('<div class="scene-title">口 部 侍 奉</div><p>你咬了咬嘴唇，选择了第二种。这需要更多的屈服，但也意味着更多的筹码。扎里克那双蛇瞳中闪过一丝意外，随即被浓烈的兴味所取代。他微微拉开双腿，身体前倾，将那令人窒息的压迫感完全释放出来。</p><p><em>胆子不小，新来的。</em>他低哑地说着，粗糙的手指抚上你的脸颊，带着浓重的硫磺味，<em>那就让我看看，你这双嘴除了说那些愚蠢的废话，还能做点什么有用的事。</em></p><p>你跪在冰冷脏污的木地板上，木刺几乎要扎进你的膝盖。你颤抖着解开他的衣物，将那滚烫而粗硕的欲望释放出来。浓烈的雄性气息扑面而来，混合着地狱底层特有的血腥与汗水味。你张开嘴，试探性地含住前端。</p><p><em>嘶——张大点。</em>他一把扣住你的后脑勺，强硬地将自己往你喉咙深处推进。你瞬间感到一阵窒息，眼泪不受控制地溢出眼角。粗暴的摩擦让你的口腔内壁感到火辣辣的刺痛。他的动作越来越猛烈，每一次抽插都带着毫不留情的野蛮，仿佛要把你整个人钉死在这肮脏的角落里。</p><p><em>对，就是这样……把它全部吞下去。</em>他的声音因情欲而变得沙哑嘶吼。你只能发出含糊的呜咽声，努力适应这粗暴的侵犯。黏液顺着你的嘴角流下，滴落在肮脏的地板上。终于，在一阵剧烈的抽搐后，浓稠的白浊射入了你的喉咙深处。那股腥甜而刺鼻的味道让你几欲作呕，但你只能被迫咽下。</p><p>他松开手，看着你狼狈地咳嗽和干呕，眼中闪过一丝满意的残忍。他将一把金币扔在你面前的地上，金币沾上了地上的污迹。</p><p><em>你做得比我想象的好。拿着吧，这是你应得的。</em>他整理好衣物，居高临下地看着你，<em>记住这种味道。在地狱，生存的滋味往往比这更恶心。</em></p><p style="color:#e85060;">完成交易。获得 ' + goldEarned + ' 金币。欲望+15，疲劳+10，理智-5。</p>');
-    cb();
-    ab('捡起金币，踉跄离开', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
-}
-function sceneSellFull() {
-    var goldEarned = Math.floor(Math.random() * 12) + 25;
-    player.gold += goldEarned;
-    player.desire = Math.min(player.maxDesire, player.desire + 25);
-    player.fatigue += 20;
-    player.sanity -= 10;
-    player.flags.hadSex = true; // 记录发生过深度关系
-    checkHp();
-    ua();
-    st('<div class="scene-title">全 程 侍 奉</div><p>你深吸一口气，闭上眼睛，做出了最屈辱也最彻底的选择。在这个连呼吸都透着绝望的灰烬区，自尊是最不值钱的消耗品。扎里克的蛇瞳猛地收缩了一下，随即爆发出毫不掩饰的狂热与贪婪。他猛地站起身，一把抓住你的手腕，力道大得仿佛要捏碎你的骨头。他粗暴地将你拖向酒馆深处一个更加昏暗、几乎无人问津的隔间。</p><p><em>这可是你自找的。</em>他一脚踹开那扇摇摇欲坠的木门，将你重重地甩在一张散发着霉味和可疑斑渍的破旧床垫上。你还没来得及起身，他已经压了上来，沉重的身躯如同一座山般将你死死禁锢。他粗暴地撕扯你的衣物，布料破裂的声音在狭小的隔间里显得格外刺耳。</p><p>没有任何前戏，没有丝毫怜惜。他直接分开了你的双腿，强悍而粗硕的欲望带着粗糙的摩擦力，狠狠地贯穿了你。剧烈的撕裂痛感让你忍不住尖叫出声，但声音很快被他粗鲁的吻堵在喉咙里。他的舌头带着浓烈的酒精和血腥味，强行侵入你的口腔，疯狂地扫荡着每一寸柔软。</p><p><em>叫出来，让我听听你的声音。</em>他一边在你的耳边喘息着，一边发了疯似地抽插。木床在剧烈的撞击下发出濒临散架的惨叫。你感觉自己的身体仿佛要在这种野蛮的挞伐中被撕成碎片，内脏随着他每一次深入的撞击而颤抖。痛楚逐渐被一种扭曲的、难以启齿的快感所取代。在这个暗无天日的角落里，你被强行拉入了他那狂热而粗暴的情欲漩涡。</p><p>汗水混合着泪水模糊了你的视线。你只能看到他那双在黑暗中如野兽般闪烁的蛇瞳。他不断变换着姿势，将你翻转、折叠，强迫你承受他全部的重量和欲望。每一次撞击都伴随着沉闷的肉体拍打声，淫靡的汁液顺着大腿根部肆意流淌，将那张肮脏的床垫弄得更加泥泞不堪。</p><p>漫长而煎熬的折磨不知持续了多久。终于，伴随着他一声震耳欲聋的低吼，滚烫而浓稠的精液如熔岩般射入了你的体内最深处。你感到一阵痉挛，意识几乎要被这极致的快感和疲惫彻底吞没。</p><p>他从你身上翻下来，大口喘息着。他没有多看你一眼，只是从怀里掏出一个沉甸甸的钱袋，扔在你赤裸而布满红痕的身体上。</p><p><em>你是个极品，我得承认。</em>他穿好衣服，声音中带着餍足后的慵懒和冷酷，<em>但别以为这样就能在这儿横着走。这袋钱够你活上几天了。滚吧。</em></p><p style="color:#e85060;">完成交易。获得 ' + goldEarned + ' 金币。欲望大幅增加（+25），疲劳骤增（+20），理智严重受损（-10）。</p>');
-    cb();
-    ab('穿好破损的衣服，带着屈辱离开', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
+    ab('接受你的新身份', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
 }
 
-        // ==================== 侧边栏渲染 ====================
+// ==================== 侧边栏渲染 ====================
         
 
         // ==================== 存档系统 ====================
@@ -4756,7 +5264,7 @@ function sceneSellFull() {
                 a.click();
                 document.body.removeChild(a);
                 URL.revokeObjectURL(url);
-                st('<p style="color:#80c080;">✅ 已保存并导出！过期对话数据已清理。</p>');
+                st('<p style="color:#80c080;">已保存并导出！过期对话数据已清理。</p>');
             } catch(e) {
                 st('<p class="highlight">保存失败：' + e.message + '</p>');
             }
@@ -4785,7 +5293,7 @@ function loadGame(event) {
                 if (!player.activeTasks) player.activeTasks = [];
                 checkHp();
     ua();
-                st('<p style="color:#e8c060;">✅ 存档加载成功！</p>');
+                st('<p style="color:#e8c060;">存档加载成功！</p>');
                 cb();
                 ab('继续步入地狱', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
             };
@@ -4841,7 +5349,7 @@ function loadSlot(index) {
                 playSound(1000, 0.1);
                 checkHp();
     ua();
-                st('<p style="color:#e8c060;">✅ 存档 ' + (index+1) + ' 加载成功！</p>');
+                st('<p style="color:#e8c060;">存档 ' + (index+1) + ' 加载成功！</p>');
                 cb();
                 ab('继续', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel()); });
             }
@@ -4872,7 +5380,7 @@ function deleteSlot(index) {
             cb();
             ab('🔥 开始角色创建', function() { sceneCreate(); }, 'primary-btn');
         }
-function sceneCreate() { stage = 'create'; selectedRace = ''; selectedGender = ''; st('<div class="scene-title">角 色 创 建</div><p>选择你的<span class="highlight">种族</span>：</p><p><span class="highlight">罪人</span>：曾是人类，犯下罪孽后坠入地狱。在傲慢之环接受路西法的审判。</p><p><span class="gold-text">原生恶魔</span>：诞生于地狱混沌能量。在诞生环直接觐见君主。每个环有独特的诞生场景和君主对话。</p><div class="input-group"><div class="race-select" id="race-btns"><span class="clickable" id="race-sinner" onclick="sr(\'sinner\')">⚰️ 罪人</span><span class="clickable" id="race-demon" onclick="sr(\'demon\')">👿 原生恶魔</span></div></div><div id="race-desc" style="font-size:0.85em;color:#9a6a6a;margin-top:8px;"></div><p style="margin-top:10px;">选择你的<span class="highlight">性别</span>：</p><div class="input-group"><div class="race-select" id="gender-btns"><span class="clickable" id="gender-male" onclick="sg(\'male\')">♂ 男性</span><span class="clickable" id="gender-female" onclick="sg(\'female\')">♀ 女性</span></div></div><div class="input-group" style="margin-top:12px;"><label>输入你的<span class="highlight">姓名</span>：</label><input type="text" id="name-input" placeholder="输入姓名……" maxlength="20"></div>'); cb(); ab('✅ 确认并继续', function() { var nv = document.getElementById('name-input').value.trim(); if (!selectedRace) { st('<p class="highlight">请先选择种族！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!selectedGender) { st('<p class="highlight">请先选择性别！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!nv) { st('<p class="highlight">请输入姓名！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } player.name = nv; player.race = selectedRace; player.gender = selectedGender; checkHp();
+function sceneCreate() { stage = 'create'; selectedRace = ''; selectedGender = ''; st('<div class="scene-title">角 色 创 建</div><p>选择你的<span class="highlight">种族</span>：</p><p><span class="highlight">罪人</span>：曾是人类，犯下罪孽后坠入地狱。在傲慢之环接受路西法的审判。</p><p><span class="gold-text">原生恶魔</span>：诞生于地狱混沌能量。在诞生环直接觐见君主。每个环有独特的诞生场景和君主对话。</p><div class="input-group"><div class="race-select" id="race-btns"><span class="clickable" id="race-sinner" onclick="sr(\'sinner\')">罪人</span><span class="clickable" id="race-demon" onclick="sr(\'demon\')">原生恶魔</span></div></div><div id="race-desc" style="font-size:0.85em;color:#9a6a6a;margin-top:8px;"></div><p style="margin-top:10px;">选择你的<span class="highlight">性别</span>：</p><div class="input-group"><div class="race-select" id="gender-btns"><span class="clickable" id="gender-male" onclick="sg(\'male\')">男性</span><span class="clickable" id="gender-female" onclick="sg(\'female\')">女性</span></div></div><div class="input-group" style="margin-top:12px;"><label>输入你的<span class="highlight">姓名</span>：</label><input type="text" id="name-input" placeholder="输入姓名……" maxlength="20"></div>'); cb(); ab('确认并继续', function() { var nv = document.getElementById('name-input').value.trim(); if (!selectedRace) { st('<p class="highlight">请先选择种族！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!selectedGender) { st('<p class="highlight">请先选择性别！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } if (!nv) { st('<p class="highlight">请输入姓名！</p>'); cb(); ab('返回', function() { sceneCreate(); }); return; } player.name = nv; player.race = selectedRace; player.gender = selectedGender; checkHp();
     ua(); if (selectedRace === 'sinner') { sceneSinSelect(); } else { sceneDemonBirthRing(); } }, 'primary-btn'); }
 function sr(race) {
             selectedRace = race;
@@ -4924,8 +5432,8 @@ function sg(gender) {
                     player.flags.crimeFlavor = newStory.flavor;
                     st('<div class="scene-title">' + s.name + '——生 前 之 罪</div><div class="divider">◆ ◆ ◆</div><p><span class="highlight">' + player.name + '</span>——这就是将你推入地狱的罪行。</p><p style="margin-top:10px;line-height:1.9;">' + newStory.crime + '</p><div class="divider">◆ ◆ ◆</div><p style="color:#c09080;font-style:italic;">"' + newStory.flavor + '"</p><div class="divider">◆ ◆ ◆</div><p>属性修正：<span class="highlight">' + s.desc + '</span></p><p style="color:#9a6a6a;font-size:0.82em;">一切罪孽的根源都是傲慢——你将首先坠入傲慢之环，接受路西法的审判。</p>');
                     cb();
-                    ab('🎲 接受此背景，掷出命运之骰', function() { sceneDiceSinner(); }, 'primary-btn');
-                    ab('🔄 再换一个', reroll);
+                    ab('塑造外貌', function() { sceneAppearance(true); }, 'primary-btn');
+                    ab('再换一个', reroll);
                 };
 
                 var chosenStory = stories[Math.floor(Math.random() * stories.length)];
@@ -4935,12 +5443,155 @@ function sg(gender) {
     ua();
                 st('<div class="scene-title">' + s.name + '——生 前 之 罪</div><div class="divider">◆ ◆ ◆</div><p><span class="highlight">' + player.name + '</span>——这就是将你推入地狱的罪行。</p><p style="margin-top:10px;line-height:1.9;">' + chosenStory.crime + '</p><div class="divider">◆ ◆ ◆</div><p style="color:#c09080;font-style:italic;">"' + chosenStory.flavor + '"</p><div class="divider">◆ ◆ ◆</div><p>属性修正：<span class="highlight">' + s.desc + '</span></p><p style="color:#9a6a6a;font-size:0.82em;">一切罪孽的根源都是傲慢——你将首先坠入傲慢之环，接受路西法的审判。</p>');
                 cb();
-                ab('🎲 接受此背景，掷出命运之骰', function() { sceneDiceSinner(); }, 'primary-btn');
-                ab('🔄 再换一个', reroll);
+                ab('塑造外貌', function() { sceneAppearance(true); }, 'primary-btn');
+                ab('再换一个', reroll);
             });
         })(sins[i]);
     }
 }
+
+var currentAppearance = {
+    hairColor: { name: '暗红', color: '#cc4040' },
+    hairStyle: '凌乱的短发',
+    eyeColor: { name: '漆黑', color: '#555555' },
+    height: '中等身材',
+    bodyType: '匀称',
+    mutation: '无明显异化'
+};
+
+var appearanceOptions = {
+    sinner: {
+        hairColor: [
+            {name: '漆黑', color: '#555555'}, {name: '灰白', color: '#b0b0b0'}, {name: '暗红', color: '#cc4040'}, {name: '枯黄', color: '#c0a060'}, {name: '苍白', color: '#e0e0e0'}
+        ],
+        hairStyle: ['凌乱的短发', '披肩长发', '大背头', '粗糙的寸头', '卷曲的齐耳短发'],
+        eyeColor: [
+            {name: '漆黑', color: '#555555'}, {name: '浑浊黄', color: '#c0a040'}, {name: '死灰', color: '#a0a0a0'}, {name: '血红', color: '#d04040'}
+        ],
+        height: ['矮小佝偻', '中等身材', '高挑瘦削', '魁梧高大'],
+        bodyType: ['骨瘦如柴', '匀称', '臃肿', '结实健壮'],
+        mutation: [
+            '脖颈处有一道勒痕', '指甲呈锋利的黑爪', '皮肤布满尸斑', '瞳孔无法对焦', '皮肤苍白如纸'
+        ]
+    },
+    demon: {
+        '傲慢之环': {
+            hairColor: [{name: '银白', color: '#e0e0ff'}, {name: '暗紫', color: '#8a2be2'}, {name: '漆黑', color: '#555555'}],
+            eyeColor: [{name: '鎏金', color: '#ffd700'}, {name: '冰蓝', color: '#40a0ff'}, {name: '异色', color: '#ff60c0'}],
+            mutation: ['头顶有一对华丽的恶魔弯角', '背后有六片残缺的黑羽', '皮肤上浮现暗金色的魔纹']
+        },
+        '贪婪之环': {
+            hairColor: [{name: '金黄', color: '#ffd700'}, {name: '暗铜', color: '#b87333'}, {name: '翠绿', color: '#40ff40'}],
+            eyeColor: [{name: '铜钱黄', color: '#ffd700'}, {name: '祖母绿', color: '#50c878'}, {name: '暗红', color: '#cc4040'}],
+            mutation: ['双手覆盖着细密的金鳞', '瞳孔是金币的形状', '手臂可以化作黑色的阴影']
+        },
+        '色欲之环': {
+            hairColor: [{name: '玫红', color: '#ff1493'}, {name: '魅紫', color: '#9400d3'}, {name: '水蓝', color: '#00bfff'}],
+            eyeColor: [{name: '粉色', color: '#ff69b4'}, {name: '紫水晶', color: '#8a2be2'}, {name: '血红', color: '#cc4040'}],
+            mutation: ['有一条带心形尾尖的恶魔尾巴', '耳尖尖锐且带有绒毛', '舌头上有魅魔的印记']
+        },
+        '暴怒之环': {
+            hairColor: [{name: '猩红', color: '#ff4040'}, {name: '焦黑', color: '#404040'}, {name: '炽橙', color: '#ff8c00'}],
+            eyeColor: [{name: '熔岩金', color: '#ffa500'}, {name: '嗜血红', color: '#ff0000'}, {name: '灰烬黑', color: '#333333'}],
+            mutation: ['双臂覆盖着坚硬的骨铠', '呼吸时会喷出细小的火星', '头上长着粗壮的牛角']
+        },
+        '嫉妒之环': {
+            hairColor: [{name: '深海蓝', color: '#00008b'}, {name: '海藻绿', color: '#2e8b57'}, {name: '幽紫', color: '#4b0082'}],
+            eyeColor: [{name: '深渊蓝', color: '#0000cd'}, {name: '幽绿', color: '#00fa9a'}, {name: '惨白', color: '#f5fffa'}],
+            mutation: ['脖子两侧有隐秘的鳃裂', '部分皮肤覆有湿润的鳞片', '双手带有蹼']
+        },
+        '暴食之环': {
+            hairColor: [{name: '酸液绿', color: '#adff2f'}, {name: '肉红色', color: '#ff7f50'}, {name: '污浊黄', color: '#bdb76b'}],
+            eyeColor: [{name: '浑浊绿', color: '#556b2f'}, {name: '暗红', color: '#8b0000'}, {name: '血丝白', color: '#ffc0cb'}],
+            mutation: ['腹部有一张长满獠牙的巨口', '唾液带有强烈的腐蚀性', '可以无视常理地吞咽任何物体']
+        },
+        '懒惰之环': {
+            hairColor: [{name: '灰白', color: '#d3d3d3'}, {name: '暗蓝', color: '#483d8b'}, {name: '无色', color: '#f8f8ff'}],
+            eyeColor: [{name: '昏沉灰', color: '#708090'}, {name: '暗淡蓝', color: '#b0c4de'}, {name: '虚无白', color: '#f0f8ff'}],
+            mutation: ['身体边缘会逸散出灰色的惰性雾气', '肢体偶尔会呈现半透明的灵体状', '周围总是萦绕着安眠的幻音']
+        }
+    },
+    demonGeneral: {
+        hairStyle: ['柔顺的长发', '狂野的刺头', '优雅的卷发', '干练的短发', '随风飘动的发丝'],
+        height: ['修长高挑', '娇小玲珑', '高大威猛', '中等匀称'],
+        bodyType: ['完美曲线', '肌肉虬结', '轻盈纤细', '修长柔韧']
+    }
+};
+
+function renderAppearanceOptions(isSinner) {
+    var pool = appearanceOptions.sinner;
+    if (!isSinner) {
+        var ringPool = appearanceOptions.demon[player.birthRing] || appearanceOptions.demon['傲慢之环'];
+        pool = {
+            hairColor: ringPool.hairColor,
+            hairStyle: appearanceOptions.demonGeneral.hairStyle,
+            eyeColor: ringPool.eyeColor,
+            height: appearanceOptions.demonGeneral.height,
+            bodyType: appearanceOptions.demonGeneral.bodyType,
+            mutation: ringPool.mutation
+        };
+    }
+    
+    // Auto-select valid first option
+    if(!pool.hairColor.find(function(c) { return c.name === currentAppearance.hairColor.name; })) currentAppearance.hairColor = pool.hairColor[0];
+    if(pool.hairStyle.indexOf(currentAppearance.hairStyle) === -1) currentAppearance.hairStyle = pool.hairStyle[0];
+    if(!pool.eyeColor.find(function(c) { return c.name === currentAppearance.eyeColor.name; })) currentAppearance.eyeColor = pool.eyeColor[0];
+    if(pool.height.indexOf(currentAppearance.height) === -1) currentAppearance.height = pool.height[0];
+    if(pool.bodyType.indexOf(currentAppearance.bodyType) === -1) currentAppearance.bodyType = pool.bodyType[0];
+    if(pool.mutation.indexOf(currentAppearance.mutation) === -1) currentAppearance.mutation = pool.mutation[0];
+
+    var html = '<div style="margin-top:15px; background:rgba(20, 5, 10, 0.6); padding:15px; border:1px solid rgba(60, 16, 32, 0.8); border-radius:4px; box-shadow:inset 0 0 10px rgba(0,0,0,0.5);">';
+    
+    html += '<p style="margin-bottom:8px;"><span style="color:#9a6a6a;">发色：</span>' + pool.hairColor.map(function(c) { return '<span class="clickable" style="color:' + (currentAppearance.hairColor.name === c.name ? c.color : '#888') + '; text-shadow:' + (currentAppearance.hairColor.name === c.name ? ('0 0 6px ' + c.color) : 'none') + '; margin-right:8px;" onclick="setAppearance(\'hairColor\', \'' + c.name + '\', \'' + c.color + '\')">[' + c.name + ']</span>'; }).join('') + '</p>';
+    
+    html += '<p style="margin-bottom:8px;"><span style="color:#9a6a6a;">发型：</span>' + pool.hairStyle.map(function(c) { return '<span class="clickable" style="color:' + (currentAppearance.hairStyle === c ? '#e8c060' : '#888') + '; margin-right:8px;" onclick="setAppearance(\'hairStyle\', \'' + c + '\')">[' + c + ']</span>'; }).join('') + '</p>';
+    
+    html += '<p style="margin-bottom:8px;"><span style="color:#9a6a6a;">瞳色：</span>' + pool.eyeColor.map(function(c) { return '<span class="clickable" style="color:' + (currentAppearance.eyeColor.name === c.name ? c.color : '#888') + '; text-shadow:' + (currentAppearance.eyeColor.name === c.name ? ('0 0 6px ' + c.color) : 'none') + '; margin-right:8px;" onclick="setAppearance(\'eyeColor\', \'' + c.name + '\', \'' + c.color + '\')">[' + c.name + ']</span>'; }).join('') + '</p>';
+    
+    html += '<p style="margin-bottom:8px;"><span style="color:#9a6a6a;">身高：</span>' + pool.height.map(function(c) { return '<span class="clickable" style="color:' + (currentAppearance.height === c ? '#e8c060' : '#888') + '; margin-right:8px;" onclick="setAppearance(\'height\', \'' + c + '\')">[' + c + ']</span>'; }).join('') + '</p>';
+    
+    html += '<p style="margin-bottom:8px;"><span style="color:#9a6a6a;">体型：</span>' + pool.bodyType.map(function(c) { return '<span class="clickable" style="color:' + (currentAppearance.bodyType === c ? '#e8c060' : '#888') + '; margin-right:8px;" onclick="setAppearance(\'bodyType\', \'' + c + '\')">[' + c + ']</span>'; }).join('') + '</p>';
+    
+    html += '<p style="margin-bottom:8px;"><span style="color:#9a6a6a;">异化：</span>' + pool.mutation.map(function(c) { return '<span class="clickable" style="color:' + (currentAppearance.mutation === c ? '#e8c060' : '#888') + '; margin-right:8px;" onclick="setAppearance(\'mutation\', \'' + c + '\')">[' + c + ']</span>'; }).join('') + '</p>';
+    
+    html += '</div>';
+    
+    var desc = '<p style="margin-top:15px; line-height:1.9; font-style:italic; padding:10px; border-left:3px solid #5a1a28; background:rgba(0,0,0,0.3);">';
+    desc += '你有着一头<span style="color:' + currentAppearance.hairColor.color + ';font-weight:bold;text-shadow:0 0 4px ' + currentAppearance.hairColor.color + ';">' + currentAppearance.hairColor.name + '</span>的' + currentAppearance.hairStyle + '。';
+    desc += '一双<span style="color:' + currentAppearance.eyeColor.color + ';font-weight:bold;text-shadow:0 0 4px ' + currentAppearance.eyeColor.color + ';">' + currentAppearance.eyeColor.name + '</span>的眼睛正冷漠地审视着深渊。';
+    desc += '你的身姿' + currentAppearance.height + '，体型' + currentAppearance.bodyType + '。';
+    if (isSinner) {
+        desc += '作为背负着罪孽坠入地狱的罪人，你的灵魂重塑的肉体上残留着前世的烙印与惩罚的痕迹：<span style="color:#c04050;font-weight:bold;">' + currentAppearance.mutation + '</span>。';
+    } else {
+        desc += '作为纯粹由混沌能量孕育的原生恶魔，你的身体带有鲜明的深渊特征：<span style="color:#c04050;font-weight:bold;">' + currentAppearance.mutation + '</span>。';
+    }
+    desc += '</p>';
+    
+    return html + desc;
+}
+
+window.setAppearance = function(key, val, color) {
+    if (key === 'hairColor' || key === 'eyeColor') {
+        currentAppearance[key] = { name: val, color: color };
+    } else {
+        currentAppearance[key] = val;
+    }
+    sceneAppearance(player.race === 'sinner');
+}
+
+function sceneAppearance(isSinner) {
+    st('<div class="scene-title">塑 造 外 貌</div><p>在这里，你的灵魂将重塑肉体。你的模样将是你在地狱中存在的最直观印记。</p>' + renderAppearanceOptions(isSinner));
+    cb();
+    ab('确认外貌', function() {
+        player.appearance = JSON.parse(JSON.stringify(currentAppearance));
+        if (isSinner) {
+            sceneDiceSinner();
+        } else {
+            sceneDiceDemon();
+        }
+    }, 'primary-btn');
+}
+
 function sceneDiceSinner() {
     var newPlayer = createCleanPlayerState(player.name, player.race, player.gender, player.sin, player.sin + '之环');
     newPlayer.currentRing = '傲慢之环';
@@ -4958,7 +5609,9 @@ function sceneDiceSinner() {
     newPlayer.daysSurvived = 1;
     newPlayer.stats.ringsVisited = ['傲慢之环'];
     
+    var tempApp = player.appearance;
     Object.assign(player, newPlayer);
+    player.appearance = tempApp;
     
     var mods = { '暴怒': function() { player.strength += 3;
             player.sanity -= 2; }, '贪婪': function() { player.charisma += 2;
@@ -4977,14 +5630,14 @@ function sceneDiceSinner() {
     st(
         '<div class="scene-title">命 运 之 骰</div><p><span class="highlight">' + player.name +
         '</span> | 罪人 | <span class="gold-text">' + player.sin +
-        '</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' +
-        player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility +
-        '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic +
-        '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma +
-        '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity +
+        '</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>力量：<span class="highlight">' +
+        player.strength + '</span></span><span>敏捷：<span class="highlight">' + player.agility +
+        '</span></span><span>魔力：<span class="highlight">' + player.magic +
+        '</span></span><span>魅力：<span class="highlight">' + player.charisma +
+        '</span></span><span>理智：<span class="highlight">' + player.sanity +
         '</span></span></div>');
     cb();
-    ab('⚡ 坠入傲慢之环……', function() { sceneSinnerAwaken(); }, 'primary-btn');
+    ab('坠入傲慢之环……', function() { sceneSinnerAwaken(); }, 'primary-btn');
 }
 function setSinTraits() {
             if (player.sin === '暴食' || player.birthRing === '暴食之环') player.sinTrait = '暴食';
@@ -5001,7 +5654,7 @@ function sceneSinnerAwaken() {
             ab('挣扎着站起来，跟随恶魔前往审判厅', function() { sceneSinnerHall(); }); 
         }
 function sceneSinnerHall() { st('<div class="scene-title">审 判 厅</div><p>审判厅比你想象中更大。大到你无法看到尽头。暗紫色的光从穹顶的棱镜中折射下来，将整个空间切割成无数明暗交错的碎片。厅堂两侧矗立着巨大的水晶柱，每根柱子都有数十米高——但让你脊背发凉的，不是柱子的宏伟，而是柱中封存的东西。</p><p><span class="highlight">罪人的遗骸。</span>不知多少年前的灵魂，保持着坠入地狱时的姿态，被永远凝固在水晶之中。他们的表情清晰可见——有的惊恐，有的愤怒，有的在最后一刻终于流露出了悔恨。他们已成为这座厅堂的装饰，成为对每一位新到者的无声警告。</p><p>你被推搡着站到了厅堂中央。周围是数十个和你一样的新到者，挤在一起，像待宰的牲畜。哭泣声渐渐停止了——因为所有人都感觉到了——空气变了。不是变冷。是变得<span class="highlight">稀薄</span>。然后你听到了脚步声。每一下都像踩在所有人的心脏上。</p><p>银白色的长发，赤金色的眼眸，暗紫金边的长袍——<span class="highlight">路西法</span>降临在审判席上。他没有看任何人。他的目光越过所有新到的罪人，仿佛他们只是一片不值得聚焦的模糊背景。</p>'); cb(); ab('屏住呼吸，等待审判', function() { var verdictText = ''; switch (player.sin) { case '傲慢': verdictText = '他的目光在你身上多停了半秒——在那双赤金色的眼眸中，你捕捉到了一丝几乎不可察觉的玩味。<em>傲慢——</em>他微微侧头，银白长发从肩上滑落，<em>倒是与吾同源。但你配不上这份罪孽。你犯下的傲慢如此渺小，连给吾提鞋都不配。不过——至少你选择了最高贵的罪。</em>'; break; case '暴怒': verdictText = '他的目光扫过你，嘴角微微下撇——那表情介于轻蔑和厌烦之间。<em>暴怒——野蛮人的罪孽。</em>他连评价都懒得多说一个字。在他眼中，你的愤怒不过是一只野兽在笼中的咆哮——吵闹，但毫无意义。'; break; case '贪婪': verdictText = '他看了你一眼——那眼神中闪过一丝毫不掩饰的鄙夷。<em>贪婪——为铜臭折腰的灵魂。</em>他的语气里没有愤怒，只有一种居高临下的嫌恶，<em>连罪孽都犯得如此庸俗。你追逐了一辈子的东西，在吾眼中不过是脚下的尘埃。</em>'; break; case '嫉妒': verdictText = '他甚至没有正眼看你。<em>嫉妒——最卑微的罪孽。</em>他的声音里带着一种独特的蔑视——那种蔑视不是针对你的罪行，而是针对你选择了如此低劣的罪，<em>连罪都不配光明正大地犯。永远活在别人的阴影里，连自己站出来的勇气都没有。</em>'; break; case '暴食': verdictText = '他的目光冷冷掠过你，像掠过一块不值得停留的残渣。<em>暴食——把灵魂浪费在填饱肚子上。</em>他轻轻摇了摇头，<em>真是可悲。你一生的追求，不过是满足一个永远填不满的胃。连罪都犯得如此没有野心。</em>'; break; case '色欲': verdictText = '他轻哼了一声——那声音里混合着厌倦和轻微的不耐烦。<em>色欲——被欲望驱使的动物。</em>他的手指在王座扶手上轻轻敲了一下，<em>连自制都做不到，也配称罪人？你不过是欲望的奴隶，而奴隶——在任何地方都是最底层的存在。</em>'; break; case '懒惰': verdictText = '他几乎懒得开口。沉默了许久，才吐出几个字：<em>懒惰——连罪都犯得如此敷衍。</em>他挥了挥手，仿佛连审判你都是一种浪费，<em>你甚至不配被审判。你的存在本身，就是对地狱效率的侮辱。</em>'; break; } st('<div class="scene-title">审 判</div><p>路西法的目光终于扫过你——当那双赤金色的眼眸与你短暂接触时，你感到一阵前所未有的<span class="highlight">自惭形秽</span>。仿佛你的一生、你的罪孽、你自认为刻骨铭心的痛苦——在他眼中都轻如尘埃。</p><p>' + verdictText + '</p><p>他轻轻挥了挥手，语气恢复了平淡：<em>罪孽浅薄。平庸至极。按惯例，依罪孽送往对应环层。至于这些连罪孽都犯得如此平庸的——暂留傲慢环底层。若有价值，自有去处。若无价值——</em></p><p>他没有说完。他不需要说完。那个未完成的句子像一把悬在半空的刀，让每一个人都清楚地意识到：在这里，你的存在本身，不过是一种<span class="highlight">暂缓</span>。</p>'); player.flags.judged = true; cb(); ab('低头承受审判结果', function() { sceneSinnerAfter(); }); }); ab('直视路西法', function() { player.sanity -= 1; player.flags.daredToLook = true; ua(); var dareText = ''; switch (player.sin) { case '傲慢': dareText = '在所有低垂的头颅中，你抬起了头。路西法的嘴角微微上扬——那不是赞赏，而是看到一只蚂蚁试图模仿飞鸟时的嘲弄。他微微偏头，银白长发从肩上滑落。<em>有趣。</em>他说这两个字时，眼中终于映出了你的倒影——但那倒影如此渺小，<em>你至少还有抬头的勇气。但这不能改变你的平庸。傲慢——是需要实力来支撑的。而你没有。</em>'; break; case '暴怒': dareText = '你抬起头。路西法甚至没有回应你的目光——他的无视本身就是最锋利的回应。他沉默了很久，久到你的脖子开始酸痛。然后他才开口：<em>你以为愤怒能让你与众不同？每一个暴怒的灵魂在审判时都会抬头。你们都一样——除了蛮力一无所有。</em>'; break; case '贪婪': dareText = '你抬起头。路西法终于正眼看了你——但只是短短一瞬。随即移开，仿佛你的存在污染了他的视线。<em>连审判都要讨价还价？</em>他语气里的嫌恶加深了，<em>你以为直视吾能让你获得更好的待遇？贪婪——真是从头到脚都写着廉价。</em>'; break; case '嫉妒': dareText = '你抬起头。路西法的目光掠过你，像掠过一片不值得停留的阴影。<em>你在看吾？还是你在想——凭什么坐在上面的是他而不是你？</em>他替你回答了：<em>因为你永远只敢在下面看。嫉妒者最大的可悲，是永远不敢伸手去拿自己想要的东西。</em>'; break; case '暴食': dareText = '你抬起头。路西法微微偏头——那姿态不像在看你，更像在确认一件物品是否值得被踢开。<em>你的胃填不满，你的胆量倒是不小。</em>他的语气中带着一丝意外的玩味，<em>但饥饿带来的勇气，和饥饿本身一样——不过是本能。</em>'; break; case '色欲': dareText = '你抬起头。路西法面无表情，你的直视在他眼中和一只飞虫掠过面前没有区别。<em>你在试图诱惑谁？</em>他的声音冷淡至极，<em>吾见过最美的天使坠落，也见过最丑陋的欲望膨胀。你的这点小把戏，连让吾多看一眼的资格都没有。</em>'; break; case '懒惰': dareText = '你抬起头。路西法甚至懒得回应你的目光。他挥了挥手——那动作随意得像在赶走一阵无关紧要的风。<em>连抬头都抬得这么敷衍。</em>他的语气中没有愤怒，只有一种深深的疲惫，<em>退下吧。你连被审判的价值都没有。</em>'; break; } st('<p>你不知从哪来的勇气——或许是愚蠢，或许是残存的尊严——在所有头颅都低垂的时刻，你抬起了头。你直视了那双赤金色的眼眸。仅仅一瞬。但那一瞬间漫长得像一个世纪。</p><p>你没有感到愤怒。没有感到惩罚。你只感到一种<span class="highlight">彻底的无视</span>——比蔑视更令人窒息的，是他甚至懒得对你施加蔑视。一个人类抬头看天，天不会感到被冒犯。一只蚂蚁举起前肢，踩死它的人不会觉得那是挑衅。</p><p>' + dareText + '</p>'); cb(); ab('……', function() { sceneSinnerAfter(); }); }, 'danger-btn'); }
-function sceneSinnerAfter() { st('<div class="scene-title">灰 烬 区</div><p>审判结束了。路西法的身影从审判席上消失，仿佛从未存在过。只有空气中残留的星尘粒子提醒你，刚才的一切都是真实的——那位傲慢君主真的曾经坐在那张座椅上，用最漫不经心的语气决定了所有新到者的命运。</p><p>你和其他被判定为"平庸"的存在一起，被带到了傲慢环的底层区域。这里被称为<span class="highlight">灰烬区</span>——罪人、低阶恶魔、以及各种不入流的存在混杂的地方。水晶宫殿的光芒到这里已经变得稀薄，暗紫色的辉煌被灰色的平庸取代。街道狭窄而肮脏，两旁是歪歪扭扭的建筑。</p><p>但至少——你还存在。一个路过的低阶恶魔告诉你，被判定为罪孽平庸的存在可以在七环中自行选择居所。这是傲慢之主的"仁慈"——在他看来，安排你们这些平庸者的去向根本不值得他亲自费神。</p><p>你抬起头，望向灰烬区昏暗的天际线。远处，通往其他环层的通道隐约可见。你的地狱之旅——真正属于你自己的旅程——从现在开始。</p>'); cb(); ab('🗺️ 选择定居环', function() { sceneChooseResidence(); }); ab('🔍 在灰烬区探索', function() { sceneExploreDistrict('傲慢之环', 'poor'); }); }
+function sceneSinnerAfter() { st('<div class="scene-title">灰 烬 区</div><p>审判结束了。路西法的身影从审判席上消失，仿佛从未存在过。只有空气中残留的星尘粒子提醒你，刚才的一切都是真实的——那位傲慢君主真的曾经坐在那张座椅上，用最漫不经心的语气决定了所有新到者的命运。</p><p>你和其他被判定为"平庸"的存在一起，被带到了傲慢环的底层区域。这里被称为<span class="highlight">灰烬区</span>——罪人、低阶恶魔、以及各种不入流的存在混杂的地方。水晶宫殿的光芒到这里已经变得稀薄，暗紫色的辉煌被灰色的平庸取代。街道狭窄而肮脏，两旁是歪歪扭扭的建筑。</p><p>但至少——你还存在。一个路过的低阶恶魔告诉你，被判定为罪孽平庸的存在可以在七环中自行选择居所。这是傲慢之主的"仁慈"——在他看来，安排你们这些平庸者的去向根本不值得他亲自费神。</p><p>你抬起头，望向灰烬区昏暗的天际线。远处，通往其他环层的通道隐约可见。你的地狱之旅——真正属于你自己的旅程——从现在开始。</p>'); cb(); ab('选择定居环', function() { sceneChooseResidence(); }); ab('在灰烬区探索', function() { sceneExploreDistrict('傲慢之环', 'poor'); }); }
 
         // ---- 原生恶魔 ----
         function sceneDemonBirthRing() {
@@ -5022,7 +5675,7 @@ function sceneSinnerAfter() { st('<div class="scene-title">灰 烬 区</div><p>�
  ua();
  st('<div class="scene-title">' + r + '</div><p>属性修正：<span class="highlight">' + (attrMap[s] || '无') + '</span></p><p>君主：<span class="gold-text">' + (L[s] ? L[s].name : '未知') + '</span></p>');
  cb();
- ab('🎲 掷出命运之骰', function() { sceneDiceDemon(); }, 'primary-btn');
+ ab('塑造外貌', function() { sceneAppearance(false); }, 'primary-btn');
  } catch(e) {
  alert('选择环时出错: ' + e.message);
  console.error(e);
@@ -5062,18 +5715,20 @@ function sceneDiceDemon() {
     };
     if (mods[newPlayer.sin]) mods[newPlayer.sin]();
     
+    var tempApp = player.appearance;
     Object.assign(player, newPlayer);
+    player.appearance = tempApp;
     setSinTraits();
     checkHp();
     ua();
     st(
         '<div class="scene-title">命 运 之 骰</div><p><span class="highlight">' + player.name +
         '</span> | 原生恶魔 | ' + player.sin +
-        '</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>💪 力量：<span class="highlight">' +
-        player.strength + '</span></span><span>🏃 敏捷：<span class="highlight">' + player.agility +
-        '</span></span><span>✨ 魔力：<span class="highlight">' + player.magic +
-        '</span></span><span>💋 魅力：<span class="highlight">' + player.charisma +
-        '</span></span><span>🧠 理智：<span class="highlight">' + player.sanity +
+        '</p><div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;margin:12px 0;padding:14px;background:#14040a;border-radius:6px;border:1px solid #2a0a14;"><span>力量：<span class="highlight">' +
+        player.strength + '</span></span><span>敏捷：<span class="highlight">' + player.agility +
+        '</span></span><span>魔力：<span class="highlight">' + player.magic +
+        '</span></span><span>魅力：<span class="highlight">' + player.charisma +
+        '</span></span><span>理智：<span class="highlight">' + player.sanity +
         '</span></span></div><p>混沌能量额外强化了<span class="highlight">' + bn[bst] + '</span>（+3）。</p>'
         );
     cb();
@@ -5091,17 +5746,46 @@ function sceneDemonAwaken() {
             cb();
             ab('前往觐见' + ld.name, function() { sceneDemonAudience(); }, 'primary-btn');
         }
+
 function sceneDemonAudience() {
-            var ld = L[player.sin];
-            st('<div class="scene-title">觐 见 君 主</div><p>' + ld.audience.replace(/\n/g, '<br>') + '</p>');
-            player.flags.audiencedLord = true;
-            player.relationships[ld.name] = { love: 5, desire: 0, anger: 0, opinion: '一个刚诞生的原生恶魔。' };
-            player.residenceRing = player.birthRing;
-            if (player.sin === '贪婪') { player.gold += 1;
-                st(tc.innerHTML + '<p style="margin-top:10px;"><span class="gold-text">获得玛门的投资：1金币。</span></p>'); }
-            cb();
-            ab('选择居所', function() { sceneDemonChooseDistrict(); }, 'primary-btn');
+    var ld = L[player.sin];
+    st('<div class="scene-title">觐 见 君 主</div><p>' + ld.audience.replace(/\n/g, '<br>') + '</p>');
+    player.flags.audiencedLord = true;
+    player.relationships[ld.name] = { love: 5, desire: 0, anger: 0, opinion: '一个刚诞生的原生恶魔。' };
+    player.residenceRing = player.birthRing;
+    
+    cb();
+    
+    var proceed = function() {
+        if (player.sin === '贪婪') { 
+            player.gold += 1;
+            st(tc.innerHTML + '<p style="margin-top:10px;color:#e8c060;">玛门随手丢给你一枚金币：“拿去，算是投资。别让我失望。”</p>'); 
         }
+        cb();
+        ab('选择居所', function() { sceneDemonChooseDistrict(); }, 'primary-btn');
+    };
+
+    ab('🙇 谦卑俯首', function() {
+        player.relationships[ld.name].love += 2;
+        st('<p>你选择顺应本能，向王座上的君主深深低下了头。在这些古老而绝对的权能面前，谦卑是最安全的生存法则。君主对你的顺从并不意外，但至少，你没有激怒他们。</p>');
+        proceed();
+    });
+
+    ab('👁️ 直视君主', function() {
+        player.relationships[ld.name].love -= 2;
+        player.relationships[ld.name].anger += 5;
+        player.sanity = Math.max(0, player.sanity - 2);
+        st('<p>你强忍着来自血脉的压迫感，抬起头直视那双眼睛。直视原罪的化身让你的理智产生了一阵刺痛（理智-2）。君主显然注意到了你的逾矩，那目光中多了一丝警告与不悦，但也记住了你这张脸。</p>');
+        proceed();
+    });
+
+    ab('💪 展露锋芒', function() {
+        player.relationships[ld.name].opinion = '一个有点野心的新生恶魔。';
+        st('<p>你没有低头，而是微微释放出自己体内新生的魔力波动。虽然这点力量在君主面前如同烛火之于烈日，但足以证明你并非完全的弱者。君主对你的野心产生了一丝短暂的兴味。</p>');
+        proceed();
+    });
+}
+
 function sceneDemonChooseDistrict() {
             var ring = player.birthRing;
             var d = RD[ring];
@@ -5135,34 +5819,68 @@ function sceneDemonChooseDistrict() {
 
 
 // ==================== 文件1独有的睡眠和随机事件系统 ====================
+
 function doSleep(place, hours) {
     if (player.flags.isSleeping) return;
     player.flags.isSleeping = true;
-    st('<div class="scene-title">💤 沉 睡</div><p>你在 ' + place.name + ' 睡了 ' + hours + ' 小时……</p>');
+    st('<div class="scene-title">💤 沉 睡</div><p>你在 ' + place.name + ' 闭上了眼睛，试图在地狱的重压下寻找片刻的喘息……</p>');
     cb();
     setTimeout(function() {
         var fatigueRecovery = place.fatiguePerHour * hours;
         var hpRecovery = place.hpPerHour * hours;
         var sanityRecovery = place.sanityPerHour * hours;
         var foodCost = Math.floor(hours * 2);
+        
+        // Add nightmare/dream mechanic
+        var dreamHtml = '';
+        var nightmareTriggered = false;
+        
+        if (player.flags.addicted && player.flags.withdrawal) {
+            dreamHtml = '<p style="color:#e85060;">你做了一个极其恐怖的噩梦。梦里你的五脏六腑都在被数千只毒蚁啃食，你疯狂地尖叫着，在地上打滚，乞求哪怕一滴毒药。戒断反应让你的睡眠几乎成了一种拷问。</p>';
+            sanityRecovery = 0; hpRecovery = 0; fatigueRecovery = fatigueRecovery / 2;
+            nightmareTriggered = true;
+        } else if (player.sanity < 20) {
+            dreamHtml = '<p style="color:#e85060;">理智的崩溃让梦境化为一片血海。你梦见路西法的赤金双眸正在你的脑海里冷酷地审判你，你的血肉一点点剥落，只剩下一具枯骨。你在极度的恐慌和冷汗中惊醒，浑身虚脱。</p>';
+            sanityRecovery = Math.floor(sanityRecovery / 2);
+            nightmareTriggered = true;
+        } else if (player.sinValue > 80 && Math.random() < 0.5) {
+            dreamHtml = '<p style="color:#8a2be2;">你梦见自己正在无尽的深渊中下坠。庞大的罪业在你周围化作一双双黑色的巨手，试图将你彻底拉入不可名状的混沌。但奇怪的是，你并没有感到恐惧，反而有一丝……享受。</p>';
+        } else if (player.race === 'sinner' && Math.random() < 0.3) {
+            dreamHtml = '<p style="color:#9a6a6a;font-style:italic;">你梦见了生前的事。梦见了你犯下罪孽的那一天，那个被你伤害的人的脸孔在黑暗中闪过。但在这冰冷的地狱里，那段人间的记忆正变得越来越模糊，像一团快要散去的灰雾。</p>';
+        } else if (player.race === 'demon' && Math.random() < 0.3) {
+            dreamHtml = '<p style="color:#c09080;font-style:italic;">你梦见了你诞生时的那片混沌。纯粹的魔力在你的血管中流淌，你听到了原罪君主在远方深渊中的低语。这让你感到一种归属感。</p>';
+        } else {
+            dreamHtml = '<p>这是一个难得的、没有被深渊噩梦侵扰的安稳睡眠。</p>';
+        }
+        
         player.hp = Math.min(player.maxHp, player.hp + hpRecovery);
         player.sanity = Math.min(player.maxSanity, player.sanity + sanityRecovery);
         player.fatigue = Math.max(0, player.fatigue - fatigueRecovery);
         player.food = Math.max(0, player.food - foodCost);
+        
         for (var i = 1; i <= 8; i++) removeBuff('fatigue_layer_' + i);
         removeBuff('exhausted');
+        
         player.flags.isSleeping = false;
         player.consecutiveSleeplessDays = 0;
         addTime(Math.floor(hours * 60));
-        player.statusMood = '你好好休息了一觉，感到精力充沛。';
+        
+        if (nightmareTriggered) {
+            player.statusMood = '你刚从一场可怕的噩梦中惊醒，浑身冷汗。';
+        } else {
+            player.statusMood = '你好好休息了一觉，感到精力充沛。';
+        }
+        
         saveToSlot(0);
         checkHp();
         ua();
-        st('<div class="scene-title">苏 醒</div><p>你睁开眼睛，感到精神焕发。</p><p style="color:#e8c060;">HP +' + Math.floor(hpRecovery) + '，理智 +' + Math.floor(sanityRecovery) + '，疲劳 -' + Math.floor(fatigueRecovery) + '，饱食 -' + foodCost + '</p>');
+        
+        st('<div class="scene-title">苏 醒</div>' + dreamHtml + '<p style="color:#e8c060;">HP +' + Math.floor(hpRecovery) + '，理智 +' + Math.floor(sanityRecovery) + '，疲劳 -' + Math.floor(fatigueRecovery) + '，饱食 -' + foodCost + '</p>');
         cb();
-        ab('继续探索', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
+        ab('起身，继续探索', function() { sceneExploreDistrict(player.currentRing, getCurrentLevel()); });
     }, 800);
 }
+
 function doSleepWithHours(hours, placeName) {
     var ring = player.currentRing || '傲慢之环';
     var level = 'poor';
@@ -5320,7 +6038,7 @@ function hasMetNpc(npcId) {
     ua();
         sceneTitle();
 
-        console.log('✅ 七环地狱 · 傲慢之醒 已启动！');
+        console.log('七环地狱 · 傲慢之醒 已启动！');
         console.log('📌 本次修复与增强：');
         console.log('  1. 修复中层区商店返回逻辑 — 现在返回当前层级');
         console.log('  2. 完善各环各层级商店数据（贫民/中层/贵族）');
@@ -5381,6 +6099,41 @@ function chooseSleepPlace() {
             ab('取消', function() { sceneExploreDistrict(ring, level); });
         }
 function generateNegativeRandomEvent() {
+    if (player.sanity < 20 && Math.random() < 0.4) {
+        var madnessEvents = [
+            {
+                title: '👁️ 深渊狂乱',
+                text: '周围的空气突然变得像黏稠的血液。你看到墙壁上睁开了无数只流血的眼睛，它们死死地盯着你，耳边充斥着撕裂灵魂的尖啸声。你惊恐地挥舞双手，却发现自己的指甲正在剥落，血肉像蜡一样融化。',
+                effect: function() {
+                    player.hp = Math.max(1, player.hp - 10);
+                    player.sanity = Math.max(0, player.sanity - 5);
+                    st('<p style="color:#e85060;font-weight:bold;text-shadow:0 0 8px #e85060;">你的理智濒临崩溃，幻觉让你的精神与肉体同时受创！HP-10，理智-5。</p>');
+                    checkHp(); ua();
+                }
+            },
+            {
+                title: '🔪 鲜血幻触',
+                text: '你突然感觉皮肤下有无数寄生虫在爬动。那种难以忍受的瘙痒让你疯狂地抓挠自己，直到指甲里塞满了带血的皮肉。当你回过神来，发现自己正跪在角落，手臂上全是你自己抓出的深可见骨的伤痕。',
+                effect: function() {
+                    player.hp = Math.max(1, player.hp - 15);
+                    player.sanity = Math.max(0, player.sanity - 2);
+                    st('<p style="color:#e85060;font-weight:bold;text-shadow:0 0 8px #e85060;">你在无尽的疯狂与幻触中自残！HP-15，理智-2。</p>');
+                    checkHp(); ua();
+                }
+            },
+            {
+                title: '🌀 绝望低语',
+                text: '无形的锁链勒住了你的喉咙，某个不可名状的存在在你耳边低语。它列举着你犯下的每一项罪孽，嘲笑着你在地狱中可悲的挣扎。你感到前所未有的无力和疲惫，仿佛连呼吸都成了一种折磨。',
+                effect: function() {
+                    player.fatigue = Math.min(player.maxFatigue, player.fatigue + 20);
+                    player.sanity = Math.max(0, player.sanity - 5);
+                    st('<p style="color:#e85060;font-weight:bold;text-shadow:0 0 8px #e85060;">深渊的低语抽干了你的力气。疲劳+20，理智-5。</p>');
+                    checkHp(); ua();
+                }
+            }
+        ];
+        return madnessEvents[Math.floor(Math.random() * madnessEvents.length)];
+    }
             var events = [{
                 title: '💰 暗巷扒手',
                 text: '当你侧身穿过狭窄潮湿的巷道时，一个浑身散发着酸腐气息的身影与你猛地擦肩而过。那是个骨瘦如柴的剥皮魔，他的手指细长得近乎病态，指甲锋利如钩。你下意识摸了摸腰间，指尖只触碰到了被利刃划开的布料。钱袋已经不见了，那个身影正以一种扭曲的姿态在复杂的废墟间跳跃，消失在浓重的硫磺烟雾中。',
@@ -5420,7 +6173,7 @@ function generateNegativeRandomEvent() {
                         }
                     },
                     {
-                        label: '⚔️ 殊死一搏',
+                        label: '殊死一搏',
                         cls: 'danger-btn',
                         effect: function() {
                             startCombat({ id: 'corrupt_guard', name: '贪婪环巡警', hp: 50, physicalAttack: 12, defense: 4, goldReward: 20, expReward: 15, sinReward: 5, description: '那些仗着路西法税收法典在底层作威作福的渣滓。' }, null, player.currentRing, getCurrentLevel());
@@ -5443,7 +6196,7 @@ function generateNegativeRandomEvent() {
                         }
                     },
                     {
-                        label: '⚔️ 拼死反击！',
+                        label: '拼死反击！',
                         cls: 'danger-btn',
                         effect: function() {
                             startCombat({ id: 'predator_thug', name: '掠夺者小队', hp: 50, physicalAttack: 12, defense: 4, goldReward: 25, expReward: 15, sinReward: 5, description: '三个极度危险的底层掠夺者，他们习惯了在受害者的哀嚎中分赃。' }, null, player.currentRing, getCurrentLevel());
@@ -5585,13 +6338,22 @@ function generateNpcRandomEvent() {
 
             // 根据好感度选择反应库
             var reactions;
-            if (love <= 20) reactions = npcRandomReactions[npcId] ? npcRandomReactions[npcId].low : null;
-            else if (love <= 50) reactions = npcRandomReactions[npcId] ? npcRandomReactions[npcId].neutral : null;
-            else reactions = npcRandomReactions[npcId] ? npcRandomReactions[npcId].high : null;
+            var rData = npcRandomReactions[npcId];
+            var reactions = null;
+            if (rData) {
+                if (Array.isArray(rData)) {
+                    reactions = rData;
+                } else {
+                    if (love <= 20) reactions = rData.low;
+                    else if (love <= 50) reactions = rData.neutral;
+                    else reactions = rData.high;
+                }
+            }
 
             if (!reactions || reactions.length === 0) return null;
 
-            var text = reactions[Math.floor(Math.random() * reactions.length)];
+            var rObj = reactions[Math.floor(Math.random() * reactions.length)];
+            var text = typeof rObj === 'string' ? rObj : (rObj.text || rObj);
 
             // 好感度变化（轻微）
             var loveChange = 0;
@@ -5602,7 +6364,7 @@ function generateNpcRandomEvent() {
             return {
                 type: 'npc_encounter',
                 npcId: npcId,
-                title: '💬 偶遇 ' + npcId,
+                title: '偶遇 ' + npcId,
                 text: text,
                 loveChange: loveChange,
                 options: [
@@ -5731,7 +6493,7 @@ function sceneBlackFigure() {
     '<p>他似乎注意到了你的视线，抬眼望来，嘴角勾起一抹玩味的弧度，却什么也没说。</p>' +
     '<p style="color:#9a6a6a;font-size:0.78em;">（他看起来不像普通恶魔，但浑身上下透着一股让人想揍他的欠揍气息。）</p>');
     cb();
-    ab('💬 和他搭话', function() { sceneBlackFigureTalk(); });
+    ab('和他搭话', function() { sceneBlackFigureTalk(); });
     ab('👊 揍他一顿', function() { sceneFakeCombat(); });
     ab('↩ 离开', function() { sceneExploreDistrict(player.currentRing || '傲慢之环', 'poor'); });
 }
@@ -5742,7 +6504,7 @@ function sceneBlackFigureTalk() {
     '<p style="color:#c09080;">“随便输入，说不定就踩中彩蛋了呢？我可是很随性的。” 他翘起二郎腿，一副看你表演的样子。</p>' +
     '<div style="margin:12px 0;"><input type="text" id="bf-input" placeholder="输入文字……" style="width:100%;padding:12px;background:#14040a;border:1px solid #3a1020;color:#e0c0c0;border-radius:6px;outline:none;box-sizing:border-box;"></div>');
     cb();
-    ab('💎 确认发送', function() {
+    ab('确认发送', function() {
         var input = document.getElementById('bf-input');
         var val = input ? input.value.trim() : "";
         if (val === '朗诵哥') {
@@ -5771,13 +6533,13 @@ function sceneBlackFigureTalk() {
     ab('取消', sceneBlackFigure);
 }
 function sceneFakeCombat() {
-    st('<div class="scene-title">⚔️ 你决定揍他一顿</div>' +
+    st('<div class="scene-title">你决定揍他一顿</div>' +
     '<p>你猛地站起身，一拳挥向黑衣人！</p>' +
     '<p>然而，你的拳头穿过了一片残影，原来他早已从原地消失。声音从你背后传来：</p>' +
     '<p style="color:#e8c060;">“哎呀呀，年轻人火气这么大？”</p>' +
     '<p>你回头，他正悠闲地站在三米外，双手插兜，一脸戏谑。</p>');
     cb();
-    ab('⚔️ 再次攻击', function() { fakeCombatAttack(1); });
+    ab('再次攻击', function() { fakeCombatAttack(1); });
     ab('😤 骂他一句', function() { fakeCombatInsult(); });
     ab('😩 认输', function() { fakeCombatEnd(); });
 }
@@ -5789,7 +6551,7 @@ function fakeCombatAttack(stage) {
     '“我闭着眼睛都能躲开你这一拳。你该不会是在模仿慢动作回放吧？”'
     ];
     var taunt = taunts[Math.floor(Math.random() * taunts.length)];
-    st('<div class="scene-title">⚔️ 你再次挥拳</div>' +
+    st('<div class="scene-title">你再次挥拳</div>' +
     '<p>你大喝一声，全力挥出一记重拳！黑衣人轻轻侧身，你的拳头擦着他的衣角落空，你因为惯性差点摔倒。</p>' +
     '<p style="color:#e8c060;">' + taunt + '</p>');
     cb();
