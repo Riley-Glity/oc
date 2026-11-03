@@ -1143,6 +1143,16 @@ button.wide.danger:hover { background: #2a0c14; color: #e85060; }
     outline-offset: 2px;
 }
 
+/* 简洁化：去掉多余装饰，收紧间距 */
+#text-content .divider { letter-spacing: 0.1em; color: #3a1a20; margin: 14px 0; }
+#text-content p { margin: 0 0 0.85em; }
+.scene-title { letter-spacing: 0.08em; }
+#quick-stats { border-bottom: 1px solid #1a060c; }
+#topbar .title { letter-spacing: 0.05em; }
+#text-content .clickable { border: 1px solid #2a0e18; background: rgba(255,255,255,0.012); }
+#text-content .clickable:hover { background: rgba(220,60,90,0.10); border-color: #6a2030; }
+#text-content .disabled-btn { background: none; opacity: 0.5; }
+
 </style>
 </head>
 <body>
@@ -3350,6 +3360,18 @@ function dailySettlement() {
             player.pendingNotices.push('你交不出 ' + player.rentDue + ' 金币房租，被记上了欠账（通缉度 +1）。');
         }
         player.rentDue = 0;
+    }
+
+    // 3b. 租约到期：没续租就只能睡街上
+    if (player.rentPaidUntilDay && (player.daysSurvived || 1) > player.rentPaidUntilDay) {
+        player.flags = player.flags || {};
+        var _expKey = 'rentExpired_d' + (player.daysSurvived || 1);
+        if (!player.flags[_expKey]) {
+            player.flags[_expKey] = true;
+            player.pendingNotices.push('租约到期了。今晚你没有地方可去。');
+            player.sanity = Math.max(0, (player.sanity || 0) - 2);
+            player.fatigue = Math.min(100, (player.fatigue || 0) + 10);
+        }
     }
 
     // 4. 通缉度自然衰减 / 惩罚
@@ -6704,6 +6726,9 @@ function sceneTavernMurder() {
 
         // ==================== 探索场景 ====================
         function sceneExploreDistrict(ring, level) {
+    if (typeof maybeTutorial === 'function' &&
+        (typeof __disableNpcRoll === 'undefined' || !__disableNpcRoll) &&
+        maybeTutorial()) return;
     // 高层区才可能撞见君主；泽洛斯则哪儿都可能冒出来
     if (typeof tryLordEncounter === 'function' && !player._npcRollPaused) {
         try { if (tryLordEncounter(ring, level)) return; } catch (e) {}
@@ -7800,6 +7825,14 @@ function hasMetNpc(npcId) {
     
 
 function chooseSleepPlace() {
+    // 有租约就睡自己家，别走两套睡眠逻辑
+    if (typeof rentInfo === 'function') {
+        var _ri = rentInfo();
+        if (_ri.paid > (player.daysSurvived || 1) && typeof sceneSleepAtHome === 'function') {
+            sceneSleepAtHome(player.residenceRing || player.currentRing || '傲慢之环', getCurrentLevel());
+            return;
+        }
+    }
             var ring = player.currentRing || '傲慢之环';
             var level = getCurrentLevel();
             var places = getSleepPlaces(ring, level);
@@ -10864,8 +10897,11 @@ function getNpcLove(id) {
 function addNpcLove(id, delta) {
     var d = NPC_PACK[id];
     if (!d) return 0;
-    // 涨得快没用：一次最多 +3
+    // 一次最多 +3，一天最多 +2
     if (delta > 3) delta = 3;
+    if (typeof clampDailyFavor === 'function') delta = clampDailyFavor(id, delta);
+    if (delta === 0) return 0;
+    if (delta > 0 && typeof _favorAddToday === 'function') _favorAddToday(id, delta);
     if (!player.relationships[d.name]) player.relationships[d.name] = { love: 2, met: true };
     var rel = player.relationships[d.name];
     rel.love = Math.max(0, Math.min(100, (rel.love || 0) + delta));
@@ -10956,8 +10992,8 @@ function sceneNativeNpcMenu(id) {
 
     // 独立剧情线
     if (typeof addNpcStoryButton === 'function') addNpcStoryButton(id);
-    if (typeof addNpcLowFavorButtons === 'function') addNpcLowFavorButtons(id);
-    if (typeof addRaceOption === 'function') addRaceOption(id);
+    if (typeof addNpcTogetherButton === 'function') addNpcTogetherButton(id);
+    if (typeof addWardrobeButton === 'function') addWardrobeButton();
     if (typeof storyAftermathText === 'function') {
         var _am = storyAftermathText(id);
         if (_am) { tc.innerHTML += _am; }
@@ -11458,8 +11494,9 @@ function sceneSubmenu(title, intro, items, backFn, backLabel) {
 function districtExploreMenu(ring, level) {
     var d = RD[ring][level];
     var items = [];
+    var placeItems = [];
     if (level === 'poor') {
-        items.push({ label: '地下暗血祭坛', cls: 'danger-btn', fn: function() { sceneDarkRitual(ring, level); } });
+        items.push({ label: '去危险的地方', cls: 'danger-btn', fn: function() { sceneDarkRitual(ring, level); } });
     }
     if (level === 'poor' && d.featureScenes) {
         var keys = Object.keys(d.featureScenes);
@@ -11471,7 +11508,7 @@ function districtExploreMenu(ring, level) {
         };
         for (var i = 0; i < keys.length; i++) {
             (function(key) {
-                items.push({
+                placeItems.push({
                     label: niceName[key] || key,
                     fn: function() {
                         var scene = d.featureScenes[key];
@@ -11485,7 +11522,14 @@ function districtExploreMenu(ring, level) {
             })(keys[i]);
         }
     }
-    items.push({ label: '深度搜刮 / 游荡（15分钟）', fn: function() { sceneWander(ring, 'middle'); } });
+    // 去处：地名太多，单独一层
+    if (placeItems.length) {
+        items.push({ label: '去某个地方（' + placeItems.length + ' 处）', fn: function() {
+            sceneSubmenu('探索 · ' + d.name, '这一带能走进去的地方。', placeItems,
+                function() { districtExploreMenu(ring, level); });
+        } });
+    }
+    items.push({ label: '随便走走，看看能碰上什么（15分钟）', fn: function() { sceneWander(ring, 'middle'); } });
     sceneSubmenu('探索 · ' + d.name, '这一带能走进去的地方。', items,
         function() { sceneExploreDistrict(ring, level); });
 }
@@ -11504,6 +11548,7 @@ function districtWorkMenu(ring, level) {
         })(keys[i]);
     }
     items.push({ label: '街头零工（30分钟）', fn: function() { findJob(); } });
+    items.push({ label: '顶一班（加班，2 小时）', fn: function() { sceneOvertime(ring, level); } });
     if (isBlackMarketOpen()) {
         items.push({ label: '黑市（已开放）', fn: function() { enterBlackMarket(); } });
     } else {
@@ -11526,16 +11571,156 @@ function districtWorkMenu(ring, level) {
         function() { sceneExploreDistrict(ring, level); });
 }
 
-function districtShopMenu(ring, level) {
-    var items = [
-        { label: '服装店', fn: function() { enterShop('cloth'); } },
-        { label: '食品店', fn: function() { enterShop('food'); } },
-        { label: '道具店', fn: function() { enterShop('item'); } }
+
+// ==================================================================
+// 店铺是地点，不是分类
+// 初版就是这么做的：道具店、服装店、食品店、铁匠铺、典当行……
+// 都有自己的名字和位置。这里补回名字，同时给每个地方标上远近。
+// ==================================================================
+
+var SHOP_DIST = { near: { label: '就在附近', cost: 3 }, mid: { label: '要走一段', cost: 8 }, far: { label: '挺远', cost: 15 } };
+
+function shopPlacesOf(ring, level) {
+    var key = ring + '|' + level;
+    var T = {
+        '傲慢之环|poor': [
+            { name: '破布铺', type: 'cloth', dist: 'near', line: '门口挂着几件洗到发白的衣服，风一吹就往里倒。' },
+            { name: '街角杂货', type: 'food', dist: 'near', line: '半间铺面，货架上摆着看不出年份的罐头。' },
+            { name: '拾荒人摊子', type: 'item', dist: 'far', line: '地上铺块布，东西按“还能用/不能用了”分两堆。' }
+        ],
+        '傲慢之环|middle': [
+            { name: '缝线成衣店', type: 'cloth', dist: 'mid', line: '橱窗里那件外套的线脚很密，是给中层人做的。' },
+            { name: '面包与盐', type: 'food', dist: 'near', line: '推门就是一股麦子的味道，在这里算奢侈。' },
+            { name: '玻璃柜杂货', type: 'item', dist: 'far', line: '东西都锁在柜里，看一样要等店主过来开一次。' }
+        ],
+        '傲慢之环|rich': [
+            { name: '晨星裁缝行', type: 'cloth', dist: 'mid', line: '量体要半个时辰，没人催你。' },
+            { name: '水晶食府', type: 'food', dist: 'near', line: '盘子比食物贵，侍者不说多余的话。' },
+            { name: '稀有道具店', type: 'item', dist: 'far', line: '柜台后面那面墙全是抽屉，看不见标签。' }
+        ],
+        '贪婪之环|poor': [
+            { name: '铜板巷旧衣摊', type: 'cloth', dist: 'near', line: '衣服堆成一座小山，翻到哪件算哪件。' },
+            { name: '热汤车', type: 'food', dist: 'near', line: '一辆推车，汤锅一直在冒气。' },
+            { name: '零件铺', type: 'item', dist: 'mid', line: '螺丝按大小分了二十几个盒子。' }
+        ],
+        '贪婪之环|middle': [
+            { name: '金丝成衣', type: 'cloth', dist: 'mid', line: '橱窗擦得太干净，你差点撞上去。' },
+            { name: '酒与乳酪', type: 'food', dist: 'near', line: '店里只有四张桌子，都坐着人。' },
+            { name: '典当行', type: 'item', dist: 'near', line: '柜台很高，你得仰头说话。' }
+        ],
+        '贪婪之环|rich': [
+            { name: '万宝定制', type: 'cloth', dist: 'far', line: '进门先有人替你收外套，再没人理你。' },
+            { name: '内城食堂', type: 'food', dist: 'mid', line: '菜牌每天换，写在水晶板上。' },
+            { name: '拍卖行后柜', type: 'item', dist: 'far', line: '要验过身份才往里面带。' }
+        ],
+        '暴怒之环|poor': [
+            { name: '碎骨衣铺', type: 'cloth', dist: 'near', line: '卖的多半是别人穿剩下的护具。' },
+            { name: '铁锅摊', type: 'food', dist: 'near', line: '锅一直没停过火，味道很冲。' },
+            { name: '碎骨铁匠铺', type: 'item', dist: 'mid', line: '锤声从街那头就听得见。' }
+        ],
+        '暴怒之环|middle': [
+            { name: '铁砧裁缝', type: 'cloth', dist: 'mid', line: '做的是耐磨的，不是好看的。' },
+            { name: '工棚饭食', type: 'food', dist: 'near', line: '长条桌，坐下就吃，不说话。' },
+            { name: '熔渣五金', type: 'item', dist: 'far', line: '地上堆着还没分类的料。' }
+        ],
+        '暴怒之环|rich': [
+            { name: '堡垒军需', type: 'cloth', dist: 'far', line: '按尺码分好，没有挑的余地。' },
+            { name: '将官食堂', type: 'food', dist: 'mid', line: '墙上挂着阵亡名单，吃饭时没人抬头。' },
+            { name: '军械库门市', type: 'item', dist: 'far', line: '每件东西出库都要登记。' }
+        ],
+        '色欲之环|poor': [
+            { name: '暗巷布庄', type: 'cloth', dist: 'near', line: '帘子后面挂着些不该挂在明面上的料子。' },
+            { name: '甜汤铺', type: 'food', dist: 'near', line: '甜得发腻，本地人一口就能喝完。' },
+            { name: '香料杂货', type: 'item', dist: 'mid', line: '一进门眼睛先被熏出泪。' }
+        ],
+        '色欲之环|middle': [
+            { name: '霓虹成衣', type: 'cloth', dist: 'mid', line: '灯光从外面照进来，衣服的颜色都被改了。' },
+            { name: '夜宵摊群', type: 'food', dist: 'near', line: '一条街十几家，都在抢同一个路口。' },
+            { name: '调香铺', type: 'item', dist: 'far', line: '店主会让你先闻三种，再问你要什么。' }
+        ],
+        '色欲之环|rich': [
+            { name: '红雾礼服行', type: 'cloth', dist: 'far', line: '量体的人在帘子后面等，不看你。' },
+            { name: '宫殿甜点房', type: 'food', dist: 'mid', line: '每样只做十二份。' },
+            { name: '私藏柜', type: 'item', dist: 'far', line: '要报名字才开门。' }
+        ],
+        '嫉妒之环|poor': [
+            { name: '水沟旧衣', type: 'cloth', dist: 'near', line: '衣服挂在水面之上，下面全是水。' },
+            { name: '水煮摊', type: 'food', dist: 'near', line: '一锅水什么都煮。' },
+            { name: '镜面零件', type: 'item', dist: 'mid', line: '碎镜片按大小论价。' }
+        ],
+        '嫉妒之环|middle': [
+            { name: '镜面裁衣', type: 'cloth', dist: 'mid', line: '店里全是镜子，没有一件衣服是给你穿的。' },
+            { name: '清汤馆', type: 'food', dist: 'near', line: '汤清得能看见碗底。' },
+            { name: '当铺分号', type: 'item', dist: 'far', line: '门口那块牌子和当铺总部一模一样。' }
+        ],
+        '嫉妒之环|rich': [
+            { name: '深水织坊', type: 'cloth', dist: 'far', line: '布料在水下织成，捞上来还是湿的。' },
+            { name: '王座膳房', type: 'food', dist: 'mid', line: '每道菜先给试吃的人尝。' },
+            { name: '私库', type: 'item', dist: 'far', line: '要两个人同时点头才开。' }
+        ],
+        '暴食之环|poor': [
+            { name: '残渣衣堆', type: 'cloth', dist: 'near', line: '分不清是衣服还是抹布。' },
+            { name: '大锅', type: 'food', dist: 'near', line: '锅里始终有东西。' },
+            { name: '残渣集市', type: 'item', dist: 'mid', line: '什么都有，什么都不能细看。' }
+        ],
+        '暴食之环|middle': [
+            { name: '美食大道衣铺', type: 'cloth', dist: 'mid', line: '衣服上有淡淡的味道，说不清是什么。' },
+            { name: '长桌食堂', type: 'food', dist: 'near', line: '一张桌子从门口排到底。' },
+            { name: '食材商行', type: 'item', dist: 'far', line: '冷库在后面，进去要穿厚点。' }
+        ],
+        '暴食之环|rich': [
+            { name: '盛宴礼服', type: 'cloth', dist: 'far', line: '每一件都配好了餐具的颜色。' },
+            { name: '永恒宴厅', type: 'food', dist: 'mid', line: '宴席从三十年前就没散过。' },
+            { name: '香料库', type: 'item', dist: 'far', line: '库门一开，整层楼都闻得到。' }
+        ],
+        '懒惰之环|poor': [
+            { name: '停滞旧衣', type: 'cloth', dist: 'near', line: '衣服挂在墙上，没人管。' },
+            { name: '随手汤', type: 'food', dist: 'near', line: '谁想喝谁舀。' },
+            { name: '堆着的杂货', type: 'item', dist: 'far', line: '东西堆着，翻不翻随你。' }
+        ],
+        '懒惰之环|middle': [
+            { name: '慵懒成衣', type: 'cloth', dist: 'mid', line: '店主躺着，让你自己看。' },
+            { name: '慢食堂', type: 'food', dist: 'near', line: '上菜要等，等多久没人说。' },
+            { name: '闲置货架', type: 'item', dist: 'far', line: '一半的架子上落了灰。' }
+        ],
+        '懒惰之环|rich': [
+            { name: '虚无裁坊', type: 'cloth', dist: 'far', line: '量完体要等七天，没人来催。' },
+            { name: '无味餐厅', type: 'food', dist: 'mid', line: '菜没有味道，据说是故意的。' },
+            { name: '无人看管库', type: 'item', dist: 'far', line: '门开着，里面没人。' }
+        ]
+    };
+    return T[key] || [
+        { name: '旧衣摊', type: 'cloth', dist: 'near', line: '一堆衣服。' },
+        { name: '小食摊', type: 'food', dist: 'near', line: '有点吃的。' },
+        { name: '杂货铺', type: 'item', dist: 'mid', line: '零碎东西。' }
     ];
-    if (ring === '傲慢之环' && level === 'poor' && !player.hasClock) {
-        items.push({ label: '买一个时钟（10 金币）', fn: function() { buyClock(); } });
+}
+
+function districtShopMenu(ring, level) {
+    var list = shopPlacesOf(ring, level);
+    var items = [];
+    for (var i = 0; i < list.length; i++) {
+        (function(p) {
+            var dist = SHOP_DIST[p.dist] || SHOP_DIST.mid;
+            items.push({
+                label: p.name + '（' + dist.label + '）',
+                fn: function() {
+                    addTime(dist.cost);
+                    st('<div class="scene-title">' + p.name + '</div><p>' + p.line + '</p>' +
+                        '<p style="color:#9a9a9a;font-size:0.84em;">走过去花了 ' + dist.cost + ' 分钟。</p>');
+                    cb();
+                    ab('看看货', function() { enterShop(p.type); }, 'primary-btn');
+                    ab('走开', function() { districtShopMenu(ring, level); });
+                }
+            });
+        })(list[i]);
     }
-    sceneSubmenu('交易 · ' + RD[ring][level].name, '柜台上摆着的东西。', items,
+    items.push({ label: '卖掉身上的东西', fn: function() { sceneSellItems(ring, level); } });
+    if (ring === '傲慢之环' && level === 'poor' && !player.hasClock) {
+        items.push({ label: '向人买一个时钟（10 金币）', fn: function() { buyClock(); } });
+    }
+    sceneSubmenu('能买东西的地方 · ' + RD[ring][level].name,
+        '这一带做买卖的都在这些地方，远近不一样，来回也花时间。', items,
         function() { sceneExploreDistrict(ring, level); });
 }
 
@@ -11550,11 +11735,105 @@ function districtPeopleMenu(ring, level) {
     addPackNpcButtons(ring, level);
     ab('觐见' + ring + '君主', function() { sceneLordCourt(ring); }, 'primary-btn');
     ab('加入派系', function() { sceneFactionJoin(ring, level); });
+    if (typeof addSupplementButtons === 'function') addSupplementButtons(ring, level);
     ab('返回', function() { sceneExploreDistrict(ring, level); });
+}
+
+
+// ==================================================================
+// 住处：租房、续租、欠租
+// 原来只有 rentDue / rentPaidUntilDay 两个字段，收租逻辑在，
+// 但没有任何地方能签租约——等于房租永远不会被触发。
+// ==================================================================
+
+var RENT_PLAN = {
+    poor:   { ring: null, label: '棚屋',   price: 35,  days: 7, line: '一块木板搭的棚，门能锁。下雨会漏。' },
+    middle: { ring: null, label: '单间',   price: 90,  days: 7, line: '一张床、一张桌、一扇朝内的窗。' },
+    rich:   { ring: null, label: '套间',   price: 240, days: 7, line: '有热水，有门房，走廊里没人看你。' }
+};
+
+function rentInfo() {
+    var paid = player.rentPaidUntilDay || 0;
+    var day = player.daysSurvived || 1;
+    return { paid: paid, left: Math.max(0, paid - day), level: player.residenceLevel || 'poor' };
+}
+
+function sceneRentHome(ring, level) {
+    var info = rentInfo();
+    var html = '<div class="scene-title">住 处</div>';
+    if (info.paid > (player.daysSurvived || 1)) {
+        var r = RENT_PLAN[info.level] || RENT_PLAN.poor;
+        html += '<p>你住的是<b>' + r.label + '</b>。' + r.line + '</p>' +
+            '<p style="color:#7ab47a;">租金已付到第 ' + info.paid + ' 天，还剩 ' + info.left + ' 天。</p>';
+    } else {
+        html += '<p>你没有在付租金的地方。</p>' +
+            '<p style="color:#c09080;">睡在街上不是不能活，只是醒过来的时候不会好受。</p>';
+    }
+    st(html);
+    cb();
+
+    for (var key in RENT_PLAN) {
+        (function(k) {
+            var r = RENT_PLAN[k];
+            var canAdd = (level === k || (k === 'poor' && level === 'middle'));
+            if (!canAdd) return;
+            ab('租 ' + r.label + '（' + r.price + ' 金币 / ' + r.days + ' 天）', function() {
+                if (player.gold < r.price) {
+                    st('<p>你数了数，还差 ' + (r.price - player.gold) + ' 金币。</p>');
+                    cb();
+                    ab('回去', function() { sceneRentHome(ring, level); });
+                    return;
+                }
+                addTime(15);
+                player.gold -= r.price;
+                player.residenceLevel = k;
+                player.residenceRing = ring;
+                var base = Math.max(info.paid, player.daysSurvived || 1);
+                player.rentPaidUntilDay = base + r.days;
+                player.rentDue = 0;
+                st('<p>你把金币推过去，对方数了一遍，给了你一把钥匙。</p>' +
+                    '<p>房租付到第 ' + player.rentPaidUntilDay + ' 天。</p>');
+                cb();
+                ab('进去看看', function() { sceneRentHome(ring, level); });
+            }, player.gold >= r.price ? 'primary-btn' : '');
+        })(key);
+    }
+
+    if (info.paid > (player.daysSurvived || 1)) {
+        ab('收拾东西，睡一觉', function() {
+            if (typeof sceneSleepAtHome === 'function') { sceneSleepAtHome(ring, level); return; }
+            sceneExploreDistrict(ring, level);
+        });
+    }
+    ab('离开', function() { sceneExploreDistrict(ring, level); });
+}
+
+// 睡在自己租的地方：回得多，欠租的话扣得厉害
+function sceneSleepAtHome(ring, level) {
+    var info = rentInfo();
+    var ok = info.paid > (player.daysSurvived || 1);
+    addTime(420);
+    if (ok) {
+        var r = RENT_PLAN[info.level] || RENT_PLAN.poor;
+        player.hp = Math.min(player.maxHp || 100, (player.hp || 0) + 45);
+        player.fatigue = Math.max(0, (player.fatigue || 0) - 60);
+        player.sanity = Math.min(15, (player.sanity || 0) + 2);
+        st('<div class="scene-title">' + r.label + '</div><p>你睡了一觉。醒来的时候天还没亮。</p>' +
+            '<p style="color:#7ab47a;">HP +45　疲劳 -60　理智 +2</p>');
+    } else {
+        player.hp = Math.min(player.maxHp || 100, (player.hp || 0) + 10);
+        player.fatigue = Math.max(0, (player.fatigue || 0) - 15);
+        player.sanity = Math.max(0, (player.sanity || 0) - 3);
+        st('<div class="scene-title">街上</div><p>你在墙根下睡着了，半夜被冻醒过两次。</p>' +
+            '<p style="color:#c09080;">HP +10　疲劳 -15　理智 -3</p>');
+    }
+    cb();
+    ab('起来', function() { sceneExploreDistrict(ring, level); });
 }
 
 function districtCareMenu(ring, level) {
     var items = [
+        { label: '住处（租房 / 睡觉）', fn: function() { sceneRentHome(ring, level); } },
         { label: '吃东西', fn: function() { sceneEatFromBag(ring, level); } },
         { label: '去翻点不要钱的（30分钟）', fn: function() { sceneScavengeFood(ring, level); } },
         { label: '找个角落喘口气（30分钟）', fn: function() { districtBreathe(ring, level); } },
@@ -11704,11 +11983,8 @@ function sceneFactionJoin(ring, level) {
 
 // 地区主菜单：6 个按钮，替代原来的 24 个
 function renderDistrictActions(ring, level) {
+    if (typeof districtPlacesMenu === 'function') { districtPlacesMenu(ring, level); return; }
     ab('探索', function() { districtExploreMenu(ring, level); }, 'nav-btn');
-    ab('谋生', function() { districtWorkMenu(ring, level); }, 'nav-btn');
-    ab('交易', function() { districtShopMenu(ring, level); }, 'nav-btn');
-    ab('人物', function() { districtPeopleMenu(ring, level); }, 'nav-btn');
-    ab('打理', function() { districtCareMenu(ring, level); }, 'nav-btn');
     ab('移动', function() { districtGoMenu(ring, level); }, 'nav-btn');
 }
 
@@ -13622,8 +13898,8 @@ function talkExhausted(id) {
 
 // 对话专用入口：衰减 + 计数（内部调原来的 addNpcLove）
 function addNpcLoveFromTalk(id, base) {
-    // 有时候一句话说得不对，就掉一点
-    if (Math.random() < 0.12) {
+    // 有时候一句话说得不对，就掉一点（测试模式下关闭，保证可复现）
+    if ((typeof __disableNpcRoll === 'undefined' || !__disableNpcRoll) && Math.random() < 0.12) {
         var _dd = NPC_PACK[id];
         if (_dd) {
             if (!player.relationships[_dd.name]) player.relationships[_dd.name] = { love: 2, met: true };
@@ -13634,8 +13910,13 @@ function addNpcLoveFromTalk(id, base) {
     }
     var gain = loveGainGated(id, base);
     _bump('talk', id);
-    if (gain !== 0) addNpcLove(id, gain);
-    return gain;
+    if (gain === 0) return 0;
+    // 返回真正加进去的数（addNpcLove 里还有单次上限 3）
+    var _p = NPC_PACK[id];
+    var _before = _p ? getNpcLove(id) : 0;
+    addNpcLove(id, gain);
+    var _after = _p ? getNpcLove(id) : 0;
+    return _after - _before;
 }
 
 // ---------- 属性：每日次数上限 ----------
@@ -14303,12 +14584,13 @@ function tryZelosEncounter(ring, level) {
         }
         return false;
     }
-    var k = 'zelosRoll_d' + (player.daysSurvived || 1) + '_' + ring + level;
+    // 一天只掷一次，不分环层（原来七个环乘三层=21 次，太多了）
+    var k = 'zelosRoll_d' + (player.daysSurvived || 1);
     if (player.flags[k]) return false;
     if (zelosStage() >= ZELOS_STORY.stages.length) return false;
 
-    var ch = 0.06;
-    if (zelosLove() >= 12) ch = 0.09;
+    var ch = 0.015;
+    if (zelosLove() >= 12) ch = 0.03;
     if (Math.random() >= ch) return false;
     player.flags[k] = true;
     player.flags.zelosMeets = (player.flags.zelosMeets || 0) + 1;
@@ -15615,6 +15897,1227 @@ function sinImpression(id) {
     else if (sin) line = '「' + sin + '的。」他把这三个字在嘴里嚼了一下，「……行吧。」';
     else line = '他没看出你带着哪一宗。这让他有点不高兴。';
     return { love: Math.min(love, 6), line: line, good: liked };
+}
+
+
+
+// ==================================================================
+// 欲望事件 / 血腥事件
+// 探索池里原来多是环境氛围，缺这两类。这里补的是真正会发生在人身上的事：
+// 色欲之环的、暴怒之环的，以及各环共通的。
+// ==================================================================
+
+(function attachDarkEvents() {
+    if (typeof EXPLORE_EVENTS === 'undefined') return;
+
+    var DESIRE = [
+        { id: 'dark_desire_1', text: '暗巷尽头的门帘被人从里面掀起一角。一只手伸出来，手腕很细，' +
+            '指甲修得很整齐，掌心朝上摊着，什么也没放。\n\n' +
+            '「进来。」里面的人说，声音压得很低，「不要钱。我只要有人听我说完一句话。」\n\n' +
+            '门帘后面的空气是甜的，甜得发腻，甜到舌根发苦。你看见里面有影子在动，不止一个。',
+          opt: [
+            { label: '把手放上去', fn: 'san-6 hp-4 love_all+1', text:
+              '门帘落下。里面很暗，只有一盏灯，灯罩是红的。\n\n' +
+              '那只手把你往里带，另外几只也跟着靠过来，动作很轻，像怕碰碎什么。' +
+              '有人在你的颈侧说了句什么，气声贴着皮肤，你一个字也没听清，' +
+              '只觉得那句话从耳朵一直落到了腹部以下。\n\n' +
+              '你被按在一张低矮的榻上，布料是凉的，贴着背脊一路滑下去。' +
+              '有人解开了你的衣带，指腹一寸一寸数过去，数到哪里，哪里就热起来。' +
+              '黑暗中分不清是谁的手，也分不清是几个人的手。\n\n' +
+              '「别怕。」那个声音又响起来，就在你耳边，"我们只是想确认，' +
+              '还有人是热的。」\n\n' +
+              '你出来的时候天已经黑透了。身上没有一处伤，但走路的姿势变了，' +
+              '像有什么东西还留在里面没有拿出来。' },
+            { label: '抽回手，掀开门帘往里看', fn: 'san-3', text:
+              '你掀开了。里面比你想的空——没有想象中那种场面。' +
+              '只有三具身体叠在一张榻上，都是活的，都在动，但谁也没有看谁。' +
+              '他们的眼睛都朝着天花板，像在等什么东西从上面掉下来。\n\n' +
+              '最上面那个人转过头，看见你，很轻地说：「你要不要一起。」' +
+              '语气平得像在问要不要喝水。\n\n' +
+              '你把门帘放下了。' },
+            { label: '什么都不做，走开', fn: 'san+2', text:
+              '你没有碰那只手。走出去很远之后，你还能闻到那股甜味，' +
+              '它粘在鼻腔里，很久都不散。' }
+          ] },
+
+        { id: 'dark_desire_2', text: '红雾宫殿侧廊的一面墙上嵌着半身像，' +
+            '不是石头做的，是活的。那些身体被固定在墙里，' +
+            '只露出肩膀以上和腰以下，中间那一段被封在墙里。\n\n' +
+            '你经过时，有一个睁开了眼睛。\n\n' +
+            '「帮我个忙。」他说，喉咙很干，「我已经很久没有被碰过了。' +
+            '碰一下就行。哪里都行。」',
+          opt: [
+            { label: '伸手碰他的脸', fn: 'san-5 love_all+1', text:
+              '你伸手，指背贴上他的颊侧。皮肤是凉的，但一碰到就立刻热起来，' +
+              '像有什么东西被点着了。\n\n' +
+              '他闭上眼睛，喉咙里发出很轻的一声，不是叹气，比叹气更往下。' +
+              '「再一下。」他说。你又碰了一下，这次是下巴，然后是脖子。\n\n' +
+              '墙里的部分开始动，你能听见石头里面有东西在挣，' +
+              '幅度很小，但一直在挣。他的呼吸乱了，张开嘴，' +
+              '没有出声，只是把脸往你手掌里送。\n\n' +
+              '「够了。」他忽然说，声音抖得厉害，「够了，谢谢。」\n\n' +
+              '你收回手。他闭着眼，很久才重新睁开，眼睛里的东西不像刚才了。' },
+            { label: '问他是谁把他封进去的', fn: 'san-2', text:
+              '「我自己。」他说得很平静，「我签了字。」\n\n' +
+              '「为什么。」\n\n' +
+              '他笑了一下，笑得很轻，「因为我想被看着。」' },
+            { label: '不说话，继续走', fn: 'san+1', text:
+              '你走了。身后他没有再开口，但你走出很远之后回头，' +
+              '看见他那双眼睛还睁着，一直朝着你走的方向。' }
+          ] },
+
+        { id: 'dark_desire_3', text: '那里有一间没有招牌的屋子，门口挂着一块帘子，' +
+            '帘子上绣着一只闭着的眼睛。\n\n' +
+            '里面的人不收钱，只收一样东西：你愿意说出口的最难堪的一件往事。\n\n' +
+            '「说完，」坐在里面的人说，「你就可以在我这里待一整晚。' +
+            '我什么都做，也可以什么都不做。你选。」',
+          opt: [
+            { label: '说一件你从没跟人说过的事', fn: 'san-8 love_all+2', text:
+              '你说了。说的时候声音很干，中间停了三次。\n\n' +
+              '里面的人一直没有打断，也没有露出任何表情，只是听。' +
+              '你说完之后，屋子里安静了很久。\n\n' +
+              '「好。」他站起来，走过来，把一只手放在你的后颈上，' +
+              '不轻不重地按着，「现在，你可以不用想那件事了。」\n\n' +
+              '那一晚很长。他做事很慢，慢到你几乎要开口催，' +
+              '但每次你刚一有那个念头，他就恰好往前一点。\n\n' +
+              '天亮的时候你醒过来。屋子里只剩你一个人，' +
+              '那件往事还在，但重量变了，像被谁拿出去晾过。' },
+            { label: '摇头，转身出去', fn: 'san+2', text:
+              '「不用说。」里面的人也不勉强，「很多人在门口站了一会儿就走了。」\n\n' +
+              '你走出去，帘子在你身后落下，那只闭着的眼睛重新合上。' }
+          ] },
+
+        { id: 'dark_desire_4', text: '霓虹大道后巷有一扇门，门上贴着一张纸：\n\n' +
+            '「本店只做一件事。收费按你叫出声的次数算。一声一个铜板。」\n\n' +
+            '门是虚掩的，里面有灯光，也有很轻的、有节奏的声音。',
+          opt: [
+            { label: '推门进去', fn: 'gold-20 san-6 hp-5', text:
+              '里面只有一张床，一个帘子，和一个看不清脸的人。\n\n' +
+              '「躺下。」他说，「不用说话。」\n\n' +
+              '接下来的一段时间里，你确实没怎么说话。你只是很努力地不叫出声，' +
+              '因为每叫一声都要付钱，而你身上只剩二十个铜板。\n\n' +
+              '他的手很稳，也很知道该在哪里停。每次你快要出声的时候，' +
+              '他就恰好退开一点，让你把那一口气压回去。\n\n' +
+              '最后你还是叫了。叫了很多声。\n\n' +
+              '他从帘子后面伸手出来，掌心朝上。你把二十个铜板全放上去，' +
+              '他没有数，直接收进了口袋。' },
+            { label: '在门口听一会儿就走', fn: 'san-2', text:
+              '你站在门外听了一会儿。里面的声音很有规律，' +
+              '规律到后来你觉得那不是人发出来的' + '——是某种被反复练习过的、给人听的东西。\n\n' +
+              '你走开了。' }
+          ] }
+    ];
+
+    var VIOLENCE = [
+        { id: 'dark_gore_1', text: '巷子里有人在拆一具身体。\n\n' +
+            '他做得很仔细，像在处理一只大型的、还有余温的猎物。' +
+            '刀从关节处下去，避开骨头，顺着筋的走向一点一点分开。\n\n' +
+            '地上铺着一块布，布上已经摆好了几样东西，摆得很整齐。\n\n' +
+            '他抬头看见你，一点也不慌：「等一下，我这条腿马上就下来。」',
+          opt: [
+            { label: '蹲下来看他怎么做', fn: 'san-8 hp-3 atk+1', text:
+              '你蹲下去。他没有赶你，甚至把角度让开了一点，让你看得更清楚。\n\n' +
+              '「这里，」他用刀背点了点，「这个位置有一条筋，切断了腿就不会乱蹬。」\n\n' +
+              '刀下去的时候没有多少血。真正出血的是后面那一下——' +
+              '他把整条腿从髋上卸下来，血才一下子涌出来，热的，溅在你手上。\n\n' +
+              '「你手别抖。」他说，「抖了容易切歪，切歪了就不值钱了。」\n\n' +
+              '你看完了整个过程。结束之后你站起来，膝盖有点软。' },
+            { label: '问他这个人是谁', fn: 'san-4', text:
+              '「欠钱的。」他头也不抬，「欠了三个月的利息。」\n\n' +
+              '「还不上？」\n\n' +
+              '「还不上。」他把一块骨头扔进桶里，「所以现在他不用还了。」' },
+            { label: '转身离开', fn: 'san+1', text:
+              '你转身走了。身后传来骨头落进桶里的声音，一声，两声，三声。' }
+          ] },
+
+        { id: 'dark_gore_2', text: '铁砧大道边上有个台子，台子上正在举行一场没有人下注的比赛。\n\n' +
+            '两个人被铁链锁在一起，链子很短，短到他们只能互相撕。' +
+            '已经有一个不太动了，另一个还在咬，咬的位置是脖子。\n\n' +
+            '台下没有观众，只有几个记录的人，一边看一边在本子上写。',
+          opt: [
+            { label: '上去把铁链砸开', fn: 'hp-25 san-4 atk+2', text:
+              '你跳上台，抓住那条链子往铁桩上砸。砸到第七下，链环断了。\n\n' +
+              '还活着的那一个立刻扑过来，不是扑你，是扑向那个不动的。' +
+              '你把他按住，他挣扎得很厉害，牙齿咬在你小臂上，咬穿了。\n\n' +
+              '「他已经死了。」你说。\n\n' +
+              '「我知道。」他嘴里全是血，说话含糊，「我知道。我停不下来。」\n\n' +
+              '记录的人抬起头，看了你一眼，在本子上写了几个字，没有拦你。' },
+            { label: '站在台下看完', fn: 'san-6', text:
+              '你站在台下看完了。最后赢的那一个站起来，' +
+              '浑身都是别人的血，走到台边，很平静地问记录的人：「记好了吗。」\n\n' +
+              '「记好了。」\n\n' +
+              '他点点头，自己走下台，从你身边经过时，看了你一眼，什么也没说。' },
+            { label: '离开这里', fn: 'san+1', text:
+              '你走了。台子上的声音在你身后持续了很久，然后忽然停了。' }
+          ] },
+
+        { id: 'dark_gore_3', text: '水沟区的下水道口堆着一团东西，走近才看清是个人。\n\n' +
+            '他还有呼吸，但半边脸已经没了，剩下的那只眼睛在转，转得很慢。\n\n' +
+            '他的手在地上抓，抓的方向是旁边的一把刀。',
+          opt: [
+            { label: '把刀递给他', fn: 'san-9 repentance+3', text:
+              '你把刀捡起来，塞进他手里。他的手指僵了一下，然后握紧了。\n\n' +
+              '他没有立刻动手。他先是用那只眼睛看了你很久，' +
+              '眼神里没有感激，只有一种很疲惫的东西，像终于等到了一件该来的事。\n\n' +
+              '「谢谢。」他说得含糊，因为半边嘴已经没了。\n\n' +
+              '你转过身去。身后有声音，很短。\n\n' +
+              '你等了很久才回头。他已经不动了，刀还在手里。' },
+            { label: '给他包扎', fn: 'hp-6 san-7 repentance+1', text:
+              '你撕下衣摆按住伤口。血根本止不住，' +
+              '布一贴上去就透了，透了三层。\n\n' +
+              '「别弄了。」他说，「弄不好的。」\n\n' +
+              '你还是弄了很久。弄完的时候他已经不说话了，但还有气。' +
+              '你把他挪到墙根，让他靠着。' },
+            { label: '走开', fn: 'san-2', text:
+              '你走开了。' }
+          ] },
+
+        { id: 'dark_gore_4', text: '熔岩堡垒的锻炉旁挂着一排钩子，钩子上挂着东西。\n\n' +
+            '有一个钩子上的还活着，吊在肩胛上，脚离地半尺，' +
+            '身体随着呼吸很轻地晃。\n\n' +
+            '旁边的铁匠正在打一把刀，锤子落下去的节奏很稳，跟那个人的晃一模一样。',
+          opt: [
+            { label: '把他放下来', fn: 'hp-18 san-5 atk+1', text:
+              '你伸手去解钩子。铁是烫的，抓上去掌心立刻起了泡。\n\n' +
+              '铁匠停了一锤，看了你一眼，又继续打。\n\n' +
+              '你把钩子从他肩胛里取出来的时候，他叫了，很短的一声，然后整个人塌下来，' +
+              '压在你身上，热得吓人。\n\n' +
+              '「你干什么。」铁匠终于开口，语气甚至有点好奇。\n\n' +
+              '「放他下来。」\n\n' +
+              '「他还会被挂回去。」铁匠把刀放进水里，' +
+              '「不过你手上那层皮，算你今天买的东西。」' },
+            { label: '问铁匠他犯了什么事', fn: 'san-3', text:
+              '「没犯事。」铁匠一边打一边说，「他是料。」' },
+            { label: '什么都不做', fn: 'san+1', text:
+              '你站了一会儿。锤子的节奏没有变过。' }
+          ] }
+    ];
+
+    var POOL = {
+        '色欲之环': DESIRE,
+        '暴怒之环': VIOLENCE
+    };
+
+    for (var ring in POOL) {
+        if (!EXPLORE_EVENTS[ring]) continue;
+        for (var i = 0; i < POOL[ring].length; i++) {
+            EXPLORE_EVENTS[ring].push(POOL[ring][i]);
+        }
+    }
+
+    // 暴食与贪婪也各拿一条血腥的
+    if (EXPLORE_EVENTS['暴食之环']) {
+        EXPLORE_EVENTS['暴食之环'].push({
+            id: 'dark_gore_5',
+            text: '残渣区的后厨里，一口大锅正在煮东西。\n\n' +
+                '锅边站着一个人，正在往里放东西。那些东西的形状，' +
+                '你看了两眼就决定不再看了。\n\n' +
+                '「新来的？」他舀起一勺，递到你面前，' +
+                '「尝尝。今天的比昨天好。」',
+            opt: [
+                { label: '接过来喝一口', fn: 'food+30 hp-8 san-7', text:
+                    '你接过来喝了。味道很浓，浓到盖住了所有你不想辨认的东西。\n\n' +
+                    '「怎么样。」他问。\n\n' +
+                    '「挺好的。」\n\n' +
+                    '他笑了，笑得眼睛都眯起来，「你看，我就说。」' +
+                    '他转回去继续往里放东西，「这儿的人只要不问是什么，都吃得下去。」' },
+                { label: '问他放的是什么', fn: 'san-4 food+10', text:
+                    '他停下手里的动作，看了你一会儿。\n\n' +
+                    '「你真的想知道？」\n\n' +
+                    '你没说话。他把勺子放回去，「那就别问。」' },
+                { label: '摇头走开', fn: 'food-5', text: '你走了。肚子在这个时候很不争气地叫了一声。' }
+            ]
+        });
+    }
+
+    if (EXPLORE_EVENTS['贪婪之环']) {
+        EXPLORE_EVENTS['贪婪之环'].push({
+            id: 'dark_gore_6',
+            text: '当铺后巷的墙根下坐着一个人，正在数自己的手指。\n\n' +
+                '数到第八根的时候他停住了，重新开始数。\n\n' +
+                '他的左手少了两根，切口很齐，已经结痂了。\n\n' +
+                '「你借过钱吗。」他抬头问你，' +
+                '「借过的话你就知道，他们不要手指。他们只是让你自己数清楚，还剩几根。」',
+            opt: [
+                { label: '坐下来陪他数', fn: 'san-3 repentance+2 love_all+1', text:
+                    '你坐下来。他数到八又停下，你就替他数完——十。\n\n' +
+                    '「不对。」他说，「只剩八。」\n\n' +
+                    '「十。」你说，「你还有十根。」\n\n' +
+                    '他低头看自己的手，看了很久，然后开始重新数。这次数到了十。' },
+                { label: '给他一些钱', fn: 'gold-15 repentance+3', text:
+                    '你把铜板放在他手边。他没有捡，只是看着。\n\n' +
+                    '「不够的。」他说，但没有把钱还给你。' },
+                { label: '走开', fn: 'san+1', text: '你走了。身后他又开始数，数到八，停下，重头数。' }
+            ]
+        });
+    }
+})();
+
+
+
+// 欲望 / 血腥事件的加长版：给已有的十起各补一段环境、一段后果。
+// 不动原结构，只在运行时往后追加段落。
+(function extendDarkEvents() {
+    if (typeof EXPLORE_EVENTS === 'undefined') return;
+
+    var EXT = {
+        dark_desire_1: {
+            text: '\n\n你站在门口，能听见里面有人在很轻地喘，节奏不整齐，像是两个人在互相等对方先动。\n\n' +
+                '这条巷子里的甜味是有来源的——墙缝里渗出来的汁液、地上没擦干的水痕、' +
+                '还有门口那只碗里剩下的半碗东西。你忽然明白，那些人不是在等你，' +
+                '是在等任何一个还愿意掀开帘子的人。',
+            opt: [
+                '\n\n你把衣带重新系好，手指还在抖。走出巷口的时候你回头看了一眼，' +
+                '门帘已经落回去了，里面又恢复了那种很轻的、有节奏的动静，像什么都没发生过。',
+                '\n\n你退出巷子。那股甜味一直跟到街口才断，断得很突然，' +
+                '像有人在你背后把一扇门关上了。',
+                ''
+            ]
+        },
+        dark_desire_2: {
+            text: '\n\n这面墙不止他一个。往两边看，每隔几步就有一副同样的半身像，' +
+                '有的闭着眼，有的睁着，有的脸上还留着笑，笑到一半僵在那儿。\n\n' +
+                '墙上没有铭牌，也没有编号。他们是谁、为什么在这里，没有任何记录。',
+            opt: [
+                '\n\n他的手在你掌心里慢慢松开，落回身体两侧。你走出去很远，' +
+                '回头看时他仍然睁着眼，但已经不再朝着你走的方向了。',
+                '\n\n他没有再回答。你走的时候，他的眼睛一直跟着你，' +
+                '直到墙的转角把你们隔开。',
+                ''
+            ]
+        },
+        dark_desire_3: {
+            text: '\n\n屋子里只有一张桌子、两把椅子、一盏灯。灯芯剪得很短，光只照亮桌面。\n\n' +
+                '坐在对面的人始终没有报名字。他说这里每天只接一个人，' +
+                '因为「听完一个人的往事，需要一整天才能忘掉」。',
+            opt: [
+                '\n\n你走出那间屋子的时候，天刚亮。街上有扫地的声音，' +
+                '很平常的声音，你听着听着，忽然发现自己已经很久没有注意过这种声音了。',
+                '\n\n你走出去，帘子在身后落下。那个人没有留你，也没有说下次再来。'
+            ]
+        },
+        dark_desire_4: {
+            text: '\n\n门框上钉着一排小木牌，每块上面刻着一个数字，从一到三十几，排得整整齐齐。\n\n' +
+                '老板说那是客人叫出声的次数。最高那块是三十七，' +
+                '刻得很深，边上还有被反复摸过的痕迹。\n\n' +
+                '「那块牌子挂了两年了。」他说，「没人破得了。」',
+            opt: [
+                '\n\n你在门口站了一会儿。里面的声音换了一个人，节奏没变。\n\n' +
+                '你把耳朵从门缝移开，走了。',
+                ''
+            ]
+        },
+        dark_gore_1: {
+            text: '\n\n他脚边放着三个桶，桶里的东西分得很清楚：一处放肉，一处放骨，' +
+                '一处放那些既不是肉也不是骨的东西。\n\n' +
+                '第三个桶最小，已经快满了。他往里面放东西的时候，动作比前两个都轻。',
+            opt: [
+                '\n\n他最后把布卷起来，四个角系好，扛在肩上。\n\n' +
+                '「你要不要也学着做。」他问得随口，「这活儿不难，就是得不怕脏。」',
+                '\n\n「三个月。」他补了一句，把刀在裤腿上擦了两下。\n\n' +
+                '刀身上还有没干透的东西，他没有再擦。',
+                ''
+            ]
+        },
+        dark_gore_2: {
+            text: '\n\n台子是用旧铁板焊的，焊口已经裂了，边缘卷起来。' +
+                '地上有拖拽的痕迹，从台边一直到巷口。\n\n' +
+                '记录的人坐在一张矮凳上，本子摊在膝盖，笔尖一直在动。' +
+                '他写的东西很密，一页写完就翻过去，不回头改。',
+            opt: [
+                '\n\n链子断成两截，落在铁板上，发出一声很闷的响。\n\n' +
+                '记录的人抬起头，看了看链子，又看了看你，最后在那页纸上补了一行字，' +
+                '把本子合上了。',
+                '\n\n记录的人写完最后一页，把本子合上，站起来，' +
+                '从台子下面拖出一块布，盖在那具不动的身体上。\n\n' +
+                '「下一场。」他说。没有人在听。',
+                ''
+            ]
+        },
+        dark_gore_3: {
+            text: '\n\n下水道口附近还有别的东西——一只翻倒的鞋、半截断掉的皮带、' +
+                '一小块被踩进泥里的纸。纸上写着什么，已经看不清了。\n\n' +
+                '他喘气的声音很响，每一下中间都要停很久，像在等自己攒够力气。',
+            opt: [
+                '\n\n他握刀的手一直没有松开，直到最后也没松。' +
+                '你走的时候没有回头，但那个握紧的姿势一直留在你脑子里。',
+                '\n\n你把他的位置摆正，让后脑靠着墙。他的呼吸慢下来，' +
+                '慢得你以为已经停了，过了一会儿又续上。\n\n' +
+                '你等了三轮，然后站起来，走了。',
+                ''
+            ]
+        },
+        dark_gore_4: {
+            text: '\n\n那些钩子一共九个，挂满了七个。有两副钩子是空的，' +
+                '钩尖上还留着一小段干掉的、已经发黑的东西。\n\n' +
+                '铁匠不理你。他把刀翻了个面，锤子落下去，火星溅到旁边的水缸里，' +
+                '滋了一声。',
+            opt: [
+                '\n\n他压在你身上，很轻。你能感觉到他在发抖，' +
+                '不是因为怕，是因为身体已经撑不住那些肌肉了。\n\n' +
+                '铁匠没有再说话。锤子的节奏变快了，' +
+                '不知道是不是故意的。',
+                '\n\n「料」这个字他说得很平，像在说铁矿石。\n\n' +
+                '你抬头看了看钩子上那个人。他的脚很轻地动了一下，' +
+                '然后又不动了。',
+                ''
+            ]
+        },
+        dark_gore_5: {
+            text: '\n\n锅很大，深得看不见底。汤面上浮着一层油，' +
+                '油下面偶尔翻上来一些东西，你只来得及看清轮廓，就不想再看了。\n\n' +
+                '「早上来的人多。」他说，把勺子搅了一圈，' +
+                '「晚上的少。晚上来的人都是没地方去的。」',
+            opt: [
+                '\n\n你把碗放下。碗底有一层沉下去的东西，' +
+                '你没有去看第二眼。\n\n' +
+                '「明天还来吗。」他在你身后问。\n\n' +
+                '你没有回答。',
+                '\n\n「不问是对的。」他把勺子重新放进锅里，' +
+                '「在这儿活得久的，都不问。」',
+                ''
+            ]
+        },
+        dark_gore_6: {
+            text: '\n\n他身后的墙上刻着很多道横线，一道一道，刻得很浅，' +
+                '数不清有多少。有些是新的，有些已经被人用刀刮掉了一半。\n\n' +
+                '「那是我记的。」他顺着你的视线说，' +
+                '「每天刻一道。刻满了就刮掉重来。」',
+            opt: [
+                '\n\n他数完第十根之后没有再重来。\n\n' +
+                '他把手放在膝盖上，很安静地坐着，坐了很久，' +
+                '久到你以为他睡着了，他才说了一句：「原来没有少。」',
+                '\n\n他把铜板收进袖子里，动作很慢。\n\n' +
+                '「谢谢。」他说，然后又补了一句，「不过还是不够的。」',
+                ''
+            ]
+        }
+    };
+
+    for (var ring in EXPLORE_EVENTS) {
+        var pool = EXPLORE_EVENTS[ring];
+        for (var i = 0; i < pool.length; i++) {
+            var ev = pool[i];
+            var e = EXT[ev.id];
+            if (!e) continue;
+            if (ev._extended) continue;
+            ev._extended = true;
+            if (e.text) ev.text += e.text;
+            if (e.opt && ev.opt) {
+                for (var j = 0; j < ev.opt.length; j++) {
+                    if (e.opt[j]) ev.opt[j].text += e.opt[j];
+                }
+            }
+        }
+    }
+})();
+
+
+
+// ==================================================================
+// 衣柜：把买到的衣服真正穿上去
+//
+// 原来只有 equipCloth 这个函数，没有任何地方能调它——买完衣服
+// 就堆在背包里，永远穿不上。这里补一个能进的衣柜界面。
+// ==================================================================
+
+function isClothItem(it) {
+    if (!it) return false;
+    if (it.type === 'cloth' || it.type === '衣服' || it.type === '服装') return true;
+    // 没有 type 的，按有没有魅力/力量这类字段判断
+    return (it.charisma || it.strength || it.magic || it.agility || it.sanity ||
+            it.buffs) ? true : false;
+}
+
+function ownedClothes() {
+    var out = [];
+    if (!player.inventory) return out;
+    for (var i = 0; i < player.inventory.length; i++) {
+        var it = player.inventory[i];
+        if (isClothItem(it)) out.push(it);
+    }
+    return out;
+}
+
+function sceneWardrobe() {
+    var list = ownedClothes();
+    var cur = player.equippedClothData;
+    var html = '<div class="scene-title">衣 柜</div>';
+
+    html += '<p style="font-size:0.9em;color:#9a9a9a;">' +
+        (player.outfit ? '身上：' + player.outfit : '身上：你坠入地狱时的那身') + '</p>';
+
+    if (cur) {
+        var eff = [];
+        if (cur.charisma) eff.push('魅力 ' + (cur.charisma > 0 ? '+' : '') + cur.charisma);
+        if (cur.strength) eff.push('力量 ' + (cur.strength > 0 ? '+' : '') + cur.strength);
+        if (cur.magic) eff.push('魔力 ' + (cur.magic > 0 ? '+' : '') + cur.magic);
+        if (cur.agility) eff.push('敏捷 ' + (cur.agility > 0 ? '+' : '') + cur.agility);
+        if (cur.sanity) eff.push('理智 ' + (cur.sanity > 0 ? '+' : '') + cur.sanity);
+        if (eff.length) {
+            html += '<p style="font-size:0.86em;color:#7ab47a;">当前效果：' + eff.join('　') + '</p>';
+        }
+    }
+
+    if (!list.length) {
+        html += '<p>' + '衣柜是空的。你身上那身已经磨得看不出原本的颜色了。' +
+            '去店里买点什么吧——衣服在这儿不只是遮体，它决定别人怎么看你。' + '</p>';
+    } else {
+        html += '<p style="font-size:0.86em;color:#9a9a9a;">一共 ' + list.length + ' 件。</p>';
+    }
+
+    st(html);
+    cb();
+
+    for (var i = 0; i < list.length; i++) {
+        (function(it) {
+            var isOn = player.outfit === it.name;
+            var label = (isOn ? '✓ ' : '　') + it.name;
+            var marks = [];
+            if (it.charisma) marks.push('魅' + (it.charisma > 0 ? '+' : '') + it.charisma);
+            if (it.strength) marks.push('力' + (it.strength > 0 ? '+' : '') + it.strength);
+            if (it.magic) marks.push('魔' + (it.magic > 0 ? '+' : '') + it.magic);
+            if (it.agility) marks.push('敏' + (it.agility > 0 ? '+' : '') + it.agility);
+            if (it.sanity) marks.push('理' + (it.sanity > 0 ? '+' : '') + it.sanity);
+            if (marks.length) label += '（' + marks.join(' ') + '）';
+
+            ab(label, function() {
+                if (isOn) { sceneWardrobe(); return; }
+                addTime(10);
+                unequipCurrentCloth();
+                equipCloth(it);
+                player.outfit = it.name;
+                toast('换上了 ' + it.name);
+                sceneWardrobe();
+            }, isOn ? 'disabled-btn' : '');
+        })(list[i]);
+    }
+
+    if (cur || player.outfit) {
+        ab('脱下来', function() {
+            addTime(5);
+            unequipCurrentCloth();
+            toast('你换回了那身破衣服');
+            sceneWardrobe();
+        }, 'danger-btn');
+    }
+
+    ab('离开衣柜', function() {
+        sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel());
+    });
+}
+
+// 进衣柜的入口：加在起居/住处里，也加在地区菜单
+function addWardrobeButton() {
+    if (!ownedClothes().length && !player.outfit) return;
+    ab('打开衣柜（' + ownedClothes().length + ' 件）', function() { sceneWardrobe(); });
+}
+
+// ==================================================================
+// 新手指导：头三天给一次，讲清楚这地方怎么活
+// ==================================================================
+
+function maybeTutorial() {
+    if (!player.flags) player.flags = {};
+    if (player.flags.tutorialShown) return false;
+    if ((player.daysSurvived || 1) > 3) { player.flags.tutorialShown = true; return false; }
+    player.flags.tutorialShown = true;
+
+    st('<div class="scene-title">活 下 去</div>' +
+        '<p>你在地狱里。这里没有出口，只有七个环，一环套一环。</p>' +
+        '<p style="color:#c09080;">先说三件最要紧的事：</p>' +
+        '<p><strong>一、身体会坏。</strong>HP 归零或者昏过去三次，就真的结束了。' +
+        '饿、累、脏都会往下拖，记得吃东西、睡觉、洗一洗。</p>' +
+        '<p><strong>二、钱要自己挣。</strong>低环有活儿干，但工钱少；' +
+        '往上走要许可证，没证的区域进不去。别急着往上爬。</p>' +
+        '<p><strong>三、人是活的。</strong>这儿的人会记得你说过什么。' +
+        '好感涨得慢，掉得快，一天里同一个话题说两次，第二次就没什么用了。</p>' +
+        '<p style="color:#9a9a9a;font-size:0.88em;">地图上相邻的环才能走，中间隔一个就过不去。' +
+        '点击环上的地名可以直接过去——但要付路费。</p>');
+    cb();
+    ab('明白了', function() {
+        sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel());
+    }, 'primary-btn');
+    ab('再看一遍属性', function() {
+        if (typeof toggleSidebar === 'function') toggleSidebar();
+        sceneExploreDistrict(player.currentRing || '傲慢之环', getCurrentLevel());
+    });
+    return true;
+}
+
+
+
+// ==================================================================
+// DoL 式的好感与菜单
+//
+// 一、好感一天最多涨 2 点（不分途径），想看剧情就得一天天来。
+// 二、NPC 菜单不再平铺一堆按钮，收成「和他相处」一个入口。
+// 三、好感阶段用一句话标出来，像 DoL 那样让人一眼知道到哪了。
+// ==================================================================
+
+var FAVOR_STAGE = [
+    { min: 0,  name: '陌生',   line: '他看你的眼神，和看街上任何一件东西没有区别。' },
+    { min: 15, name: '眼熟',   line: '他记得见过你。仅此而已。' },
+    { min: 30, name: '能说上话', line: '他开始跟你说些不跟别人说的。' },
+    { min: 50, name: '亲近',   line: '他不自觉地把位置往你这边腾了一点。' },
+    { min: 70, name: '自己人', line: '他已经默认你会来，也开始担心你不来。' },
+    { min: 88, name: '放不下', line: '他会为你改变主意。这在地狱里几乎不可能。' }
+];
+
+function favorStage(love) {
+    var s = FAVOR_STAGE[0];
+    for (var i = 0; i < FAVOR_STAGE.length; i++) {
+        if (love >= FAVOR_STAGE[i].min) s = FAVOR_STAGE[i];
+    }
+    return s;
+}
+
+// 一天一个 NPC 最多 +2（所有途径合计）
+function _favorDayKey(id) {
+    return 'fav_d' + (player.daysSurvived || 1) + '_' + id;
+}
+
+function _favorToday(id) {
+    if (!player.counters) player.counters = {};
+    return player.counters[_favorDayKey(id)] || 0;
+}
+
+function _favorAddToday(id, n) {
+    if (!player.counters) player.counters = {};
+    player.counters[_favorDayKey(id)] = _favorToday(id) + n;
+}
+
+function clampDailyFavor(id, delta) {
+    if (delta <= 0) return delta;
+    var used = _favorToday(id);
+    var room = 2 - used;
+    if (room <= 0) return 0;
+    return Math.min(delta, room);
+}
+
+// ---------- 「和他相处」子菜单 ----------
+function addNpcTogetherButton(id) {
+    var love = getNpcLove(id);
+    var st = favorStage(love);
+    var hasIdle = (typeof npcIdleAvailable === 'function') && npcIdleAvailable(id);
+    var hasHome = (typeof NPC_HOME !== 'undefined') && NPC_HOME[id];
+    var hasRace = (typeof RACE_ATTITUDE !== 'undefined') && RACE_ATTITUDE[id];
+    var cnt = (hasIdle ? 1 : 0) + (hasHome ? 1 : 0) + (hasRace ? 1 : 0);
+    if (!cnt) return;
+    ab('与他相处（' + st.name + '）', function() { sceneNpcTogether(id); });
+}
+
+function sceneNpcTogether(id) {
+    var d = NPC_PACK[id];
+    var love = getNpcLove(id);
+    var st = favorStage(love);
+    var html = '<div class="scene-title">' + d.name + '</div>' +
+        '<p style="color:#9a9a9a;font-size:0.88em;">' + st.name + '　好感 ' + love + '/100</p>' +
+        '<p style="font-size:0.9em;">' + st.line + '</p>';
+    var todayUsed = _favorToday(id);
+    if (todayUsed >= 2) {
+        html += '<p style="color:#c09080;font-size:0.84em;">' +
+            '今天已经聊得够多了。再待下去反而是打扰。</p>';
+    } else {
+        html += '<p style="color:#7ab47a;font-size:0.84em;">今天还能再亲近 ' + (2 - todayUsed) + ' 点。</p>';
+    }
+    st(html);
+    cb();
+
+    if (typeof npcIdleAvailable === 'function' && npcIdleAvailable(id)) {
+        ab('陪他待一会儿', function() { playNpcIdle(id); });
+    }
+
+    if (typeof NPC_HOME !== 'undefined' && NPC_HOME[id]) {
+        var h = NPC_HOME[id];
+        if (typeof npcHomeOpen === 'function' && npcHomeOpen(id)) {
+            ab('去' + h.name, function() { sceneNpcHome(id); });
+        } else {
+            ab(h.name + '（好感 ' + love + '/' + h.need + '）',
+                function() { sceneNpcTogether(id); }, 'disabled-btn');
+        }
+    }
+
+    if (typeof addRaceOption === 'function' && typeof RACE_ATTITUDE !== 'undefined' && RACE_ATTITUDE[id]) {
+        addRaceOption(id);
+    }
+
+    ab('回到 ' + d.name, function() { sceneNativeNpcMenu(id); });
+}
+
+
+
+// ==================================================================
+// 地点优先的探索：先选去哪儿，进去再决定干什么
+//
+// 原来是「探索 / 谋生 / 交易 / 人物 / 打理 / 移动」六个分类平铺，
+// 你得先想清楚要做什么，再去找地方。DoL 是反过来的：
+// 屏幕上只有地点，走进去以后才有「搜刮 / 打听 / 交易 / 见人」。
+// ==================================================================
+
+function placeList(ring, level) {
+    var d = RD[ring] && RD[ring][level];
+    var out = [];
+    if (!d) return out;
+    if (d.featureScenes) {
+        for (var k in d.featureScenes) out.push(k);
+    }
+    return out;
+}
+
+function districtPlacesMenu(ring, level) {
+    var d = RD[ring][level];
+    var places = placeList(ring, level);
+
+    st('<div class="scene-title">' + d.name + '</div>' +
+        '<p>' + d.desc + '</p>' +
+        '<p style="font-size:0.86em;color:#9a9a9a;">你要去哪儿。</p>');
+    cb();
+
+    for (var i = 0; i < places.length; i++) {
+        (function(key, idx) {
+            // 同一层里也有远近：靠门口的三分，往里走要久一点
+            var d2 = idx === 0 ? 'near' : (idx < 3 ? 'mid' : 'far');
+            var dd = (typeof SHOP_DIST !== 'undefined' && SHOP_DIST[d2]) ? SHOP_DIST[d2] : { label: '', cost: 5 };
+            ab(key + (dd.label ? '（' + dd.label + '）' : ''), function() {
+                addTime(dd.cost);
+                scenePlace(ring, level, key);
+            });
+        })(places[i], i);
+    }
+
+    if (typeof addGamblePlace === 'function') addGamblePlace(ring, level);
+    ab('在大街上走走', function() { districtExploreMenu(ring, level); });
+    ab('看地图，换个地方', function() { districtGoMenu(ring, level); });
+}
+
+function scenePlace(ring, level, key) {
+    var d = RD[ring][level];
+    var scene = d.featureScenes ? d.featureScenes[key] : null;
+
+    st('<div class="scene-title">' + key + '</div>' +
+        '<p style="font-size:0.86em;color:#9a9a9a;">' + d.name + ' · 你在这里。</p>');
+    cb();
+
+    ab('仔细看看这地方', function() {
+        if (typeof scene === 'function') { scene(ring, level); return; }
+        st('<div class="scene-title">' + key + '</div><p>' + (scene || '这里没什么特别的。') + '</p>');
+        addTime(5);
+        cb();
+        ab('回去', function() { scenePlace(ring, level, key); });
+    }, 'primary-btn');
+
+    ab('找活干', function() { districtWorkMenu(ring, level); });
+    ab('买卖东西', function() { districtShopMenu(ring, level); });
+    ab('看看这一带的人', function() { districtPeopleMenu(ring, level); });
+    ab('在这里打理自己', function() { districtCareMenu(ring, level); });
+    ab('离开这里', function() { sceneExploreDistrict(ring, level); });
+}
+
+
+
+// ==================================================================
+// 世界观事件：七环各自的产业、债务、审判与许可证
+// 这些不是氛围，是这个地方真正在运转的东西——矿石、账、血、时间。
+// ==================================================================
+
+(function attachWorldEvents() {
+    if (typeof EXPLORE_EVENTS === 'undefined') return;
+
+    var EV = {};
+
+    // 傲慢：星核矿场的产量与「设备损耗」记账
+    EV['傲慢之环'] = [{
+        id: 'world_pride_1',
+        text: '矿场出口的登记处排着队。每个上来的人都要在那本册子上按一个手印，' +
+            '监工根据手印的颜色判断你今天挖了多少。\n\n' +
+            '你前面那个人按下去，手印是浅的。监工看了一眼，说：「今天半个工。」\n\n' +
+            '那人什么都没说，退到一边。你注意到他的手一直在抖，' +
+            '抖得连袖子都按不住。',
+        opt: [
+            { label: '替他说话', fn: 'san-3 reputation+5', text:
+              '「他今天下的是最深的道。」你说。\n\n' +
+              '监工抬起眼，把你从头看到脚，然后笑了，' +
+              '「你替他说话，那你替他补上？」\n\n' +
+              '他把你今天的手印画在了那个人的名字旁边。\n\n' +
+              '那个人在旁边小声说了句谢谢，声音小到你几乎没听见。' },
+            { label: '把自己的半个工让给他', fn: 'gold-15 repentance+4', text:
+              '你把今天的工钱分了一半出去。他不要，你塞进他手里。\n\n' +
+              '「你不知道这地方的规矩。」他说，「你今天让了一次，明天他们就会觉得你还有。」\n\n' +
+              '但他还是收下了。' },
+            { label: '低下头，往前走', fn: 'san+1', text:
+              '你按了手印，走过去。身后那个浅色的手印还留在册子上，' +
+              '等它干了，就变成这地方无数个手印里的一个。' }
+        ]
+    }];
+
+    // 贪婪：罪业银行与利息
+    EV['贪婪之环'] = [{
+        id: 'world_greed_1',
+        text: '银行柜台后面的墙上挂着一块牌子，上面写着一行字：\n\n' +
+            '「本行不催收。欠款超过三十日，自动转入身体抵押。」\n\n' +
+            '柜台前坐着一个正在签字的人。他签得很慢，签完一条，' +
+            '柜员就翻一页，指下一处。\n\n' +
+            '他抬头看见你在看，很平静地说：「别看了。看了也帮不上。」',
+        opt: [
+            { label: '问他签的是什么', fn: 'san-4', text:
+              '「左边那条腿，」他说，「还有这只手。」\n\n' +
+              '「他们说可以分期。分八期，每期一样东西。」\n\n' +
+              '他把笔放下，「我已经签了五期了。」' },
+            { label: '替他付掉这一期', fn: 'gold-40 repentance+5', text:
+              '你把钱放在柜台上。柜员数了，把那一页划掉。\n\n' +
+              '那个人盯着被划掉的那行字看了很久，' +
+              '然后忽然哭起来，哭得很难看，一点也不像个能签八期的人。' },
+            { label: '走开', fn: 'san+1', text: '你走开了。柜台上那支笔还在往下压纸。' }
+        ]
+    }, {
+        id: 'world_greed_2',
+        text: '恶魔股市的行情板前没什么人。据说这里曾经挤满过，' +
+            '后来有一次全盘崩了，之后就再没热闹过。\n\n' +
+            '板上现在只挂着一个还在跳动的数字，旁边用粉笔写着：\n\n' +
+            '「罪业指数 · 今日」\n\n' +
+            '一个穿旧西装的人站在板下，仰着头，一动不动。',
+        opt: [
+            { label: '问他这个数字代表什么', fn: 'san-2', text:
+              '「代表这地方一天里新欠下的东西。」他说，眼睛没离开板子，' +
+              '「涨了就说明又有人签了字。跌了说明有人还上了。」\n\n' +
+              '「那现在是涨还是跌。」\n\n' +
+              '「一直在涨。」他说，「从来没有人真的还上。」' },
+            { label: '买一点', fn: 'gold-25 luck+3', text:
+              '你在窗口买了一小份。纸票很薄，上面印着一个你不认识的名字。\n\n' +
+              '「这是谁的。」你问。\n\n' +
+              '「现在还不属于任何人。」窗口里的人说，「等你卖掉的时候就知道了。」' },
+            { label: '离开', fn: 'san+1', text: '你走出那条街。身后那个数字还在跳。' }
+        ]
+    }];
+
+    // 暴怒：角斗与「记好了吗」
+    EV['暴怒之环'] = [{
+        id: 'world_wrath_1',
+        text: '铁砧大道边的招募处排着队。牌子上写着：\n\n' +
+            '「角斗场招人。当日结算。生死自负。」\n\n' +
+            '队伍里有个在数自己手指的人，一根一根数，数完一遍又重来。' +
+            '他数得很认真，像这样能让数字变多一点。\n\n' +
+            '排到他前面的时候，登记的人抬了下头：「第几次。」\n\n' +
+            '「第四次。」他说。',
+        opt: [
+            { label: '劝他别进去', fn: 'san-3 repentance+3', text:
+              '「第四次了。」你说。\n\n' +
+              '他看了你一眼，眼神很平，' +
+              '「我知道。第三次的时候我也知道。」\n\n' +
+              '他把手从牌子上收回来，「可我不进去，今天晚上就没东西吃。」\n\n' +
+              '他还是进去了。' },
+            { label: '顶他的名额', fn: 'hp-20 gold+45 atk+1', text:
+              '你跟登记的人说，这一场你去。\n\n' +
+              '里面很快就结束了。你被摔在墙上的时候听见骨头响了一声，' +
+              '但你还站着，站到了最后。\n\n' +
+              '出来的时候那个数手指的人还在门口，' +
+              '他看见你，什么也没说，把一个东西塞进你手里就走了。\n\n' +
+              '是一小块干饼。' },
+            { label: '离开队伍', fn: 'san+1', text: '你从队伍里退出来。身后还在一个一个报数。' }
+        ]
+    }];
+
+    // 嫉妒：镜面街区，谁在照谁
+    EV['嫉妒之环'] = [{
+        id: 'world_envy_1',
+        text: '镜面街区的每一面墙都是镜子。这里的人走路都不看路，看镜子。\n\n' +
+            '一个女孩停在橱窗前，把脸凑得很近，' +
+            '她在用指甲在镜面上划——不是划镜子，是划镜子里那个自己的脸。\n\n' +
+            '「你看她，」她指着自己在镜子里的倒影对你说，' +
+            '「她比我好看，对吧。」',
+        opt: [
+            { label: '说那只是你自己', fn: 'san-4', text:
+              '「那不是我。」她说得很肯定，' +
+              '「我照了二十年，我认得出来。」\n\n' +
+              '她继续划。镜面上一点痕迹都没留下。' },
+            { label: '陪她站着看', fn: 'san-2 repentance+2 love_all+1', text:
+              '你站着没说话。她划了一会儿，手停下来。\n\n' +
+              '「你也觉得她好看。」\n\n' +
+              '「我觉得你们都好看。」\n\n' +
+              '她愣了一下，转过头真正看了你一眼——不是看镜子，是看你。\n\n' +
+              '这大概是她今天第一次看一个活人。' },
+            { label: '走开', fn: 'san+1', text: '你走开了。街上每个人都在看自己的镜子。' }
+        ]
+    }];
+
+    // 暴食：盛宴厅的剩菜与谁在吃
+    EV['暴食之环'] = [{
+        id: 'world_gluttony_1',
+        text: '永恒盛宴厅的后门每天固定开两次，把没吃完的倒出来。\n\n' +
+            '门外等着的人比你想的多，也不吵，按顺序站着。\n\n' +
+            '门开了，东西倒进桶里。有人先上去，把最上面那层拨开，' +
+            '挑里面的。后面的人不抢，因为都知道上面那层是给新来的吃的。\n\n' +
+            '一个老人拉住你：「你是新的。别拿上面的。」',
+        opt: [
+            { label: '问他为什么', fn: 'san-3', text:
+              '「上面的东西，」他压低声音，' +
+              '「是他们吃剩下的。下面的……是吃他们剩下的那个剩下的。」\n\n' +
+              '他顿了顿，「你还想听下去吗。」\n\n' +
+              '你摇头。他说：「那就对了。」' },
+            { label: '把最上面那层拨给别人', fn: 'food+20 repentance+3 love_all+1', text:
+              '你把上面那层拨给后面的人，自己去掏下面。\n\n' +
+              '老人拍了拍你的肩，什么也没说。\n\n' +
+              '你吃了。味道其实一样。' },
+            { label: '不吃，走开', fn: 'food-5 san+2', text: '你走了。肚子叫了一声，你没有回头。' }
+        ]
+    }];
+
+    // 懒惰：虚无之床，睡着的人
+    EV['懒惰之环'] = [{
+        id: 'world_sloth_1',
+        text: '虚无之床不是一张床，是一整片——街上、屋里、台阶上，' +
+            '到处都有人在睡。\n\n' +
+            '他们不是死了，胸口还在动。有人手里还攥着吃了一半的东西。\n\n' +
+            '一个还醒着的人坐在门口，看见你在看那些人，' +
+            '说：「别叫他们。叫醒了会更累。」',
+        opt: [
+            { label: '还是叫醒一个', fn: 'san-6 hp-5', text:
+              '你蹲下去，摇了摇最近的那个人。\n\n' +
+              '他睁开眼，第一时间不是看你，是看自己的手，' +
+              '然后很轻地说：「我睡了多久。」\n\n' +
+              '「不知道。」\n\n' +
+              '他闭上眼睛，「那我再睡一会儿。」\n\n' +
+              '门口那个人叹了口气：「我说了吧。」' },
+            { label: '在门口坐下，陪醒着的人', fn: 'fatigue-10 san+2 love_all+1', text:
+              '你在他旁边坐下。他往旁边挪了挪，给你腾出位置。\n\n' +
+              '「在这儿待久了会想睡。」他说。\n\n' +
+              '「我知道。」\n\n' +
+              '「那你还坐。」\n\n' +
+              '「坐一会儿就走。」\n\n' +
+              '你们坐了很久。你没有睡着，他也没有。' },
+            { label: '离开这片地方', fn: 'san+1', text: '你走了。身后全是呼吸的声音，很轻，很齐。' }
+        ]
+    }];
+
+    for (var ring in EV) {
+        if (!EXPLORE_EVENTS[ring]) continue;
+        for (var i = 0; i < EV[ring].length; i++) EXPLORE_EVENTS[ring].push(EV[ring][i]);
+    }
+})();
+
+
+
+// ==================================================================
+// 赌桌与卖东西
+//
+// DoL 那套能玩下去，是因为钱有明确的来路和去路：能干活挣、
+// 能赌一把、也能把包里的东西卖掉换钱。这里补后两个。
+// ==================================================================
+
+// ---------- 贪环赌桌：简单、有庄家优势、有冷却 ----------
+var DICE_LINES = {
+    win3: '三颗全同。庄家把牌面推过来，没说话。',
+    win2: '两颗一样高。你赢了这一注。',
+    lose: '点数不够。庄家把你的筹码收走，动作很熟练。',
+    tie: '平。筹码推回来，庄家说：「再来？」',
+    bust: '你押的东西超了。庄家看了你一眼，还是收了。'
+};
+
+function gambleAvailable() {
+    if (!player.counters) player.counters = {};
+    var key = 'gamble_d' + (player.daysSurvived || 1);
+    return (player.counters[key] || 0) < 6;
+}
+
+function gambleUsed() {
+    if (!player.counters) player.counters = {};
+    return player.counters['gamble_d' + (player.daysSurvived || 1)] || 0;
+}
+
+function sceneGambleDen(ring, level) {
+    var used = gambleUsed();
+    st('<div class="scene-title">铜板巷 · 赌桌</div>' +
+        '<p>一张圆桌，四条腿都垫过。桌主是个没长脸的东西，' +
+        '只在应该长脸的位置有一块磨得发亮的骨头。</p>' +
+        '<p style="font-size:0.86em;color:#9a9a9a;">三颗骰子，比点数。' +
+        '押中两颗以上算赢，三颗全同赔三倍。庄家永远有优势——这就是它能开下去的原因。</p>' +
+        '<p style="font-size:0.86em;color:' + (used >= 6 ? '#c09080' : '#7ab47a') + ';">' +
+        (used >= 6 ? '今天你已经坐得太久了。庄家在看你。' : '今天还能玩 ' + (6 - used) + ' 把。') + '</p>');
+    cb();
+
+    if (!gambleAvailable()) {
+        ab('站起来，走人', function() { sceneExploreDistrict(ring, level); });
+        return;
+    }
+
+    var stakes = [10, 25, 50];
+    for (var i = 0; i < stakes.length; i++) {
+        (function(bet) {
+            ab('押 ' + bet + ' 金币', function() {
+                if (player.gold < bet) {
+                    toast('你拿不出 ' + bet + ' 金币。');
+                    sceneGambleDen(ring, level);
+                    return;
+                }
+                player.counters['gamble_d' + (player.daysSurvived || 1)] = gambleUsed() + 1;
+                player.gold -= bet;
+                addTime(15);
+                var a = 1 + Math.floor(Math.random() * 6);
+                var b = 1 + Math.floor(Math.random() * 6);
+                var c = 1 + Math.floor(Math.random() * 6);
+                var mine = a + b + c;
+                var theirs = 1 + Math.floor(Math.random() * 6) + 1 + Math.floor(Math.random() * 6)
+                    + 1 + Math.floor(Math.random() * 6);
+                var same = (a === b && b === c);
+                var out, text;
+                if (same) {
+                    out = bet * 3; text = DICE_LINES.win3;
+                } else if (mine > theirs) {
+                    out = Math.round(bet * 1.6); text = DICE_LINES.win2;
+                } else if (mine === theirs) {
+                    out = bet; text = DICE_LINES.tie;
+                } else {
+                    out = 0; text = DICE_LINES.lose;
+                }
+                player.gold += out;
+                st('<div class="scene-title">开 骰</div>' +
+                    '<p>你：' + a + ' ' + b + ' ' + c + '（' + mine + '）　' +
+                    '庄家：' + theirs + '</p>' +
+                    '<p>' + text + '</p>' +
+                    '<p style="color:' + (out > bet ? '#7ab47a' : (out === 0 ? '#e85060' : '#9a9a9a')) + ';">' +
+                    (out === 0 ? '输掉 ' + bet + ' 金币' :
+                        (out > bet ? '净赚 ' + (out - bet) + ' 金币' : '拿回 ' + out + ' 金币')) + '</p>');
+                cb();
+                ab('再来一把', function() { sceneGambleDen(ring, level); });
+                ab('不玩了', function() { sceneExploreDistrict(ring, level); });
+            }, 'primary-btn');
+        })(stakes[i]);
+    }
+    ab('不玩了', function() { sceneExploreDistrict(ring, level); });
+}
+
+// ---------- 卖东西：把包里用不上的换成钱 ----------
+function itemValue(it) {
+    if (!it) return 0;
+    if (it.price) return it.price;
+    if (it.value) return it.value;
+    return 5;
+}
+
+function sellableItems() {
+    var out = [];
+    if (!player.inventory) return out;
+    for (var i = 0; i < player.inventory.length; i++) {
+        var it = player.inventory[i];
+        if (!it || !it.name) continue;
+        out.push(it);
+    }
+    return out;
+}
+
+function sceneSellItems(ring, level) {
+    var list = sellableItems();
+    var html = '<div class="scene-title">' + RD[ring][level].name + ' · 收购</div>';
+    if (!list.length) {
+        html += '<p>你包里没什么能卖的东西。</p>';
+    } else {
+        html += '<p style="font-size:0.86em;color:#9a9a9a;">' +
+            '店主按半价收。他不问你哪来的，你也别问他怎么出手。</p>';
+    }
+    st(html);
+    cb();
+
+    for (var i = 0; i < list.length; i++) {
+        (function(it) {
+            var v = Math.max(1, Math.floor(itemValue(it) * 0.5));
+            ab('卖掉 ' + it.name + '（+' + v + ' 金币）', function() {
+                // 直接在背包里找，别用 hasItem（它查的是另一套账）
+                var _idx = -1;
+                for (var _k = 0; _k < (player.inventory || []).length; _k++) {
+                    if (player.inventory[_k] === it) { _idx = _k; break; }
+                }
+                if (_idx < 0) { sceneSellItems(ring, level); return; }
+                player.inventory.splice(_idx, 1);
+                player.gold += v;
+                addTime(5);
+                toast('卖出 ' + it.name + '，+' + v + ' 金币');
+                sceneSellItems(ring, level);
+            });
+        })(list[i]);
+    }
+
+    ab('不卖了', function() { districtShopMenu(ring, level); });
+}
+
+// 把两个入口接到该去的地方
+function addGamblePlace(ring, level) {
+    if (ring !== '贪婪之环') return;
+    if (level !== 'poor') return;
+    ab('铜板巷的赌桌', function() { addTime(8); sceneGambleDen(ring, level); });
+}
+
+
+
+// ==================================================================
+// 派系事务 / 工作加钟 / 委托板
+// 三个系统原来都只有一层：能加入、能打工、能接任务。
+// 但加入之后没有事做，打工没有上升，任务只有随机给的那几单。
+// ==================================================================
+
+var FACTION_RANK = [
+    { min: 0,  name: '记名',   mul: 1.0 },
+    { min: 30, name: '执事',   mul: 1.25 },
+    { min: 80, name: '干事',   mul: 1.6 },
+    { min: 160, name: '核心',  mul: 2.0 }
+];
+
+function factionOfRing(ring) {
+    return (window.factions && window.factions[ring]) ? window.factions[ring] : null;
+}
+
+function factionRank(ring) {
+    if (!player.factionFavor) player.factionFavor = {};
+    var f = player.factionFavor[ring] || 0;
+    var r = FACTION_RANK[0];
+    for (var i = 0; i < FACTION_RANK.length; i++) if (f >= FACTION_RANK[i].min) r = FACTION_RANK[i];
+    return { favor: f, rank: r };
+}
+
+var FACTION_DUTIES = [
+    { label: '替会里跑一趟腿', min: 30, gold: [12, 20], favor: 6,
+      line: '一趟腿而已。你在门房那儿报了名字，对方连头都没抬，只把封好的东西推过来。' },
+    { label: '在门口站两个钟头', min: 60, gold: [20, 34], favor: 10,
+      line: '站就是站着。有人进出，你记下脸；有人想进，你拦住。没人教过你怎么拦，你自己看出来的。' },
+    { label: '跟人出去一趟，别多问', min: 90, gold: [35, 60], favor: 16,
+      line: '对方一路上没说话，你也没问。回来的路上他忽然说：「你比上一个懂事。」' }
+];
+
+function sceneFactionHall(ring, level) {
+    var f = factionOfRing(ring);
+    if (!f) { ab('离开', function() { districtPeopleMenu(ring, level); }); return; }
+
+    if (player.faction !== ring) {
+        st('<div class="scene-title">' + f.name + '</div>' +
+            '<p>' + f.desc + '</p>' +
+            '<p style="font-size:0.86em;color:#9a9a9a;">' +
+            (player.faction ? '你已经是别处的人了。这里不会给你位置。' : '他们只收自己人。') + '</p>');
+        cb();
+        ab('离开', function() { districtPeopleMenu(ring, level); });
+        return;
+    }
+
+    var info = factionRank(ring);
+    var todayKey = 'facduty_d' + (player.daysSurvived || 1) + '_' + ring;
+    player.flags = player.flags || {};
+    var done = player.flags[todayKey] || 0;
+
+    st('<div class="scene-title">' + f.name + ' · 事务</div>' +
+        '<p>' + f.desc + '</p>' +
+        '<p style="font-size:0.88em;">你的位置：<b>' + info.rank.name + '</b>' +
+        '（贡献 ' + info.favor + '）　报酬系数 ×' + info.rank.mul + '</p>' +
+        '<p style="font-size:0.84em;color:' + (done >= 3 ? '#c09080' : '#7ab47a') + ';">' +
+        (done >= 3 ? '今天的事已经做完了。会里不缺你这一趟。' : '今天还能做 ' + (3 - done) + ' 件事。') + '</p>');
+    cb();
+
+    if (done < 3) {
+        for (var i = 0; i < FACTION_DUTIES.length; i++) {
+            (function(duty, idx) {
+                ab(duty.label + '（' + duty.min + ' 分钟）', function() {
+                    player.flags[todayKey] = (player.flags[todayKey] || 0) + 1;
+                    addTime(duty.min);
+                    var g = Math.round((duty.gold[0] + Math.floor(Math.random() * (duty.gold[1] - duty.gold[0] + 1))) * info.rank.mul);
+                    player.gold += g;
+                    if (!player.factionFavor) player.factionFavor = {};
+                    player.factionFavor[ring] = (player.factionFavor[ring] || 0) + duty.favor;
+                    var ni = factionRank(ring);
+                    var up = (ni.rank.name !== info.rank.name);
+                    st('<p>' + duty.line + '</p>' +
+                        '<p style="color:#7ab47a;">金币 +' + g + '　贡献 +' + duty.favor + '</p>' +
+                        (up ? '<p class="highlight">会里给你换了称呼：' + ni.rank.name + '。报酬系数 ×' + ni.rank.mul + '。</p>' : ''));
+                    cb();
+                    ab('回去', function() { sceneFactionHall(ring, level); });
+                });
+            })(FACTION_DUTIES[i], i);
+        }
+    }
+    ab('离开', function() { districtPeopleMenu(ring, level); });
+}
+
+// ---------- 工作加钟：同一天多做一班，钱多但身体垮得快 ----------
+function sceneOvertime(ring, level) {
+    var pay = 18 + Math.round((player.strength || 0) * 0.8) + Math.round((player.agility || 0) * 0.5);
+    st('<div class="scene-title">加班</div>' +
+        '<p>监工说今天缺人手，问你要不要再顶一班。</p>' +
+        '<p style="font-size:0.86em;color:#c09080;">顶一班：' + pay + ' 金币，两小时，' +
+        'HP −12、疲劳 +25。累了不给你换人。</p>');
+    cb();
+    ab('顶这一班', function() {
+        addTime(120);
+        player.gold += pay;
+        player.hp = Math.max(1, (player.hp || 0) - 12);
+        player.fatigue = Math.min(100, (player.fatigue || 0) + 25);
+        st('<p>你顶完了这一班。收工的时候手抬不起来，但钱是现的。</p>' +
+            '<p style="color:#7ab47a;">金币 +' + pay + '</p>');
+        cb();
+        ab('回去', function() { districtWorkMenu(ring, level); });
+    }, 'primary-btn');
+    ab('不了，我还想活着', function() { districtWorkMenu(ring, level); });
+}
+
+// ---------- 委托板：把现成的活写成委托，接了就得按期交 ----------
+function makeBoardTask(ring, level) {
+    var pool = [
+        { title: '把一封信送到隔壁街', desc: '收信人没有名字，只有一个门牌。送到就行，别问。',
+          need: 'explore', gold: 25, exp: 12, days: 2, ring: ring },
+        { title: '替人看一夜门', desc: '从入夜看到天亮。中间有人来，你就说里面没人。',
+          need: 'explore', gold: 40, exp: 18, days: 3, ring: ring },
+        { title: '找一件丢了的东西', desc: '失主说不清是什么样子，只说「银的，很小」。',
+          need: 'explore', gold: 35, exp: 15, days: 3, ring: ring },
+        { title: '陪一个人走完这段夜路', desc: '他不肯说为什么需要人陪。走完就好。',
+          need: 'explore', gold: 30, exp: 20, days: 2, ring: ring }
+    ];
+    var t = pool[Math.floor(Math.random() * pool.length)];
+    var task = {
+        id: 'board_' + Date.now() + '_' + Math.floor(Math.random() * 1000),
+        title: t.title, desc: t.desc,
+        deadline: (player.daysSurvived || 1) + t.days,
+        rewardGold: t.gold, rewardExp: t.exp,
+        type: t.need, target: t.ring,
+        boardRing: ring, boardLevel: level,
+        status: 'active', progress: 0, needCount: 3
+    };
+    return task;
+}
+
+function sceneTaskBoard(ring, level) {
+    st('<div class="scene-title">委托板</div>' +
+        '<p>一块钉在墙上的木板，上面用图钉按着几张纸。' +
+        '大部分已经泛黄，边角卷起来，是没人接的。</p>' +
+        '<p style="font-size:0.86em;color:#9a9a9a;">板上现在挂着 ' +
+        Math.max(1, 4 - (player.activeTasks || []).length) + ' 张还能接的。</p>');
+    cb();
+
+    if ((player.activeTasks || []).length >= 3) {
+        ab('你手上已经有三单了', function() { districtPeopleMenu(ring, level); }, 'disabled-btn');
+        return;
+    }
+
+    var shown = 3;
+    for (var i = 0; i < shown; i++) {
+        (function() {
+            var t = makeBoardTask(ring, level);
+            ab(t.title + '（' + t.rewardGold + ' 金币，' + (t.deadline - (player.daysSurvived || 1)) + ' 天内）',
+                function() {
+                    st('<div class="scene-title">' + t.title + '</div><p>' + t.desc + '</p>' +
+                        '<p style="font-size:0.86em;color:#9a9a9a;">报酬 ' + t.rewardGold +
+                        ' 金币，' + t.rewardExp + ' 经验。期限：第 ' + t.deadline + ' 天。</p>');
+                    cb();
+                    ab('接下', function() { acceptTask(t); }, 'primary-btn');
+                    ab('放回去', function() { sceneTaskBoard(ring, level); });
+                });
+        })();
+    }
+    ab('离开', function() { districtPeopleMenu(ring, level); });
+}
+
+// ---------- 接线 ----------
+function addSupplementButtons(ring, level) {
+    if (typeof factionOfRing === 'function' && factionOfRing(ring)) {
+        ab('派系事务' + (player.faction === ring ? '（' + factionRank(ring).rank.name + '）' : ''),
+            function() { addTime(5); sceneFactionHall(ring, level); });
+    }
+    ab('委托板', function() { addTime(5); sceneTaskBoard(ring, level); });
 }
 
 // ==================== 启动游戏 ====================
